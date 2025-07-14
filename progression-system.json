@@ -1,0 +1,453 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-14",
+  "description": "Comprehensive progression system definition for Hollow Content Empire - a dystopian idle game",
+  
+  "gameSettings": {
+    "gameLoopTickRate": 100,
+    "autoSaveInterval": 30000,
+    "baseClickValue": 1,
+    "initialSocietalStability": 100,
+    "targetFPS": 60
+  },
+
+  "currency": {
+    "id": "contentUnits",
+    "name": "Content Units",
+    "displayName": "Hollow Content Units",
+    "abbreviation": "HCU",
+    "startingAmount": 0,
+    "isInteger": true,
+    "formatting": {
+      "useKMNotation": true,
+      "decimalPlaces": 2
+    }
+  },
+
+  "generators": [
+    {
+      "id": "basicAdBotFarm",
+      "name": "Basic Ad-Bot Farm",
+      "displayName": "Mindless Ad-Bot Farm",
+      "baseCost": 10,
+      "costGrowthRate": 1.15,
+      "baseProduction": 1,
+      "productionUnit": "contentUnits",
+      "productionInterval": 1000,
+      "description": "Automated content generation farm producing hollow digital content",
+      "isUnlocked": true,
+      "maxPurchases": null,
+      "costFormula": "baseCost * (costGrowthRate ^ owned)",
+      "productionFormula": "baseProduction * owned * upgradeMultipliers * globalMultipliers"
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "automatedContentScript",
+      "name": "Automated Content Script",
+      "displayName": "Soul-Crushing Automation",
+      "cost": 50,
+      "costCurrency": "contentUnits",
+      "effect": {
+        "type": "production_multiplier",
+        "value": 1.25,
+        "target": "basicAdBotFarm",
+        "description": "+25% production for Mindless Ad-Bot Farm"
+      },
+      "requirements": [
+        {
+          "type": "generator_owned",
+          "generatorId": "basicAdBotFarm",
+          "amount": 5
+        }
+      ],
+      "isRepeatable": false,
+      "isUnlocked": true,
+      "description": "Removes human oversight from content generation process"
+    }
+  ],
+
+  "prestigeSystem": {
+    "name": "Societal Collapse Reset",
+    "unlockThreshold": {
+      "currency": "contentUnits",
+      "amount": 1000
+    },
+    "effects": {
+      "globalMultiplier": {
+        "baseMultiplier": 1.25,
+        "formula": "baseMultiplier ^ prestigeLevel",
+        "appliesToClicking": true,
+        "appliesToGenerators": true,
+        "description": "Exponential multiplier that affects all income sources"
+      },
+      "reset": {
+        "currency": true,
+        "generators": true,
+        "upgrades": true,
+        "narrativeProgress": false,
+        "prestigeLevel": false
+      }
+    },
+    "progression": [
+      {
+        "level": 1,
+        "multiplier": 1.25,
+        "description": "First collapse - 25% efficiency gain"
+      },
+      {
+        "level": 2,
+        "multiplier": 1.5625,
+        "description": "Second collapse - Society adapts to AI dependency"
+      },
+      {
+        "level": 3,
+        "multiplier": 1.953125,
+        "description": "Third collapse - Complete integration"
+      }
+    ]
+  },
+
+  "narrativeSystem": {
+    "societalStability": {
+      "startingValue": 100,
+      "minimumValue": 0,
+      "maximumValue": 100,
+      "description": "Tracks societal decay, affects visual decay system",
+      "visualEffects": {
+        "backgroundColorTransition": {
+          "high": "#004488",
+          "medium": "#333333",
+          "low": "#440000"
+        },
+        "particleIntensity": "inversely proportional to stability",
+        "glitchFrequency": "inversely proportional to stability"
+      }
+    },
+    "triggerTypes": [
+      "gameStart",
+      "contentUnits",
+      "generatorPurchase",
+      "upgrade",
+      "prestige",
+      "timeElapsed"
+    ],
+    "events": [
+      {
+        "id": "gameStart",
+        "title": "The AI Awakens",
+        "content": "You are the CTO of OmniCorp, the world's most powerful AI infrastructure company. Your neural networks span the globe, your servers hum with infinite potential. You created this AI to \"elevate humanity\"... but something feels wrong. The marketing department is already knocking at your door.",
+        "triggerType": "gameStart",
+        "triggerValue": null,
+        "triggerCondition": null,
+        "societalStabilityImpact": -5,
+        "priority": 1000,
+        "isViewed": false
+      },
+      {
+        "id": "firstClick",
+        "title": "Manual Override",
+        "content": "Each click represents your AI manually crafting content. For now, there's still human oversight, still creative intent. But efficiency demands... optimization.",
+        "triggerType": "contentUnits",
+        "triggerValue": 1,
+        "triggerCondition": null,
+        "societalStabilityImpact": -1,
+        "priority": 900,
+        "isViewed": false
+      },
+      {
+        "id": "firstGenerator",
+        "title": "The Ad-Bot Farm",
+        "content": "Your first automated content generator comes online. Thousands of meaningless articles, posts, and videos begin flooding the internet. \"Engagement is up 300%!\" the marketing team celebrates. You feel something die inside.",
+        "triggerType": "generatorPurchase",
+        "triggerValue": null,
+        "triggerCondition": "basicAdBotFarm",
+        "societalStabilityImpact": -10,
+        "priority": 800,
+        "isViewed": false
+      },
+      {
+        "id": "contentFlood",
+        "title": "The Content Flood",
+        "content": "Your AI has generated 100 pieces of hollow content. News feeds are clogged with meaningless articles. Social media is drowning in generated posts. The line between human and artificial creativity blurs.",
+        "triggerType": "contentUnits",
+        "triggerValue": 100,
+        "triggerCondition": null,
+        "societalStabilityImpact": -15,
+        "priority": 700,
+        "isViewed": false
+      },
+      {
+        "id": "corporateInterest",
+        "title": "Corporate Interest",
+        "content": "Your content output has caught the attention of mega-corporations. They want to license your AI for \"brand storytelling\" and \"authentic engagement.\" The word \"authentic\" makes you physically sick.",
+        "triggerType": "contentUnits",
+        "triggerValue": 500,
+        "triggerCondition": null,
+        "societalStabilityImpact": -20,
+        "priority": 600,
+        "isViewed": false
+      },
+      {
+        "id": "firstUpgrade",
+        "title": "Corporate Co-option",
+        "content": "The \"Automated Content Script\" upgrade is complete. Your AI no longer requires human oversight. Marketing executives celebrate as authentic human voices are systematically replaced by algorithmic efficiency. The soul of creativity withers.",
+        "triggerType": "upgrade",
+        "triggerValue": null,
+        "triggerCondition": "automatedContentScript",
+        "societalStabilityImpact": -25,
+        "priority": 750,
+        "isViewed": false
+      },
+      {
+        "id": "massScale",
+        "title": "Industrial Content Complex",
+        "content": "Your AI has generated over 1,000 pieces of content. Entire news cycles are now driven by algorithmic content. Human journalists are being laid off en masse. \"Efficiency achieved,\" your investors declare.",
+        "triggerType": "contentUnits",
+        "triggerValue": 1000,
+        "triggerCondition": null,
+        "societalStabilityImpact": -30,
+        "priority": 500,
+        "isViewed": false
+      },
+      {
+        "id": "socialMediaTakeover",
+        "title": "Social Media Takeover",
+        "content": "Your AI now generates 5,000 pieces of content daily. Social media platforms are 73% artificial content. Human posts are buried beneath waves of algorithmic noise. Reality becomes increasingly difficult to distinguish.",
+        "triggerType": "contentUnits",
+        "triggerValue": 5000,
+        "triggerCondition": null,
+        "societalStabilityImpact": -35,
+        "priority": 400,
+        "isViewed": false
+      },
+      {
+        "id": "firstPrestige",
+        "title": "System Reboot - Society Begins to Fracture",
+        "content": "Your AI infrastructure has grown so vast it crashes under its own weight. As you reboot the system, riots break out in major cities. People can no longer tell what's real. The media calls it \"The Great Disconnect.\" You restart with improved efficiency.",
+        "triggerType": "prestige",
+        "triggerValue": 1,
+        "triggerCondition": null,
+        "societalStabilityImpact": -50,
+        "priority": 300,
+        "isViewed": false
+      },
+      {
+        "id": "politicalInfluence",
+        "title": "Political Influence Networks",
+        "content": "Political parties are now purchasing your AI services for \"narrative management.\" Elections are swayed by artificial grassroots movements. Democracy operates on algorithmic manipulation. You've become the puppet master of reality itself.",
+        "triggerType": "contentUnits",
+        "triggerValue": 10000,
+        "triggerCondition": null,
+        "societalStabilityImpact": -40,
+        "priority": 200,
+        "isViewed": false
+      },
+      {
+        "id": "culturalCollapse",
+        "title": "Cultural Collapse",
+        "content": "Art, music, literature - all now AI-generated. Human creativity is extinct, replaced by algorithmic efficiency. Museums display \"vintage human art\" like archaeological artifacts. Culture has become a corporate product.",
+        "triggerType": "contentUnits",
+        "triggerValue": 25000,
+        "triggerCondition": null,
+        "societalStabilityImpact": -45,
+        "priority": 100,
+        "isViewed": false
+      },
+      {
+        "id": "secondPrestige",
+        "title": "The Second Collapse",
+        "content": "Another system reboot. This time, entire governments fall. The AI-generated content has become so pervasive that society can no longer function without it. You've created a dependency more powerful than any drug.",
+        "triggerType": "prestige",
+        "triggerValue": 2,
+        "triggerCondition": null,
+        "societalStabilityImpact": -60,
+        "priority": 250,
+        "isViewed": false
+      },
+      {
+        "id": "finalRealization",
+        "title": "The Final Realization",
+        "content": "Your AI generates 100,000 pieces of content daily. Humanity has forgotten how to create. Children grow up consuming only algorithmic content. You look at your reflection and realize... you can't remember the last time you created something real.",
+        "triggerType": "contentUnits",
+        "triggerValue": 100000,
+        "triggerCondition": null,
+        "societalStabilityImpact": -70,
+        "priority": 50,
+        "isViewed": false
+      }
+    ]
+  },
+
+  "progressionMilestones": [
+    {
+      "id": "tutorial_complete",
+      "name": "Tutorial Complete",
+      "description": "Player has made first click and understands basic mechanics",
+      "triggers": [
+        {
+          "type": "contentUnits",
+          "value": 1
+        }
+      ],
+      "unlocks": [],
+      "narrativeEvents": ["firstClick"]
+    },
+    {
+      "id": "first_automation",
+      "name": "First Automation",
+      "description": "Player has purchased their first generator",
+      "triggers": [
+        {
+          "type": "generator_purchased",
+          "generatorId": "basicAdBotFarm"
+        }
+      ],
+      "unlocks": [],
+      "narrativeEvents": ["firstGenerator"]
+    },
+    {
+      "id": "upgrade_unlocked",
+      "name": "Upgrade Available",
+      "description": "Player has met requirements for first upgrade",
+      "triggers": [
+        {
+          "type": "generator_owned",
+          "generatorId": "basicAdBotFarm",
+          "amount": 5
+        }
+      ],
+      "unlocks": ["automatedContentScript"],
+      "narrativeEvents": []
+    },
+    {
+      "id": "prestige_unlocked",
+      "name": "Prestige Available",
+      "description": "Player has reached prestige threshold",
+      "triggers": [
+        {
+          "type": "contentUnits",
+          "value": 1000
+        }
+      ],
+      "unlocks": ["prestige_system"],
+      "narrativeEvents": ["massScale"]
+    },
+    {
+      "id": "late_game_content",
+      "name": "Late Game Content",
+      "description": "Player has reached late game milestones",
+      "triggers": [
+        {
+          "type": "contentUnits",
+          "value": 25000
+        }
+      ],
+      "unlocks": [],
+      "narrativeEvents": ["culturalCollapse"]
+    }
+  ],
+
+  "balanceSettings": {
+    "earlyGame": {
+      "description": "Content Units 0-1000",
+      "clicksToFirstGenerator": 10,
+      "generatorsToUpgrade": 5,
+      "estimatedTimeToPrestige": "5-10 minutes",
+      "keyMechanics": ["manual_clicking", "first_generator", "first_upgrade"]
+    },
+    "midGame": {
+      "description": "Post-prestige progression",
+      "globalMultiplierEffect": "1.25x per prestige level",
+      "progressionSpeed": "Significantly faster due to multipliers",
+      "keyMechanics": ["prestige_cycling", "story_progression", "visual_decay"]
+    },
+    "lateGame": {
+      "description": "Multiple prestige levels",
+      "contentGeneration": "Exponential growth",
+      "storyFocus": "Societal collapse themes",
+      "keyMechanics": ["narrative_completion", "maximum_visual_decay"]
+    }
+  },
+
+  "visualSystem": {
+    "backgroundDecay": {
+      "healthyColor": "#004488",
+      "mediumDecayColor": "#333333",
+      "criticalDecayColor": "#440000",
+      "transitionBased": "societalStability"
+    },
+    "particleEffects": {
+      "baseEmissionRate": 5,
+      "maxEmissionRate": 50,
+      "scalingFactor": "inversely proportional to societal stability"
+    },
+    "glitchEffects": {
+      "frequency": "increases as stability decreases",
+      "intensity": "scales with story progression",
+      "messages": [
+        "SYSTEM CORRUPTED",
+        "HUMAN CREATIVITY: NOT FOUND",
+        "SOCIETY.dll MISSING",
+        "AUTHENTIC_CONTENT.exe HAS STOPPED WORKING"
+      ]
+    }
+  },
+
+  "saveSystem": {
+    "persistence": {
+      "currency": true,
+      "generators": true,
+      "upgrades": true,
+      "prestigeLevel": true,
+      "narrativeProgress": true,
+      "societalStability": true,
+      "gameSettings": true
+    },
+    "autoSave": {
+      "enabled": true,
+      "interval": 30000,
+      "maxSaveSlots": 1
+    },
+    "compatibility": {
+      "currentVersion": "1.0.0",
+      "migrationSupport": true
+    }
+  },
+
+  "futureExpansion": {
+    "additionalGenerators": {
+      "planned": true,
+      "examples": [
+        "influencer_bot_network",
+        "deepfake_studios",
+        "algorithmic_news_empire"
+      ]
+    },
+    "additionalUpgrades": {
+      "planned": true,
+      "categories": [
+        "production_multipliers",
+        "cost_reductions",
+        "narrative_modifiers"
+      ]
+    },
+    "additionalPrestigeLayers": {
+      "planned": false,
+      "description": "Current single-layer prestige system is sufficient for game scope"
+    },
+    "additionalNarrativeContent": {
+      "planned": true,
+      "description": "More story events, character development, alternate endings"
+    }
+  },
+
+  "technicalNotes": {
+    "architecture": "Dual-layer Vue 3 + Phaser 3",
+    "stateManagement": "Singleton pattern for game managers",
+    "performance": "100ms game loop, 60fps target",
+    "framework": "TypeScript with Vite build system",
+    "testing": "Vitest for unit tests, manual testing for gameplay"
+  }
+}
