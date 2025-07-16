@@ -1,0 +1,17 @@
+[
+  {
+    "id": "automatedContentScript",
+    "name": "Soul-Crushing Automation",
+    "description": "Increases Mindless Ad-Bot Farm production by 25%",
+    "cost": 50,
+    "targetGenerator": "basicAdBotFarm",
+    "effectType": "production_multiplier",
+    "effectValue": 1.25,
+    "requirements": [
+      {
+        "generatorId": "basicAdBotFarm",
+        "minOwned": 5
+      }
+    ]
+  }
+]

@@ -1,7 +1,7 @@
 <template>
   <div class="generator-purchase">
     <div class="generator-info">
-      <div class="generator-name">{{ generatorName }}</div>
+      <div class="generator-name">{{ props.generatorName }}</div>
       <div class="generator-stats">
         <span class="owned-count">Owned: {{ ownedCount }}</span>
         <span class="production-rate"
@@ -25,20 +25,23 @@ import { ref, computed } from 'vue'
 import { GameManager } from '../game/Game'
 import HCUDisplay from './HCUDisplay.vue'
 
+const props = defineProps<{
+  generatorId: string
+  generatorName: string
+}>()
+
 const gameManager = GameManager.getInstance()
-const generatorId = 'basicAdBotFarm'
-const generatorName = 'Mindless Ad-Bot Farm'
 
 const isPurchasing = ref(false)
 
 // Reactive computed properties directly from game state
 const ownedCount = computed(() => {
-  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
+  const generator = gameManager.state.generators.find((g) => g.id === props.generatorId)
   return generator ? generator.owned : 0
 })
 
 const cost = computed(() => {
-  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
+  const generator = gameManager.state.generators.find((g) => g.id === props.generatorId)
   if (!generator) return 0
   return generator.baseCost * Math.pow(generator.growthRate, generator.owned)
 })
@@ -48,7 +51,7 @@ const canAfford = computed(() => {
 })
 
 const actualProductionRate = computed(() => {
-  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
+  const generator = gameManager.state.generators.find((g) => g.id === props.generatorId)
   if (!generator) return 0
   return generator.baseProduction * generator.owned * gameManager.state.globalMultiplier
 })
@@ -61,7 +64,7 @@ const handlePurchase = async () => {
 
   // Visual feedback delay
   setTimeout(() => {
-    gameManager.purchaseGenerator(generatorId)
+    gameManager.purchaseGenerator(props.generatorId)
     isPurchasing.value = false
   }, 100)
 }

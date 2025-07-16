@@ -1,7 +1,10 @@
 import { SaveManager } from './SaveManager'
 import type { GameState } from './SaveManager'
 import { reactive } from 'vue'
-import { narrativeEvents, type NarrativeEvent } from '../assets/narratives'
+import type { NarrativeEvent } from '../assets/narratives'
+import generatorsConfig from '../../config/generators.json'
+import upgradesConfig from '../../config/upgrades.json'
+import narrativesConfig from '../../config/narratives.json'
 
 export interface GeneratorConfig {
   id: string
@@ -131,53 +134,41 @@ export class GameManager {
 
   // Initialize generators
   private initializeGenerators(): void {
-    const basicAdBot: GeneratorConfig = {
-      id: 'basicAdBotFarm',
-      name: 'Basic Ad-Bot Farm',
-      baseCost: 10,
-      growthRate: 1.15,
-      baseProduction: 1,
-      owned: 0,
-    }
-    this.generators.set(basicAdBot.id, basicAdBot)
+    generatorsConfig.forEach(config => {
+      const generator: GeneratorConfig = {
+        ...config,
+        owned: 0,
+      }
+      this.generators.set(generator.id, generator)
+    })
     this.state.generators = Array.from(this.generators.values())
   }
 
   // Initialize upgrades
   private initializeUpgrades(): void {
-    const soulCrushingAutomation: UpgradeConfig = {
-      id: 'automatedContentScript',
-      name: 'Soul-Crushing Automation',
-      description: 'Increases Mindless Ad-Bot Farm production by 25%',
-      cost: 50,
-      targetGenerator: 'basicAdBotFarm',
-      effectType: 'production_multiplier',
-      effectValue: 1.25,
-      requirements: [
-        {
-          generatorId: 'basicAdBotFarm',
-          minOwned: 5,
-        },
-      ],
-      isPurchased: false,
-    }
-    this.upgrades.set(soulCrushingAutomation.id, soulCrushingAutomation)
+    upgradesConfig.forEach(config => {
+      const upgrade: UpgradeConfig = {
+        ...config,
+        effectType: config.effectType as 'production_multiplier' | 'global_multiplier',
+        isPurchased: false,
+      }
+      this.upgrades.set(upgrade.id, upgrade)
+    })
     this.state.upgrades = Array.from(this.upgrades.values())
   }
 
   // Initialize narrative
   private initializeNarrative(): void {
-    this.state.narrative.currentStoryEvents = [...narrativeEvents]
+    this.state.narrative.currentStoryEvents = narrativesConfig.map(config => ({
+      ...config,
+      triggerType: config.triggerType as 'gameStart' | 'contentUnits' | 'generatorPurchase' | 'upgrade' | 'prestige' | 'timeElapsed',
+      isViewed: false
+    }))
     this.state.narrative.viewedEvents = []
     this.state.narrative.societalStability = 100
     this.state.narrative.pendingEvents = []
     this.state.narrative.isNarrativeActive = false
     this.state.narrative.gameStartTime = Date.now()
-
-    // Initialize all events as unviewed
-    this.state.narrative.currentStoryEvents.forEach((event) => {
-      event.isViewed = false
-    })
   }
 
   // Start the game loop

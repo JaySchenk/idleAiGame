@@ -9,6 +9,8 @@ import PrestigeButton from '../components/PrestigeButton.vue'
 import NarrativeDisplay from '../components/NarrativeDisplay.vue'
 import { GameManager } from '../game/Game'
 
+const gameManager = GameManager.getInstance()
+
 onMounted(() => {
   // Game loop is now started in GameManager constructor
   // Just ensure GameManager is initialized
@@ -29,7 +31,12 @@ onMounted(() => {
 
           <div class="section">
             <h2 class="section-title">Automation</h2>
-            <GeneratorPurchaseButton />
+            <GeneratorPurchaseButton 
+              v-for="generator in gameManager.state.generators" 
+              :key="generator.id"
+              :generator-id="generator.id"
+              :generator-name="generator.name"
+            />
           </div>
 
           <div class="section">
