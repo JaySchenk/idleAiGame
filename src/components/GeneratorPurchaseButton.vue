@@ -4,7 +4,7 @@
       <div class="generator-name">{{ generatorName }}</div>
       <div class="generator-stats">
         <span class="owned-count">Owned: {{ ownedCount }}</span>
-        <span class="production-rate">+{{ productionRate }}/sec</span>
+        <span class="production-rate">+<HCUDisplay :amount="actualProductionRate" :show-unit="false" />/sec</span>
       </div>
     </div>
     <button
@@ -31,12 +31,10 @@ const ownedCount = ref(0)
 const cost = ref(0)
 const canAfford = ref(false)
 const isPurchasing = ref(false)
+const actualProductionRate = ref(0)
 
 let updateInterval: number | null = null
 
-const productionRate = computed(() => {
-  return ownedCount.value > 0 ? '1.0' : '1.0'
-})
 
 // Update component state from game
 const updateState = () => {
@@ -47,6 +45,8 @@ const updateState = () => {
     ownedCount.value = generator.owned
     cost.value = gameManager.getGeneratorCost(generatorId)
     canAfford.value = gameManager.canPurchaseGenerator(generatorId)
+    // Base production rate per generator (usually 1.0)
+    actualProductionRate.value = generator.productionRate || 1.0
   }
 }
 
