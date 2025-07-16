@@ -73,6 +73,7 @@ src/
 - **Prestige**: "Societal Collapse Reset" - global multipliers (1.25x per level)
 - **Narrative**: 13 milestone-based story events
 - **Save System**: Auto-save every 30 seconds + manual save button
+- **State Management**: Hybrid approach - store essential state, calculate derived values with formulas
 - **Progression Data**: See `progression-system.json` for complete system definition
 
 ## Current Implementation Status
@@ -95,6 +96,7 @@ src/
 - **Custom Implementation**: Uses custom singleton pattern for game state management
 - **Game Loop**: 100ms tick rate with delta time calculations
 - **Theme**: Dystopian terminology throughout ("Hollow", "Mindless", "Soul-Crushing")
+- **Save Data Pattern**: Following idle game best practices - store base values (current HCU, lifetime HCU, generator counts, upgrade flags), calculate derived values (costs, production rates) using mathematical formulas to keep save files efficient
 
 ## Next Steps
 

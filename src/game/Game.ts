@@ -19,8 +19,6 @@ export class GameManager {
 
   // Prestige system
   private prestigeLevel: number = 0
-  private globalMultiplier: number = 1
-  private prestigeThreshold: number = 1000
 
   // Auto-save system
   private autoSaveInterval: number | null = null
@@ -107,7 +105,7 @@ export class GameManager {
       // Convert production per second to production per tick
       const productionThisTick = (productionRate * deltaTime) / 1000
       // Apply global prestige multiplier
-      const finalProduction = productionThisTick * this.globalMultiplier
+      const finalProduction = productionThisTick * this.getGlobalMultiplier()
       this.resourceManager.addContentUnits(finalProduction)
     }
 
@@ -131,7 +129,7 @@ export class GameManager {
   // Manual content generation (clicker mechanic)
   public clickForContent(): void {
     // Apply global prestige multiplier to manual clicks
-    const clickValue = 1 * this.globalMultiplier
+    const clickValue = 1 * this.getGlobalMultiplier()
     this.resourceManager.addContentUnits(clickValue)
 
     // Check narrative triggers for content units
@@ -144,12 +142,12 @@ export class GameManager {
     return {
       contentUnits: this.resourceManager.getContentUnits(),
       formattedContentUnits: this.resourceManager.formatContentUnits(),
-      productionRate: this.generatorManager.getTotalProductionRate() * this.globalMultiplier,
+      productionRate: this.generatorManager.getTotalProductionRate() * this.getGlobalMultiplier(),
       generators: this.generatorManager.getAllGenerators(),
       isRunning: this.isRunning,
-      prestigeLevel: this.prestigeLevel,
-      globalMultiplier: this.globalMultiplier,
-      prestigeThreshold: this.prestigeThreshold,
+      prestigeLevel: this.getPrestigeLevel(),
+      globalMultiplier: this.getGlobalMultiplier(),
+      prestigeThreshold: this.getPrestigeThreshold(),
       canPrestige: this.canPrestige(),
     }
   }
@@ -210,9 +208,26 @@ export class GameManager {
     return this.narrativeManager
   }
 
-  // Prestige system methods
+  // Get current prestige level
+  public getPrestigeLevel(): number {
+    return this.prestigeLevel
+  }
+
+  // Calculate global multiplier based on prestige level
+  public getGlobalMultiplier(): number {
+    return Math.pow(1.25, this.prestigeLevel)
+  }
+
+  // Calculate current prestige threshold
+  public getPrestigeThreshold(): number {
+    return 1000 * Math.pow(10, this.prestigeLevel)
+  }
+
+  // Check if player can prestige (has enough current HCU for next level)
   public canPrestige(): boolean {
-    return this.resourceManager.getContentUnits() >= this.prestigeThreshold
+    const currentHCU = this.resourceManager.getContentUnits()
+    const nextThreshold = 1000 * Math.pow(10, this.prestigeLevel)
+    return currentHCU >= nextThreshold
   }
 
   public performPrestige(): boolean {
@@ -220,16 +235,13 @@ export class GameManager {
       return false
     }
 
-    // Increase prestige level
-    this.prestigeLevel++
-
-    // Calculate new global multiplier (1.25x per prestige)
-    this.globalMultiplier = Math.pow(1.25, this.prestigeLevel)
-
     // Trigger narrative events for prestige
     this.narrativeManager.checkPrestigeTrigger(this.prestigeLevel)
 
-    // Reset game state
+    // Increase prestige level
+    this.prestigeLevel++
+
+    // Reset game state (but keep lifetime HCU)
     this.resourceManager.resetContentUnits()
     this.resetGenerators()
     this.resetUpgrades()
@@ -260,8 +272,8 @@ export class GameManager {
   public getPrestigeInfo() {
     return {
       level: this.prestigeLevel,
-      globalMultiplier: this.globalMultiplier,
-      threshold: this.prestigeThreshold,
+      globalMultiplier: this.getGlobalMultiplier(),
+      threshold: this.getPrestigeThreshold(),
       canPrestige: this.canPrestige(),
       nextMultiplier: Math.pow(1.25, this.prestigeLevel + 1),
     }
@@ -310,23 +322,21 @@ export class GameManager {
 
   // Serialize current game state
   private serializeGameState(): GameState {
-    // Serialize generators
+    // Serialize generators - only store owned count
     const generators: {
-      [key: string]: { owned: number; baseCost: number; costMultiplier: number }
+      [key: string]: { owned: number }
     } = {}
     for (const generator of this.generatorManager.getAllGenerators()) {
       generators[generator.id] = {
         owned: generator.owned,
-        baseCost: generator.baseCost,
-        costMultiplier: generator.growthRate,
       }
     }
 
-    // Serialize upgrades
-    const upgrades: { [key: string]: { isPurchased: boolean } } = {}
+    // Serialize upgrades - only store purchased IDs
+    const purchasedUpgrades: string[] = []
     for (const upgrade of this.upgradeManager.getAllUpgrades()) {
-      upgrades[upgrade.id] = {
-        isPurchased: upgrade.isPurchased,
+      if (upgrade.isPurchased) {
+        purchasedUpgrades.push(upgrade.id)
       }
     }
 
@@ -334,10 +344,10 @@ export class GameManager {
       version: '1.0.0',
       timestamp: Date.now(),
       contentUnits: this.resourceManager.getContentUnits(),
+      lifetimeContentUnits: this.resourceManager.getLifetimeContentUnits(),
       prestigeLevel: this.prestigeLevel,
-      globalMultiplier: this.globalMultiplier,
       generators,
-      upgrades,
+      purchasedUpgrades,
       narrative: this.narrativeManager.serializeState(),
       hasTriggeredGameStart: this.hasTriggeredGameStart,
       taskStartTime: this.taskStartTime,
@@ -349,26 +359,22 @@ export class GameManager {
   private deserializeGameState(gameState: GameState): void {
     // Restore basic state
     this.resourceManager.setContentUnits(gameState.contentUnits)
+    this.resourceManager.setLifetimeContentUnits(gameState.lifetimeContentUnits)
+    
+    // Restore prestige level
     this.prestigeLevel = gameState.prestigeLevel
-    this.globalMultiplier = gameState.globalMultiplier
 
     // Restore generators
     for (const generatorId in gameState.generators) {
       const generator = this.generatorManager.getGenerator(generatorId)
       if (generator) {
         const savedGenerator = gameState.generators[generatorId]
-        generator.owned = savedGenerator.owned || 0
+        generator.owned = savedGenerator.owned
       }
     }
 
     // Restore upgrades
-    for (const upgradeId in gameState.upgrades) {
-      const upgrade = this.upgradeManager.getUpgrade(upgradeId)
-      if (upgrade) {
-        const savedUpgrade = gameState.upgrades[upgradeId]
-        upgrade.isPurchased = savedUpgrade.isPurchased || false
-      }
-    }
+    this.upgradeManager.setPurchasedUpgrades(gameState.purchasedUpgrades)
 
     // Restore narrative state
     if (gameState.narrative) {
@@ -376,11 +382,11 @@ export class GameManager {
     }
 
     // Restore narrative tracking
-    this.hasTriggeredGameStart = gameState.hasTriggeredGameStart || false
-    this.lastContentUnitsCheck = gameState.lastContentUnitsCheck || 0
+    this.hasTriggeredGameStart = gameState.hasTriggeredGameStart ?? false
+    this.lastContentUnitsCheck = gameState.lastContentUnitsCheck ?? 0
 
     // Restore timer state
-    this.taskStartTime = gameState.taskStartTime || Date.now()
+    this.taskStartTime = gameState.taskStartTime ?? Date.now()
   }
 
   // Auto-save system

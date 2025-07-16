@@ -150,4 +150,20 @@ export class UpgradeManager {
   public getPurchasedUpgrades(): UpgradeConfig[] {
     return Array.from(this.upgrades.values()).filter((upgrade) => upgrade.isPurchased)
   }
+
+  // Set purchased upgrades from array of IDs (for save loading)
+  public setPurchasedUpgrades(upgradeIds: string[]): void {
+    // Reset all upgrades first
+    for (const upgrade of this.upgrades.values()) {
+      upgrade.isPurchased = false
+    }
+    
+    // Set purchased upgrades
+    for (const upgradeId of upgradeIds) {
+      const upgrade = this.upgrades.get(upgradeId)
+      if (upgrade) {
+        upgrade.isPurchased = true
+      }
+    }
+  }
 }

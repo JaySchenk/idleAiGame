@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import ResourceDisplay from '../components/ResourceDisplay.vue'
+// import ResourceDisplay from '../components/ResourceDisplay.vue'
 import GeneratorPurchaseButton from '../components/GeneratorPurchaseButton.vue'
 import ManualClickerButton from '../components/ManualClickerButton.vue'
 import ProgressBar from '../components/ProgressBar.vue'

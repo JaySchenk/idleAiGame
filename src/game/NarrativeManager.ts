@@ -153,7 +153,7 @@ export class NarrativeManager {
   }
 
   // Get narrative state for saving
-  public serializeState(): any {
+  public serializeState(): unknown {
     return {
       viewedEvents: this.state.viewedEvents,
       societalStability: this.state.societalStability,
@@ -162,22 +162,26 @@ export class NarrativeManager {
   }
 
   // Load narrative state from save
-  public deserializeState(savedState: any): void {
-    if (savedState.viewedEvents) {
-      this.state.viewedEvents = savedState.viewedEvents
+  public deserializeState(savedState: unknown): void {
+    if (savedState && typeof savedState === 'object') {
+      const state = savedState as Record<string, unknown>
+      
+      if (Array.isArray(state.viewedEvents)) {
+        this.state.viewedEvents = state.viewedEvents as string[]
 
-      // Mark events as viewed
-      this.state.currentStoryEvents.forEach((event) => {
-        event.isViewed = this.state.viewedEvents.includes(event.id)
-      })
-    }
+        // Mark events as viewed
+        this.state.currentStoryEvents.forEach((event) => {
+          event.isViewed = this.state.viewedEvents.includes(event.id)
+        })
+      }
 
-    if (savedState.societalStability !== undefined) {
-      this.state.societalStability = savedState.societalStability
-    }
+      if (typeof state.societalStability === 'number') {
+        this.state.societalStability = state.societalStability
+      }
 
-    if (savedState.gameStartTime !== undefined) {
-      this.state.gameStartTime = savedState.gameStartTime
+      if (typeof state.gameStartTime === 'number') {
+        this.state.gameStartTime = state.gameStartTime
+      }
     }
   }
 

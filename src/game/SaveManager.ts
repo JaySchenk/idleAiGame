@@ -3,21 +3,15 @@ export interface GameState {
   version: string
   timestamp: number
   contentUnits: number
-  prestigeLevel: number
-  globalMultiplier: number
+  lifetimeContentUnits: number // Total lifetime HCU generated (used to calculate prestige level)
+  prestigeLevel: number // Current prestige level (determines global multiplier)
   generators: {
     [generatorId: string]: {
       owned: number
-      baseCost: number
-      costMultiplier: number
     }
   }
-  upgrades: {
-    [upgradeId: string]: {
-      isPurchased: boolean
-    }
-  }
-  narrative?: any // Narrative state from NarrativeManager
+  purchasedUpgrades: string[] // Array of purchased upgrade IDs
+  narrative?: unknown // Narrative state from NarrativeManager
   hasTriggeredGameStart?: boolean // Narrative tracking
   taskStartTime?: number // Timer state
   lastContentUnitsCheck?: number // Narrative milestone tracking
@@ -127,19 +121,15 @@ export class SaveManager {
       return false
     }
 
+    if (typeof state.lifetimeContentUnits !== 'number' || state.lifetimeContentUnits < 0) {
+      return false
+    }
+
     if (typeof state.prestigeLevel !== 'number' || state.prestigeLevel < 0) {
       return false
     }
 
-    if (typeof state.globalMultiplier !== 'number' || state.globalMultiplier < 1) {
-      return false
-    }
-
     if (!state.generators || typeof state.generators !== 'object') {
-      return false
-    }
-
-    if (!state.upgrades || typeof state.upgrades !== 'object') {
       return false
     }
 
@@ -153,10 +143,11 @@ export class SaveManager {
     }
 
     // Validate upgrades data
-    const upgrades = state.upgrades as Record<string, unknown>
-    for (const upgradeId in upgrades) {
-      const upgrade = upgrades[upgradeId] as Record<string, unknown>
-      if (typeof upgrade.isPurchased !== 'boolean') {
+    if (!Array.isArray(state.purchasedUpgrades)) {
+      return false
+    }
+    for (const upgradeId of state.purchasedUpgrades) {
+      if (typeof upgradeId !== 'string') {
         return false
       }
     }

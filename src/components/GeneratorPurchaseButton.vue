@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { GameManager } from '../game/Game'
 import HCUDisplay from './HCUDisplay.vue'
 
@@ -45,8 +45,8 @@ const updateState = () => {
     ownedCount.value = generator.owned
     cost.value = gameManager.getGeneratorCost(generatorId)
     canAfford.value = gameManager.canPurchaseGenerator(generatorId)
-    // Base production rate per generator (usually 1.0)
-    actualProductionRate.value = generator.productionRate || 1.0
+    // Get actual production rate from generator manager
+    actualProductionRate.value = gameManager.getGeneratorManager().getGeneratorProductionRate(generatorId)
   }
 }
 

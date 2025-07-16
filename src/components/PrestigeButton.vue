@@ -34,8 +34,8 @@
         <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
       <div class="progress-text">
-        <HCUDisplay :amount="gameState.contentUnits" :show-unit="false" /> /
-        <HCUDisplay :amount="prestigeInfo.threshold" />
+        <HCUDisplay :amount="gameManager.getResourceManager().getLifetimeContentUnits()" :show-unit="false" /> /
+        <HCUDisplay :amount="prestigeInfo.threshold" /> Lifetime
       </div>
     </div>
 
@@ -83,12 +83,13 @@ const gameState = ref(gameManager.getGameState())
 
 let updateInterval: number | null = null
 
-// Get prestige info
+// Get prestige info (now properly reactive since it's calculated from gameState)
 const prestigeInfo = computed(() => gameManager.getPrestigeInfo())
 
-// Calculate progress to prestige
+// Calculate progress to prestige (based on lifetime HCU)
 const progressPercent = computed(() => {
-  const progress = (gameState.value.contentUnits / prestigeInfo.value.threshold) * 100
+  const lifetime = gameManager.getResourceManager().getLifetimeContentUnits()
+  const progress = (lifetime / prestigeInfo.value.threshold) * 100
   return Math.min(100, progress)
 })
 

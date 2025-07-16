@@ -1,6 +1,7 @@
 export class ResourceManager {
   private static instance: ResourceManager
   private contentUnits: number = 0
+  private lifetimeContentUnits: number = 0
 
   private constructor() {
     this.initializeResources()
@@ -26,6 +27,7 @@ export class ResourceManager {
   // Add Content Units
   public addContentUnits(amount: number): void {
     this.contentUnits += amount
+    this.lifetimeContentUnits += amount
   }
 
   // Set Content Units (for loading saved games)
@@ -85,7 +87,17 @@ export class ResourceManager {
     return value.toFixed(2) + ' HCU'
   }
 
-  // Reset content units for prestige
+  // Get lifetime Content Units
+  public getLifetimeContentUnits(): number {
+    return this.lifetimeContentUnits
+  }
+
+  // Set lifetime Content Units (for loading saved games)
+  public setLifetimeContentUnits(amount: number): void {
+    this.lifetimeContentUnits = Math.max(0, amount)
+  }
+
+  // Reset content units for prestige (but keep lifetime total)
   public resetContentUnits(): void {
     this.contentUnits = 0
   }
