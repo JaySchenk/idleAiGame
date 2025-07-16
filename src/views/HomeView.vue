@@ -10,9 +10,9 @@ import NarrativeDisplay from '../components/NarrativeDisplay.vue'
 import { GameManager } from '../game/Game'
 
 onMounted(() => {
-  // Start the game loop when the component mounts
-  const gameManager = GameManager.getInstance()
-  gameManager.startGameLoop()
+  // Game loop is now started in GameManager constructor
+  // Just ensure GameManager is initialized
+  GameManager.getInstance()
 })
 </script>
 

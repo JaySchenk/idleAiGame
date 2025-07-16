@@ -112,8 +112,14 @@ export class GameManager {
     // Try to load saved game
     this.loadGame()
 
+    // Calculate initial production rate after loading
+    this.updateComputedState()
+
     // Save on F5 refresh
     this.setupKeyboardListeners()
+
+    // Start the game loop immediately after initialization
+    this.startGameLoop()
   }
 
   public static getInstance(): GameManager {
@@ -251,6 +257,10 @@ export class GameManager {
     this.state.prestigeThreshold = this.getPrestigeThreshold()
     this.state.canPrestige = this.canPrestige()
     this.state.taskProgress = this.getTaskProgress()
+    
+    // Calculate and update production rate
+    const productionRate = this.getTotalProductionRate()
+    this.state.productionRate = productionRate * this.getGlobalMultiplier()
 
     // Update prestige state
     const prestigeInfo = this.getPrestigeInfo()
