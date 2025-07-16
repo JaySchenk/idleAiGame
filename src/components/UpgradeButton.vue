@@ -36,7 +36,7 @@
       <span v-if="upgrade.isPurchased">✓ Purchased</span>
       <span v-else-if="isPurchasing">Purchasing...</span>
       <span v-else-if="!requirementsMet">Requirements Not Met</span>
-      <span v-else-if="!canAfford">Not Enough CU</span>
+      <span v-else-if="!canAfford">Not Enough HCU</span>
       <span v-else>Purchase Upgrade</span>
     </button>
     

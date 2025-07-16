@@ -33,7 +33,7 @@
         ></div>
       </div>
       <div class="progress-text">
-        {{ formatNumber(gameState.contentUnits) }} / {{ formatNumber(prestigeInfo.threshold) }} CU
+        {{ formatNumber(gameState.contentUnits) }} / {{ formatNumber(prestigeInfo.threshold) }} HCU
       </div>
     </div>
     

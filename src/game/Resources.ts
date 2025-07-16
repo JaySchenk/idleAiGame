@@ -50,7 +50,7 @@ export class ResourceManager {
   // Format currency for display
   public formatContentUnits(amount?: number): string {
     const value = amount !== undefined ? amount : this.contentUnits
-    return `${Math.floor(value)} CU`
+    return `${Math.floor(value)} HCU`
   }
   
   // Reset content units for prestige
