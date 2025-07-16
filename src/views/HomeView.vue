@@ -7,10 +7,12 @@ import ProgressBar from '../components/ProgressBar.vue'
 import UpgradeButton from '../components/UpgradeButton.vue'
 import PrestigeButton from '../components/PrestigeButton.vue'
 import NarrativeDisplay from '../components/NarrativeDisplay.vue'
+import { GameManager } from '../game/Game'
 
 onMounted(() => {
-  // Ensure Phaser game is initialized when Vue mounts
-  // The Phaser game is already initialized in main.ts
+  // Start the game loop when the component mounts
+  const gameManager = GameManager.getInstance()
+  gameManager.startGameLoop()
 })
 </script>
 

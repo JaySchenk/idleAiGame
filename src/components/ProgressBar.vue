@@ -37,12 +37,12 @@ const showCompletionEffect = ref(false)
 const taskProgress = ref(gameManager.getTaskProgress())
 
 let updateInterval: number | null = null
+let lastProgressPercent = 0
 
-// Computed properties
+// Computed properties for reactive UI
 const timeRemaining = computed(() => taskProgress.value.timeRemaining)
 const progressPercent = computed(() => taskProgress.value.progressPercent)
 const rewardAmount = computed(() => taskProgress.value.rewardAmount)
-const isComplete = computed(() => taskProgress.value.isComplete)
 
 // Format time in seconds
 const formatTime = (milliseconds: number): string => {
@@ -50,33 +50,30 @@ const formatTime = (milliseconds: number): string => {
   return `${seconds}s`
 }
 
-// Handle task completion
-const completeTask = () => {
-  const completed = gameManager.completeTask()
+// Handle completion animation trigger
+const checkForCompletion = () => {
+  const currentProgress = taskProgress.value.progressPercent
   
-  if (completed) {
-    // Show completion effect
+  // Task completed - trigger animation
+  if (currentProgress === 0 && lastProgressPercent > 90) {
     showCompletionEffect.value = true
-    
-    // Hide effect after animation
     setTimeout(() => {
       showCompletionEffect.value = false
     }, 2000)
   }
+  
+  lastProgressPercent = currentProgress
 }
 
-// Update timer
-const updateTimer = () => {
+// Update UI state from game loop
+const updateUI = () => {
   taskProgress.value = gameManager.getTaskProgress()
-  
-  if (isComplete.value && !showCompletionEffect.value) {
-    completeTask()
-  }
+  checkForCompletion()
 }
 
 onMounted(() => {
-  // Update every 100ms for smooth animation
-  updateInterval = setInterval(updateTimer, 100)
+  // Update UI every 100ms for smooth animation
+  updateInterval = setInterval(updateUI, 100)
 })
 
 onUnmounted(() => {
@@ -187,7 +184,6 @@ onUnmounted(() => {
   color: #ffffff;
   animation: rewardFloat 2s ease-out;
 }
-
 
 @keyframes completionPulse {
   0% { 

@@ -111,6 +111,12 @@ export class GameManager {
       this.resourceManager.addContentUnits(finalProduction)
     }
     
+    // Check for task completion and auto-complete
+    const taskProgress = this.getTaskProgress()
+    if (taskProgress.isComplete) {
+      this.completeTask()
+    }
+    
     // Check narrative triggers based on content units
     const currentContentUnits = this.resourceManager.getContentUnits()
     if (Math.floor(currentContentUnits) > Math.floor(this.lastContentUnitsCheck)) {
