@@ -19,6 +19,8 @@ export interface GameState {
   }
   narrative?: any // Narrative state from NarrativeManager
   hasTriggeredGameStart?: boolean // Narrative tracking
+  taskStartTime?: number // Timer state
+  lastContentUnitsCheck?: number // Narrative milestone tracking
 }
 
 export class SaveManager {

@@ -33,20 +33,16 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { GameManager } from '../game/Game'
 
 const gameManager = GameManager.getInstance()
-
-const duration = 30000 // 30 seconds
-const rewardAmount = 10
-const startTime = ref(Date.now())
-const currentTime = ref(Date.now())
 const showCompletionEffect = ref(false)
+const taskProgress = ref(gameManager.getTaskProgress())
 
 let updateInterval: number | null = null
 
 // Computed properties
-const timeElapsed = computed(() => currentTime.value - startTime.value)
-const timeRemaining = computed(() => Math.max(0, duration - timeElapsed.value))
-const progressPercent = computed(() => Math.min(100, (timeElapsed.value / duration) * 100))
-const isComplete = computed(() => timeElapsed.value >= duration)
+const timeRemaining = computed(() => taskProgress.value.timeRemaining)
+const progressPercent = computed(() => taskProgress.value.progressPercent)
+const rewardAmount = computed(() => taskProgress.value.rewardAmount)
+const isComplete = computed(() => taskProgress.value.isComplete)
 
 // Format time in seconds
 const formatTime = (milliseconds: number): string => {
@@ -56,25 +52,22 @@ const formatTime = (milliseconds: number): string => {
 
 // Handle task completion
 const completeTask = () => {
-  // Grant reward
-  gameManager.getResourceManager().addContentUnits(rewardAmount)
+  const completed = gameManager.completeTask()
   
-  // Show completion effect
-  showCompletionEffect.value = true
-  
-  // Hide effect after animation
-  setTimeout(() => {
-    showCompletionEffect.value = false
-  }, 2000)
-  
-  // Reset timer
-  startTime.value = Date.now()
-  currentTime.value = Date.now()
+  if (completed) {
+    // Show completion effect
+    showCompletionEffect.value = true
+    
+    // Hide effect after animation
+    setTimeout(() => {
+      showCompletionEffect.value = false
+    }, 2000)
+  }
 }
 
 // Update timer
 const updateTimer = () => {
-  currentTime.value = Date.now()
+  taskProgress.value = gameManager.getTaskProgress()
   
   if (isComplete.value && !showCompletionEffect.value) {
     completeTask()

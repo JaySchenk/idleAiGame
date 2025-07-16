@@ -6,7 +6,6 @@ import ManualClickerButton from '../components/ManualClickerButton.vue'
 import ProgressBar from '../components/ProgressBar.vue'
 import UpgradeButton from '../components/UpgradeButton.vue'
 import PrestigeButton from '../components/PrestigeButton.vue'
-import SaveGameButton from '../components/SaveGameButton.vue'
 import NarrativeDisplay from '../components/NarrativeDisplay.vue'
 
 onMounted(() => {
@@ -46,11 +45,6 @@ onMounted(() => {
           <div class="section">
             <h2 class="section-title">Prestige</h2>
             <PrestigeButton />
-          </div>
-          
-          <div class="section">
-            <h2 class="section-title">Save Game</h2>
-            <SaveGameButton />
           </div>
           
           <div class="section">

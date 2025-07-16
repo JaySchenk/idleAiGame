@@ -24,13 +24,18 @@ export class GameManager {
   
   // Auto-save system
   private autoSaveInterval: number | null = null
-  private autoSaveRate: number = 30000 // 30 seconds
+  private autoSaveRate: number = 5000 // 5 seconds
   private lastSaveTime: number = 0
   private loadedFromSave: boolean = false
   
   // Narrative tracking
   private hasTriggeredGameStart: boolean = false
   private lastContentUnitsCheck: number = 0
+  
+  // Task progress timer
+  private taskStartTime: number = Date.now()
+  private taskDuration: number = 30000
+  private taskReward: number = 10
   
   private constructor() {
     this.resourceManager = ResourceManager.getInstance()
@@ -44,6 +49,9 @@ export class GameManager {
     
     // Try to load saved game
     this.loadGame()
+    
+    // Save on F5 refresh
+    this.setupKeyboardListeners()
   }
   
   public static getInstance(): GameManager {
@@ -255,8 +263,8 @@ export class GameManager {
 
   // Save/Load System
   
-  // Save current game state
-  public saveGame(): boolean {
+  // Save current game state (auto-save only)
+  private saveGame(): boolean {
     try {
       const gameState = this.serializeGameState()
       const success = this.saveManager.saveGame(gameState)
@@ -323,7 +331,9 @@ export class GameManager {
       generators,
       upgrades,
       narrative: this.narrativeManager.serializeState(),
-      hasTriggeredGameStart: this.hasTriggeredGameStart
+      hasTriggeredGameStart: this.hasTriggeredGameStart,
+      taskStartTime: this.taskStartTime,
+      lastContentUnitsCheck: this.lastContentUnitsCheck
     }
   }
   
@@ -359,7 +369,10 @@ export class GameManager {
     
     // Restore narrative tracking
     this.hasTriggeredGameStart = gameState.hasTriggeredGameStart || false
-    this.lastContentUnitsCheck = gameState.contentUnits || 0
+    this.lastContentUnitsCheck = gameState.lastContentUnitsCheck || 0
+    
+    // Restore timer state
+    this.taskStartTime = gameState.taskStartTime || Date.now()
   }
   
   // Auto-save system
@@ -376,6 +389,14 @@ export class GameManager {
       clearInterval(this.autoSaveInterval)
       this.autoSaveInterval = null
     }
+  }
+  
+  // Browser event listeners for saving
+  private setupKeyboardListeners(): void {
+    // Save before page unload (refresh, close, navigate away)
+    window.addEventListener('beforeunload', () => {
+      this.saveGame()
+    })
   }
   
   // Save system utilities
@@ -401,6 +422,39 @@ export class GameManager {
   
   public isAutoSaveActive(): boolean {
     return this.autoSaveInterval !== null
+  }
+
+  // Task progress timer methods
+  public getTaskProgress() {
+    const currentTime = Date.now()
+    const timeElapsed = currentTime - this.taskStartTime
+    const timeRemaining = Math.max(0, this.taskDuration - timeElapsed)
+    const progressPercent = Math.min(100, (timeElapsed / this.taskDuration) * 100)
+    const isComplete = timeElapsed >= this.taskDuration
+    
+    return {
+      timeElapsed,
+      timeRemaining,
+      progressPercent,
+      isComplete,
+      rewardAmount: this.taskReward,
+      duration: this.taskDuration
+    }
+  }
+  
+  public completeTask(): boolean {
+    const progress = this.getTaskProgress()
+    if (!progress.isComplete) {
+      return false
+    }
+    
+    // Grant reward
+    this.resourceManager.addContentUnits(this.taskReward)
+    
+    // Reset timer
+    this.taskStartTime = Date.now()
+    
+    return true
   }
 
 }
