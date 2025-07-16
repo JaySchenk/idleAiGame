@@ -70,36 +70,20 @@ onMounted(() => {
 
 <style scoped>
 .game-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
-
-.ui-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
-  z-index: 2;
-  pointer-events: none;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 2rem;
   padding: 2rem;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.ui-layer * {
-  pointer-events: auto;
 }
 
 .ui-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr auto;
   gap: 2rem;
+  align-items: start;
 }
 
 .game-title {
@@ -108,33 +92,23 @@ onMounted(() => {
   color: #ffffff;
   text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
   margin: 0;
-  flex-shrink: 0;
 }
 
 .ui-main {
-  display: flex;
-  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
-  align-items: flex-start;
+  align-items: start;
 }
 
-.ui-left {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
+.ui-left,
 .ui-right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 2rem;
 }
 
 .section {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 1rem;
 }
 
@@ -150,22 +124,21 @@ onMounted(() => {
 /* Responsive design */
 @media (max-width: 1024px) {
   .ui-main {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   
   .ui-header {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr;
+    text-align: center;
   }
   
   .game-title {
     font-size: 2rem;
-    text-align: center;
   }
 }
 
 @media (max-width: 768px) {
-  .ui-layer {
+  .game-container {
     padding: 1rem;
   }
   
