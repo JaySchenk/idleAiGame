@@ -17,7 +17,7 @@ import ResourceDisplay from './components/ResourceDisplay.vue'
         <ResourceDisplay />
       </div>
     </header>
-    
+
     <main class="app-main">
       <RouterView />
     </main>
@@ -96,15 +96,15 @@ import ResourceDisplay from './components/ResourceDisplay.vue'
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .title-nav-section {
     text-align: center;
   }
-  
+
   .app-title {
     font-size: 1.5rem;
   }
-  
+
   .nav-menu {
     justify-content: center;
   }

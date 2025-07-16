@@ -2,33 +2,31 @@
   <div class="upgrade-container">
     <div class="upgrade-header">
       <h3 class="upgrade-title">{{ upgrade.name }}</h3>
-      <div class="upgrade-cost">{{ formatCost(upgrade.cost) }} HCU</div>
+      <div class="upgrade-cost">
+        <HCUDisplay :amount="upgrade.cost" />
+      </div>
     </div>
-    
+
     <div class="upgrade-description">
       {{ upgrade.description }}
     </div>
-    
+
     <div class="upgrade-requirements" v-if="!requirementsMet">
       <div class="requirement-text">Requires:</div>
-      <div 
-        v-for="req in upgrade.requirements" 
-        :key="req.generatorId"
-        class="requirement-item"
-      >
+      <div v-for="req in upgrade.requirements" :key="req.generatorId" class="requirement-item">
         {{ req.minOwned }} {{ getGeneratorName(req.generatorId) }}
         <span class="requirement-progress">
           ({{ getGeneratorOwned(req.generatorId) }}/{{ req.minOwned }})
         </span>
       </div>
     </div>
-    
-    <button 
+
+    <button
       class="upgrade-button"
-      :class="{ 
-        'disabled': !canPurchase, 
-        'purchasing': isPurchasing,
-        'purchased': upgrade.isPurchased
+      :class="{
+        disabled: !canPurchase,
+        purchasing: isPurchasing,
+        purchased: upgrade.isPurchased,
       }"
       :disabled="!canPurchase || isPurchasing || upgrade.isPurchased"
       @click="purchaseUpgrade"
@@ -39,7 +37,7 @@
       <span v-else-if="!canAfford">Not Enough HCU</span>
       <span v-else>Purchase Upgrade</span>
     </button>
-    
+
     <!-- Purchase effect animation -->
     <div v-if="showPurchaseEffect" class="purchase-effect">
       <div class="effect-text">Upgrade Purchased!</div>
@@ -51,6 +49,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { GameManager } from '../game/Game'
+import HCUDisplay from './HCUDisplay.vue'
 
 interface Props {
   upgradeId: string
@@ -70,17 +69,19 @@ let updateInterval: number | null = null
 // Get upgrade data
 const upgrade = computed(() => {
   const upgradeData = upgradeManager.getUpgrade(props.upgradeId)
-  return upgradeData || {
-    id: '',
-    name: 'Unknown',
-    description: '',
-    cost: 0,
-    targetGenerator: '',
-    effectType: 'production_multiplier' as const,
-    effectValue: 1,
-    requirements: [],
-    isPurchased: false
-  }
+  return (
+    upgradeData || {
+      id: '',
+      name: 'Unknown',
+      description: '',
+      cost: 0,
+      targetGenerator: '',
+      effectType: 'production_multiplier' as const,
+      effectValue: 1,
+      requirements: [],
+      isPurchased: false,
+    }
+  )
 })
 
 // Check requirements
@@ -98,16 +99,6 @@ const canPurchase = computed(() => {
   return upgradeManager.canPurchaseUpgrade(props.upgradeId)
 })
 
-// Format cost display
-const formatCost = (cost: number): string => {
-  if (cost >= 1000000) {
-    return (cost / 1000000).toFixed(1) + 'M'
-  } else if (cost >= 1000) {
-    return (cost / 1000).toFixed(1) + 'K'
-  }
-  return cost.toString()
-}
-
 // Get generator name by ID
 const getGeneratorName = (generatorId: string): string => {
   const generator = generatorManager.getGenerator(generatorId)
@@ -123,24 +114,24 @@ const getGeneratorOwned = (generatorId: string): number => {
 // Purchase upgrade
 const purchaseUpgrade = async () => {
   if (!canPurchase.value || isPurchasing.value) return
-  
+
   isPurchasing.value = true
-  
+
   // Add slight delay for visual feedback
-  await new Promise(resolve => setTimeout(resolve, 100))
-  
+  await new Promise((resolve) => setTimeout(resolve, 100))
+
   const success = gameManager.purchaseUpgrade(props.upgradeId)
-  
+
   if (success) {
     // Show purchase effect
     showPurchaseEffect.value = true
-    
+
     // Hide effect after animation
     setTimeout(() => {
       showPurchaseEffect.value = false
     }, 2000)
   }
-  
+
   isPurchasing.value = false
 }
 
@@ -294,35 +285,40 @@ onUnmounted(() => {
 }
 
 @keyframes purchasePulse {
-  0% { 
+  0% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.5);
   }
-  50% { 
+  50% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.1);
   }
-  100% { 
+  100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1);
   }
 }
 
 @keyframes textGlow {
-  0%, 100% { text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
-  50% { text-shadow: 0 0 20px rgba(0, 255, 136, 1); }
+  0%,
+  100% {
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(0, 255, 136, 1);
+  }
 }
 
 @keyframes bonusFloat {
-  0% { 
+  0% {
     opacity: 0;
     transform: translateY(20px);
   }
-  50% { 
+  50% {
     opacity: 1;
     transform: translateY(0);
   }
-  100% { 
+  100% {
     opacity: 0;
     transform: translateY(-20px);
   }
@@ -335,7 +331,7 @@ onUnmounted(() => {
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .upgrade-cost {
     font-size: 1rem;
   }

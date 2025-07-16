@@ -21,11 +21,11 @@ export class NarrativeManager {
       societalStability: 100,
       pendingEvents: [],
       isNarrativeActive: false,
-      gameStartTime: Date.now()
+      gameStartTime: Date.now(),
     }
-    
+
     // Initialize all events as unviewed
-    this.state.currentStoryEvents.forEach(event => {
+    this.state.currentStoryEvents.forEach((event) => {
       event.isViewed = false
     })
   }
@@ -68,28 +68,32 @@ export class NarrativeManager {
     this.checkTrigger('timeElapsed', timeElapsed)
   }
 
-  private checkTrigger(triggerType: string, triggerValue?: number, triggerCondition?: string): void {
-    const eligibleEvents = this.state.currentStoryEvents.filter(event => {
+  private checkTrigger(
+    triggerType: string,
+    triggerValue?: number,
+    triggerCondition?: string,
+  ): void {
+    const eligibleEvents = this.state.currentStoryEvents.filter((event) => {
       // Skip already viewed events
       if (event.isViewed) return false
-      
+
       // Check trigger type
       if (event.triggerType !== triggerType) return false
-      
+
       // Check trigger value (if specified)
       if (event.triggerValue !== undefined) {
         if (triggerValue === undefined || triggerValue < event.triggerValue) {
           return false
         }
       }
-      
+
       // Check trigger condition (if specified)
       if (event.triggerCondition !== undefined) {
         if (triggerCondition !== event.triggerCondition) {
           return false
         }
       }
-      
+
       return true
     })
 
@@ -97,7 +101,7 @@ export class NarrativeManager {
     eligibleEvents.sort((a, b) => b.priority - a.priority)
 
     // Process each eligible event
-    eligibleEvents.forEach(event => {
+    eligibleEvents.forEach((event) => {
       this.triggerEvent(event)
     })
   }
@@ -106,18 +110,19 @@ export class NarrativeManager {
     // Mark event as viewed
     event.isViewed = true
     this.state.viewedEvents.push(event.id)
-    
+
     // Apply societal stability impact
-    this.state.societalStability = Math.max(0, 
-      Math.min(100, this.state.societalStability + event.societalStabilityImpact)
+    this.state.societalStability = Math.max(
+      0,
+      Math.min(100, this.state.societalStability + event.societalStabilityImpact),
     )
-    
+
     // Add to pending events for display
     this.state.pendingEvents.push(event)
-    
+
     // Notify subscribers
-    this.eventCallbacks.forEach(callback => callback(event))
-    
+    this.eventCallbacks.forEach((callback) => callback(event))
+
     console.log(`Narrative Event Triggered: ${event.title}`)
     console.log(`Societal Stability: ${this.state.societalStability}%`)
   }
@@ -139,12 +144,12 @@ export class NarrativeManager {
 
   // Get societal stability as a visual decay factor (0-1, where 1 is maximum decay)
   public getVisualDecayFactor(): number {
-    return 1 - (this.state.societalStability / 100)
+    return 1 - this.state.societalStability / 100
   }
 
   // Get all viewed events for archive
   public getViewedEvents(): NarrativeEvent[] {
-    return this.state.currentStoryEvents.filter(event => event.isViewed)
+    return this.state.currentStoryEvents.filter((event) => event.isViewed)
   }
 
   // Get narrative state for saving
@@ -152,7 +157,7 @@ export class NarrativeManager {
     return {
       viewedEvents: this.state.viewedEvents,
       societalStability: this.state.societalStability,
-      gameStartTime: this.state.gameStartTime
+      gameStartTime: this.state.gameStartTime,
     }
   }
 
@@ -160,17 +165,17 @@ export class NarrativeManager {
   public deserializeState(savedState: any): void {
     if (savedState.viewedEvents) {
       this.state.viewedEvents = savedState.viewedEvents
-      
+
       // Mark events as viewed
-      this.state.currentStoryEvents.forEach(event => {
+      this.state.currentStoryEvents.forEach((event) => {
         event.isViewed = this.state.viewedEvents.includes(event.id)
       })
     }
-    
+
     if (savedState.societalStability !== undefined) {
       this.state.societalStability = savedState.societalStability
     }
-    
+
     if (savedState.gameStartTime !== undefined) {
       this.state.gameStartTime = savedState.gameStartTime
     }
@@ -190,13 +195,13 @@ export class NarrativeManager {
       viewedEvents: this.state.viewedEvents.length,
       societalStability: this.state.societalStability,
       pendingEvents: this.state.pendingEvents.length,
-      decayFactor: this.getVisualDecayFactor()
+      decayFactor: this.getVisualDecayFactor(),
     }
   }
 
   // Force trigger an event by ID (for debugging)
   public forceEvent(eventId: string): void {
-    const event = this.state.currentStoryEvents.find(e => e.id === eventId)
+    const event = this.state.currentStoryEvents.find((e) => e.id === eventId)
     if (event && !event.isViewed) {
       this.triggerEvent(event)
     }

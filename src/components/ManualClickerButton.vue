@@ -2,11 +2,13 @@
   <div class="clicker-container">
     <div class="clicker-info">
       <div class="clicker-title">Desperate Human Touch</div>
-      <div class="clicker-description">Click to generate +1 Hollow Content Unit</div>
+      <div class="clicker-description">
+        Click to generate +<HCUDisplay :amount="1" :show-unit="false" /> Hollow Content Unit
+      </div>
     </div>
-    <button 
+    <button
       class="clicker-button"
-      :class="{ 'clicking': isClicking }"
+      :class="{ clicking: isClicking }"
       @click="handleClick"
       @mousedown="handleMouseDown"
       @mouseup="handleMouseUp"
@@ -14,18 +16,18 @@
     >
       <div class="click-icon">⚡</div>
       <div class="click-text">CLICK</div>
-      <div class="click-reward">+1 HCU</div>
+      <div class="click-reward">+<HCUDisplay :amount="1" /></div>
     </button>
-    
+
     <!-- Floating animation for click feedback -->
-    <div 
-      v-for="animation in clickAnimations" 
+    <div
+      v-for="animation in clickAnimations"
       :key="animation.id"
       class="click-animation"
-      :style="{ 
-        left: animation.x + 'px', 
+      :style="{
+        left: animation.x + 'px',
         top: animation.y + 'px',
-        animationDelay: animation.delay + 'ms'
+        animationDelay: animation.delay + 'ms',
       }"
     >
       +1
@@ -36,10 +38,11 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
 import { GameManager } from '../game/Game'
+import HCUDisplay from './HCUDisplay.vue'
 
 const gameManager = GameManager.getInstance()
 const isClicking = ref(false)
-const clickAnimations = ref<Array<{id: number, x: number, y: number, delay: number}>>([])
+const clickAnimations = ref<Array<{ id: number; x: number; y: number; delay: number }>>([])
 
 let animationId = 0
 
@@ -47,23 +50,23 @@ let animationId = 0
 const handleClick = async (event: MouseEvent) => {
   // Trigger manual content generation
   gameManager.clickForContent()
-  
+
   // Add click animation
   const rect = (event.target as HTMLElement).getBoundingClientRect()
   const animation = {
     id: animationId++,
     x: event.clientX - rect.left,
     y: event.clientY - rect.top,
-    delay: 0
+    delay: 0,
   }
-  
+
   clickAnimations.value.push(animation)
-  
+
   // Remove animation after completion
   setTimeout(() => {
-    clickAnimations.value = clickAnimations.value.filter(a => a.id !== animation.id)
+    clickAnimations.value = clickAnimations.value.filter((a) => a.id !== animation.id)
   }, 1000)
-  
+
   // Visual feedback
   isClicking.value = true
   await nextTick()
@@ -168,8 +171,13 @@ const handleMouseUp = () => {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 @keyframes floatUp {
@@ -194,7 +202,9 @@ const handleMouseUp = () => {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  transition: width 0.3s ease, height 0.3s ease;
+  transition:
+    width 0.3s ease,
+    height 0.3s ease;
 }
 
 .clicker-button:active::after {

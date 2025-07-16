@@ -2,11 +2,13 @@
   <div class="resource-display">
     <div class="resource-item primary">
       <div class="resource-label">Hollow Content Units</div>
-      <div class="resource-value">{{ formattedContentUnits }}</div>
+      <div class="resource-value">
+        <HCUDisplay :amount="contentUnits" />
+      </div>
     </div>
     <div class="resource-item secondary">
       <div class="resource-label">Hollow Content per Second</div>
-      <div class="resource-value">{{ formattedCPS }}</div>
+      <div class="resource-value"><HCUDisplay :amount="productionRate" :show-unit="false" />/s</div>
     </div>
   </div>
 </template>
@@ -14,18 +16,19 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { GameManager } from '../game/Game'
+import HCUDisplay from './HCUDisplay.vue'
 
 const gameManager = GameManager.getInstance()
-const formattedContentUnits = ref('0')
-const formattedCPS = ref('0')
+const contentUnits = ref(0)
+const productionRate = ref(0)
 
 let updateInterval: number | null = null
 
 // Update display values from game state
 const updateDisplay = () => {
   const gameState = gameManager.getGameState()
-  formattedContentUnits.value = gameState.formattedContentUnits
-  formattedCPS.value = gameState.productionRate.toFixed(1)
+  contentUnits.value = gameState.contentUnits
+  productionRate.value = gameState.productionRate
 }
 
 onMounted(() => {

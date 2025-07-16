@@ -4,26 +4,25 @@
       <div class="progress-title">Humanity Degradation Timer</div>
       <div class="progress-timer">{{ formatTime(timeRemaining) }}</div>
     </div>
-    
+
     <div class="progress-bar-container">
       <div class="progress-bar-background">
-        <div 
-          class="progress-bar-fill"
-          :style="{ width: progressPercent + '%' }"
-        ></div>
+        <div class="progress-bar-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
       <div class="progress-percentage">{{ Math.floor(progressPercent) }}%</div>
     </div>
-    
+
     <div class="progress-reward">
       <span class="reward-text">Reward: </span>
-      <span class="reward-amount">+{{ rewardAmount }} Hollow Content Units</span>
+      <span class="reward-amount"
+        >+<HCUDisplay :amount="rewardAmount" :show-unit="false" /> Hollow Content Units</span
+      >
     </div>
-    
+
     <!-- Completion animation -->
     <div v-if="showCompletionEffect" class="completion-effect">
       <div class="completion-text">Task Complete!</div>
-      <div class="completion-reward">+{{ rewardAmount }} HCU</div>
+      <div class="completion-reward">+<HCUDisplay :amount="rewardAmount" /></div>
     </div>
   </div>
 </template>
@@ -31,6 +30,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { GameManager } from '../game/Game'
+import HCUDisplay from './HCUDisplay.vue'
 
 const gameManager = GameManager.getInstance()
 const showCompletionEffect = ref(false)
@@ -53,7 +53,7 @@ const formatTime = (milliseconds: number): string => {
 // Handle completion animation trigger
 const checkForCompletion = () => {
   const currentProgress = taskProgress.value.progressPercent
-  
+
   // Task completed - trigger animation
   if (currentProgress === 0 && lastProgressPercent > 90) {
     showCompletionEffect.value = true
@@ -61,7 +61,7 @@ const checkForCompletion = () => {
       showCompletionEffect.value = false
     }, 2000)
   }
-  
+
   lastProgressPercent = currentProgress
 }
 
@@ -137,7 +137,6 @@ onUnmounted(() => {
   position: relative;
 }
 
-
 .progress-percentage {
   font-size: 0.9rem;
   color: #ffffff;
@@ -186,35 +185,40 @@ onUnmounted(() => {
 }
 
 @keyframes completionPulse {
-  0% { 
+  0% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.5);
   }
-  50% { 
+  50% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.2);
   }
-  100% { 
+  100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1);
   }
 }
 
 @keyframes textGlow {
-  0%, 100% { text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
-  50% { text-shadow: 0 0 20px rgba(0, 255, 136, 1); }
+  0%,
+  100% {
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(0, 255, 136, 1);
+  }
 }
 
 @keyframes rewardFloat {
-  0% { 
+  0% {
     opacity: 0;
     transform: translateY(20px);
   }
-  50% { 
+  50% {
     opacity: 1;
     transform: translateY(0);
   }
-  100% { 
+  100% {
     opacity: 0;
     transform: translateY(-20px);
   }

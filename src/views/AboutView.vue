@@ -2,25 +2,25 @@
   <div class="about-container">
     <div class="about-content">
       <h1 class="about-title">About Hollow Content Empire</h1>
-      
+
       <div class="about-section">
         <h2>The System</h2>
         <p>
-          Welcome to the Hollow Content Empire, where artificial intelligence has been co-opted 
-          by corporate interests to generate endless streams of meaningless content. You are 
-          tasked with managing this dystopian content generation system.
+          Welcome to the Hollow Content Empire, where artificial intelligence has been co-opted by
+          corporate interests to generate endless streams of meaningless content. You are tasked
+          with managing this dystopian content generation system.
         </p>
       </div>
-      
+
       <div class="about-section">
         <h2>Your Mission</h2>
         <p>
-          Generate Hollow Content Units (HCU) through manual labor and automated systems. 
-          Purchase Mindless Ad-Bot Farms, upgrade your Soul-Crushing Automation, and witness 
-          the gradual collapse of meaningful human expression.
+          Generate Hollow Content Units (HCU) through manual labor and automated systems. Purchase
+          Mindless Ad-Bot Farms, upgrade your Soul-Crushing Automation, and witness the gradual
+          collapse of meaningful human expression.
         </p>
       </div>
-      
+
       <div class="about-section">
         <h2>Game Features</h2>
         <ul class="feature-list">
@@ -32,12 +32,12 @@
           <li>Auto-save functionality to preserve your hollow empire</li>
         </ul>
       </div>
-      
+
       <div class="about-section">
         <h2>Technical Details</h2>
         <p>
-          Built with Vue 3 + TypeScript using a custom singleton architecture. 
-          Features dark dystopian styling and persistent save states.
+          Built with Vue 3 + TypeScript using a custom singleton architecture. Features dark
+          dystopian styling and persistent save states.
         </p>
       </div>
     </div>
@@ -108,15 +108,15 @@
   .about-container {
     padding: 1rem;
   }
-  
+
   .about-title {
     font-size: 2rem;
   }
-  
+
   .about-section {
     padding: 1rem;
   }
-  
+
   .about-section h2 {
     font-size: 1.3rem;
   }

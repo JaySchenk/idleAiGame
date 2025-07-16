@@ -29,24 +29,26 @@
       <div class="narrative-panel-header">
         <h4>System Status</h4>
         <div class="stability-indicator" :class="getStabilityClass()">
-          <span class="stability-text">Stability: {{ narrativeManager.getSocietalStability() }}%</span>
+          <span class="stability-text"
+            >Stability: {{ narrativeManager.getSocietalStability() }}%</span
+          >
           <div class="stability-bar">
-            <div 
-              class="stability-fill" 
+            <div
+              class="stability-fill"
               :style="{ width: narrativeManager.getSocietalStability() + '%' }"
             ></div>
           </div>
         </div>
       </div>
-      
+
       <div class="narrative-archive">
         <button v-if="hasViewedEvents" class="archive-button" @click="toggleArchive">
           {{ showArchive ? 'Hide' : 'Show' }} Story Archive
         </button>
-        
+
         <div v-if="showArchive" class="archive-list">
-          <div 
-            v-for="event in viewedEvents" 
+          <div
+            v-for="event in viewedEvents"
             :key="event.id"
             class="archive-item"
             @click="reviewEvent(event)"
@@ -95,10 +97,10 @@ const handleNarrativeEvent = (event: NarrativeEvent) => {
 
 const startTypewriterEffect = () => {
   if (!currentEvent.value) return
-  
+
   isTyping.value = true
   const text = currentEvent.value.content
-  
+
   typewriterInterval = setInterval(() => {
     if (currentCharIndex < text.length) {
       displayText.value += text[currentCharIndex]
@@ -276,10 +278,18 @@ onUnmounted(() => {
   font-size: 1rem;
 }
 
-.stability-high { color: #00ff88; }
-.stability-medium { color: #ffaa00; }
-.stability-low { color: #ff6600; }
-.stability-critical { color: #ff0000; }
+.stability-high {
+  color: #00ff88;
+}
+.stability-medium {
+  color: #ffaa00;
+}
+.stability-low {
+  color: #ff6600;
+}
+.stability-critical {
+  color: #ff0000;
+}
 
 .narrative-actions {
   display: flex;
@@ -349,10 +359,18 @@ onUnmounted(() => {
   transition: width 0.3s ease;
 }
 
-.stability-high .stability-fill { background: #00ff88; }
-.stability-medium .stability-fill { background: #ffaa00; }
-.stability-low .stability-fill { background: #ff6600; }
-.stability-critical .stability-fill { background: #ff0000; }
+.stability-high .stability-fill {
+  background: #00ff88;
+}
+.stability-medium .stability-fill {
+  background: #ffaa00;
+}
+.stability-low .stability-fill {
+  background: #ff6600;
+}
+.stability-critical .stability-fill {
+  background: #ff0000;
+}
 
 .archive-button {
   background: rgba(255, 255, 255, 0.1);
@@ -403,22 +421,34 @@ onUnmounted(() => {
   font-weight: bold;
 }
 
-.impact-positive { color: #00ff88; }
-.impact-minor { color: #ffaa00; }
-.impact-moderate { color: #ff6600; }
-.impact-severe { color: #ff0000; }
+.impact-positive {
+  color: #00ff88;
+}
+.impact-minor {
+  color: #ffaa00;
+}
+.impact-moderate {
+  color: #ff6600;
+}
+.impact-severe {
+  color: #ff0000;
+}
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(-50px);
   }
-  to { 
+  to {
     opacity: 1;
     transform: translateY(0);
   }
@@ -430,11 +460,11 @@ onUnmounted(() => {
     padding: 1rem;
     max-width: 95%;
   }
-  
+
   .narrative-title {
     font-size: 1.2rem;
   }
-  
+
   .narrative-text {
     font-size: 1rem;
   }

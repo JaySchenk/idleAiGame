@@ -26,29 +26,29 @@ onMounted(() => {
             <h2 class="section-title">Manual Generation</h2>
             <ManualClickerButton />
           </div>
-          
+
           <div class="section">
             <h2 class="section-title">Automation</h2>
             <GeneratorPurchaseButton />
           </div>
-          
+
           <div class="section">
             <h2 class="section-title">Upgrades</h2>
             <UpgradeButton upgrade-id="automatedContentScript" />
           </div>
         </div>
-        
+
         <div class="ui-right">
           <div class="section">
             <h2 class="section-title">Task Progress</h2>
             <ProgressBar />
           </div>
-          
+
           <div class="section">
             <h2 class="section-title">Prestige</h2>
             <PrestigeButton />
           </div>
-          
+
           <div class="section">
             <h2 class="section-title">System Chronicle</h2>
             <NarrativeDisplay />
@@ -104,7 +104,7 @@ onMounted(() => {
   .game-container {
     padding: 1rem;
   }
-  
+
   .section-title {
     font-size: 1.1rem;
   }

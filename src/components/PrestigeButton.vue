@@ -4,11 +4,13 @@
       <h3 class="prestige-title">Societal Collapse Reset</h3>
       <div class="prestige-level">Level {{ prestigeInfo.level }}</div>
     </div>
-    
+
     <div class="prestige-description">
-      Trigger a complete societal collapse to rebuild more efficiently. All resources and progress will be reset, but you'll gain a permanent global multiplier as humanity becomes more dependent on artificial content.
+      Trigger a complete societal collapse to rebuild more efficiently. All resources and progress
+      will be reset, but you'll gain a permanent global multiplier as humanity becomes more
+      dependent on artificial content.
     </div>
-    
+
     <div class="prestige-stats">
       <div class="stat-item">
         <div class="stat-label">Current Multiplier:</div>
@@ -20,28 +22,28 @@
       </div>
       <div class="stat-item">
         <div class="stat-label">Threshold:</div>
-        <div class="stat-value">{{ formatNumber(prestigeInfo.threshold) }} HCU</div>
+        <div class="stat-value">
+          <HCUDisplay :amount="prestigeInfo.threshold" />
+        </div>
       </div>
     </div>
-    
+
     <div class="progress-section" v-if="!prestigeInfo.canPrestige">
       <div class="progress-label">Progress to Reboot</div>
       <div class="progress-bar">
-        <div 
-          class="progress-fill"
-          :style="{ width: progressPercent + '%' }"
-        ></div>
+        <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
       <div class="progress-text">
-        {{ formatNumber(gameState.contentUnits) }} / {{ formatNumber(prestigeInfo.threshold) }} HCU
+        <HCUDisplay :amount="gameState.contentUnits" :show-unit="false" /> /
+        <HCUDisplay :amount="prestigeInfo.threshold" />
       </div>
     </div>
-    
-    <button 
+
+    <button
       class="prestige-button"
-      :class="{ 
-        'disabled': !prestigeInfo.canPrestige,
-        'rebooting': isRebooting
+      :class="{
+        disabled: !prestigeInfo.canPrestige,
+        rebooting: isRebooting,
       }"
       :disabled="!prestigeInfo.canPrestige || isRebooting"
       @click="performReboot"
@@ -50,14 +52,19 @@
       <span v-else-if="!prestigeInfo.canPrestige">Reboot Unavailable</span>
       <span v-else>
         🔄 Reboot System
-        <small class="multiplier-gain">+{{ ((prestigeInfo.nextMultiplier - prestigeInfo.globalMultiplier) * 100).toFixed(0) }}% Production</small>
+        <small class="multiplier-gain"
+          >+{{ ((prestigeInfo.nextMultiplier - prestigeInfo.globalMultiplier) * 100).toFixed(0) }}%
+          Production</small
+        >
       </span>
     </button>
-    
+
     <!-- Reboot effect animation -->
     <div v-if="showRebootEffect" class="reboot-effect">
       <div class="effect-title">System Rebooted!</div>
-      <div class="effect-multiplier">{{ prestigeInfo.globalMultiplier.toFixed(2) }}x Production Multiplier</div>
+      <div class="effect-multiplier">
+        {{ prestigeInfo.globalMultiplier.toFixed(2) }}x Production Multiplier
+      </div>
       <div class="effect-level">Prestige Level {{ prestigeInfo.level }}</div>
     </div>
   </div>
@@ -66,6 +73,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { GameManager } from '../game/Game'
+import HCUDisplay from './HCUDisplay.vue'
 
 const gameManager = GameManager.getInstance()
 
@@ -84,37 +92,27 @@ const progressPercent = computed(() => {
   return Math.min(100, progress)
 })
 
-// Format numbers for display
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K'
-  }
-  return num.toString()
-}
-
 // Perform prestige reboot
 const performReboot = async () => {
   if (!prestigeInfo.value.canPrestige || isRebooting.value) return
-  
+
   isRebooting.value = true
-  
+
   // Add delay for dramatic effect
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
   const success = gameManager.performPrestige()
-  
+
   if (success) {
     // Show reboot effect
     showRebootEffect.value = true
-    
+
     // Hide effect after animation
     setTimeout(() => {
       showRebootEffect.value = false
     }, 3000)
   }
-  
+
   isRebooting.value = false
 }
 
@@ -316,57 +314,73 @@ onUnmounted(() => {
 }
 
 @keyframes rebootPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes rebootEffectPulse {
-  0% { 
+  0% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.5);
   }
-  20% { 
+  20% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.1);
   }
-  80% { 
+  80% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
-  100% { 
+  100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.9);
   }
 }
 
 @keyframes titleGlow {
-  0%, 100% { text-shadow: 0 0 10px rgba(255, 102, 0, 0.5); }
-  50% { text-shadow: 0 0 25px rgba(255, 102, 0, 1); }
+  0%,
+  100% {
+    text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 25px rgba(255, 102, 0, 1);
+  }
 }
 
 @keyframes multiplierFloat {
-  0% { 
+  0% {
     opacity: 0;
     transform: translateY(20px);
   }
-  30% { 
+  30% {
     opacity: 1;
     transform: translateY(0);
   }
-  70% { 
+  70% {
     opacity: 1;
     transform: translateY(0);
   }
-  100% { 
+  100% {
     opacity: 0;
     transform: translateY(-20px);
   }
 }
 
 @keyframes levelFade {
-  0% { opacity: 0; }
-  40% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 /* Responsive design */
@@ -374,13 +388,13 @@ onUnmounted(() => {
   .prestige-stats {
     grid-template-columns: 1fr;
   }
-  
+
   .prestige-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .prestige-button {
     padding: 1.25rem;
     font-size: 1rem;

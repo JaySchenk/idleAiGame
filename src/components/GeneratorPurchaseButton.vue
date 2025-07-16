@@ -7,14 +7,13 @@
         <span class="production-rate">+{{ productionRate }}/sec</span>
       </div>
     </div>
-    <button 
+    <button
       class="purchase-button"
-      :class="{ 'disabled': !canAfford, 'purchasing': isPurchasing }"
+      :class="{ disabled: !canAfford, purchasing: isPurchasing }"
       :disabled="!canAfford || isPurchasing"
       @click="handlePurchase"
     >
-      <span class="cost">{{ formattedCost }}</span>
-      <span class="currency">HCU</span>
+      <HCUDisplay :amount="cost" />
     </button>
   </div>
 </template>
@@ -22,6 +21,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { GameManager } from '../game/Game'
+import HCUDisplay from './HCUDisplay.vue'
 
 const gameManager = GameManager.getInstance()
 const generatorId = 'basicAdBotFarm'
@@ -34,16 +34,6 @@ const isPurchasing = ref(false)
 
 let updateInterval: number | null = null
 
-// Computed properties for display
-const formattedCost = computed(() => {
-  if (cost.value >= 1000000) {
-    return (cost.value / 1000000).toFixed(1) + 'M'
-  } else if (cost.value >= 1000) {
-    return (cost.value / 1000).toFixed(1) + 'K'
-  }
-  return cost.value.toFixed(0)
-})
-
 const productionRate = computed(() => {
   return ownedCount.value > 0 ? '1.0' : '1.0'
 })
@@ -51,8 +41,8 @@ const productionRate = computed(() => {
 // Update component state from game
 const updateState = () => {
   const gameState = gameManager.getGameState()
-  const generator = gameState.generators.find(g => g.id === generatorId)
-  
+  const generator = gameState.generators.find((g) => g.id === generatorId)
+
   if (generator) {
     ownedCount.value = generator.owned
     cost.value = gameManager.getGeneratorCost(generatorId)
@@ -63,9 +53,9 @@ const updateState = () => {
 // Handle purchase with visual feedback
 const handlePurchase = async () => {
   if (!canAfford.value || isPurchasing.value) return
-  
+
   isPurchasing.value = true
-  
+
   // Visual feedback delay
   setTimeout(() => {
     const success = gameManager.purchaseGenerator(generatorId)

@@ -13,4 +13,5 @@ app.mount('#app')
 
 // Make GameManager available globally for debugging
 import { GameManager } from './game/Game'
-;(window as Window & typeof globalThis & { GameManager: typeof GameManager }).GameManager = GameManager
+;(window as Window & typeof globalThis & { GameManager: typeof GameManager }).GameManager =
+  GameManager
