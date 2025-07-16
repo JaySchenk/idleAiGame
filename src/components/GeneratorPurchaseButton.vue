@@ -4,7 +4,9 @@
       <div class="generator-name">{{ generatorName }}</div>
       <div class="generator-stats">
         <span class="owned-count">Owned: {{ ownedCount }}</span>
-        <span class="production-rate">+<HCUDisplay :amount="actualProductionRate" :show-unit="false" />/sec</span>
+        <span class="production-rate"
+          >+<HCUDisplay :amount="actualProductionRate" :show-unit="false" />/sec</span
+        >
       </div>
     </div>
     <button
@@ -31,12 +33,12 @@ const isPurchasing = ref(false)
 
 // Reactive computed properties directly from game state
 const ownedCount = computed(() => {
-  const generator = gameManager.state.generators.find(g => g.id === generatorId)
+  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
   return generator ? generator.owned : 0
 })
 
 const cost = computed(() => {
-  const generator = gameManager.state.generators.find(g => g.id === generatorId)
+  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
   if (!generator) return 0
   return generator.baseCost * Math.pow(generator.growthRate, generator.owned)
 })
@@ -46,7 +48,7 @@ const canAfford = computed(() => {
 })
 
 const actualProductionRate = computed(() => {
-  const generator = gameManager.state.generators.find(g => g.id === generatorId)
+  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
   if (!generator) return 0
   return generator.baseProduction * generator.owned * gameManager.state.globalMultiplier
 })
@@ -59,7 +61,7 @@ const handlePurchase = async () => {
 
   // Visual feedback delay
   setTimeout(() => {
-    const success = gameManager.purchaseGenerator(generatorId)
+    gameManager.purchaseGenerator(generatorId)
     isPurchasing.value = false
   }, 100)
 }

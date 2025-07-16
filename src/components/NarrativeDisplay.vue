@@ -70,7 +70,6 @@ import { GameManager } from '../game/Game'
 import type { NarrativeEvent } from '../assets/narratives'
 
 const gameManager = GameManager.getInstance()
-const narrativeManager = gameManager.getNarrativeManager()
 
 // Component state
 const showModal = ref(false)
@@ -84,7 +83,9 @@ let typewriterInterval: number | null = null
 let currentCharIndex = 0
 
 // Archive state using reactive state
-const viewedEvents = computed(() => gameManager.state.narrative.viewedEvents)
+const viewedEvents = computed(() => 
+  gameManager.state.narrative.currentStoryEvents.filter(event => event.isViewed)
+)
 const hasViewedEvents = computed(() => viewedEvents.value.length > 0)
 
 // Event handling
@@ -167,7 +168,7 @@ const getImpactClass = (impact: number) => {
 
 // Lifecycle
 onMounted(() => {
-  narrativeManager.onNarrativeEvent(handleNarrativeEvent)
+  gameManager.onNarrativeEvent(handleNarrativeEvent)
 })
 
 onUnmounted(() => {

@@ -1,18 +1,36 @@
-import { ResourceManager } from './Resources'
-import { GeneratorManager } from './Generators'
-import { UpgradeManager } from './Upgrades'
 import { SaveManager } from './SaveManager'
-import { NarrativeManager } from './NarrativeManager'
 import type { GameState } from './SaveManager'
 import { reactive } from 'vue'
+import { narrativeEvents, type NarrativeEvent } from '../assets/narratives'
+
+export interface GeneratorConfig {
+  id: string
+  name: string
+  baseCost: number
+  growthRate: number
+  baseProduction: number
+  owned: number
+}
+
+export interface UpgradeConfig {
+  id: string
+  name: string
+  description: string
+  cost: number
+  targetGenerator: string
+  effectType: 'production_multiplier' | 'global_multiplier'
+  effectValue: number
+  requirements: {
+    generatorId: string
+    minOwned: number
+  }[]
+  isPurchased: boolean
+}
+
 
 export class GameManager {
   private static instance: GameManager
-  private resourceManager: ResourceManager
-  private generatorManager: GeneratorManager
-  private upgradeManager: UpgradeManager
   private saveManager: SaveManager
-  private narrativeManager: NarrativeManager
   private gameLoop: number | null = null
   private tickRate: number = 100 // 100ms tick rate
   private lastTickTime: number = 0
@@ -26,36 +44,53 @@ export class GameManager {
   // Narrative tracking
   private hasTriggeredGameStart: boolean = false
   private lastContentUnitsCheck: number = 0
+  private eventCallbacks: ((event: NarrativeEvent) => void)[] = []
 
   // Task progress timer
   private taskStartTime: number = Date.now()
   private taskDuration: number = 30000
   private taskReward: number = 10
 
-  // Reactive state for UI
+  // Core game data
+  private generators: Map<string, GeneratorConfig> = new Map()
+  private upgrades: Map<string, UpgradeConfig> = new Map()
+
+  // Reactive state for UI - all game state centralized here
   public state = reactive({
     isRunning: false,
+    // Resources
     contentUnits: 0,
+    lifetimeContentUnits: 0,
     formattedContentUnits: '0',
+    // Production
     productionRate: 0,
+    // Prestige
     prestigeLevel: 0,
     globalMultiplier: 1,
     prestigeThreshold: 1000,
     canPrestige: false,
-    generators: [] as any[],
-    upgrades: [] as any[],
+    // Generators
+    generators: [] as GeneratorConfig[],
+    // Upgrades
+    upgrades: [] as UpgradeConfig[],
+    // Narrative
     narrative: {
+      currentStoryEvents: [] as NarrativeEvent[],
+      viewedEvents: [] as string[],
       societalStability: 100,
-      viewedEvents: [] as any[],
-      currentEvents: [] as any[]
+      pendingEvents: [] as NarrativeEvent[],
+      isNarrativeActive: false,
+      gameStartTime: Date.now(),
     },
+    // Prestige info
     prestige: {
       level: 0,
       globalMultiplier: 1,
       threshold: 1000,
       canPrestige: false,
-      nextMultiplier: 1.25
+      nextMultiplier: 1.25,
     },
+    // Task progress
     taskProgress: {
       timeElapsed: 0,
       timeRemaining: 30000,
@@ -63,18 +98,16 @@ export class GameManager {
       isComplete: false,
       rewardAmount: 10,
       duration: 30000,
-    }
+    },
   })
 
   private constructor() {
-    this.resourceManager = ResourceManager.getInstance()
-    this.generatorManager = GeneratorManager.getInstance()
-    this.upgradeManager = UpgradeManager.getInstance()
     this.saveManager = SaveManager.getInstance()
-    this.narrativeManager = NarrativeManager.getInstance()
 
-    // Initialize upgrade manager in generator manager
-    this.generatorManager.initializeUpgradeManager()
+    // Initialize game data
+    this.initializeGenerators()
+    this.initializeUpgrades()
+    this.initializeNarrative()
 
     // Try to load saved game
     this.loadGame()
@@ -88,6 +121,57 @@ export class GameManager {
       GameManager.instance = new GameManager()
     }
     return GameManager.instance
+  }
+
+  // Initialize generators
+  private initializeGenerators(): void {
+    const basicAdBot: GeneratorConfig = {
+      id: 'basicAdBotFarm',
+      name: 'Basic Ad-Bot Farm',
+      baseCost: 10,
+      growthRate: 1.15,
+      baseProduction: 1,
+      owned: 0,
+    }
+    this.generators.set(basicAdBot.id, basicAdBot)
+    this.state.generators = Array.from(this.generators.values())
+  }
+
+  // Initialize upgrades
+  private initializeUpgrades(): void {
+    const soulCrushingAutomation: UpgradeConfig = {
+      id: 'automatedContentScript',
+      name: 'Soul-Crushing Automation',
+      description: 'Increases Mindless Ad-Bot Farm production by 25%',
+      cost: 50,
+      targetGenerator: 'basicAdBotFarm',
+      effectType: 'production_multiplier',
+      effectValue: 1.25,
+      requirements: [
+        {
+          generatorId: 'basicAdBotFarm',
+          minOwned: 5,
+        },
+      ],
+      isPurchased: false,
+    }
+    this.upgrades.set(soulCrushingAutomation.id, soulCrushingAutomation)
+    this.state.upgrades = Array.from(this.upgrades.values())
+  }
+
+  // Initialize narrative
+  private initializeNarrative(): void {
+    this.state.narrative.currentStoryEvents = [...narrativeEvents]
+    this.state.narrative.viewedEvents = []
+    this.state.narrative.societalStability = 100
+    this.state.narrative.pendingEvents = []
+    this.state.narrative.isNarrativeActive = false
+    this.state.narrative.gameStartTime = Date.now()
+
+    // Initialize all events as unviewed
+    this.state.narrative.currentStoryEvents.forEach((event) => {
+      event.isViewed = false
+    })
   }
 
   // Start the game loop
@@ -106,7 +190,7 @@ export class GameManager {
 
     // Trigger game start narrative (only once)
     if (!this.hasTriggeredGameStart) {
-      this.narrativeManager.checkGameStartTrigger()
+      this.checkGameStartTrigger()
       this.hasTriggeredGameStart = true
     }
   }
@@ -130,14 +214,15 @@ export class GameManager {
     this.lastTickTime = currentTime
 
     // Calculate passive income from generators
-    const productionRate = this.generatorManager.getTotalProductionRate()
+    const productionRate = this.getTotalProductionRate()
+    this.state.productionRate = productionRate * this.getGlobalMultiplier()
 
     if (productionRate > 0) {
       // Convert production per second to production per tick
       const productionThisTick = (productionRate * deltaTime) / 1000
       // Apply global prestige multiplier
       const finalProduction = productionThisTick * this.getGlobalMultiplier()
-      this.resourceManager.addContentUnits(finalProduction)
+      this.addContentUnits(finalProduction)
     }
 
     // Check for task completion and auto-complete
@@ -147,37 +232,26 @@ export class GameManager {
     }
 
     // Check narrative triggers based on content units
-    const currentContentUnits = this.resourceManager.getContentUnits()
-    if (Math.floor(currentContentUnits) > Math.floor(this.lastContentUnitsCheck)) {
-      this.narrativeManager.checkContentUnitsTrigger(currentContentUnits)
-      this.lastContentUnitsCheck = currentContentUnits
+    if (Math.floor(this.state.contentUnits) > Math.floor(this.lastContentUnitsCheck)) {
+      this.checkContentUnitsTrigger(this.state.contentUnits)
+      this.lastContentUnitsCheck = this.state.contentUnits
     }
 
     // Check time elapsed triggers
-    this.narrativeManager.checkTimeElapsedTrigger()
+    this.checkTimeElapsedTrigger()
 
-    // Update reactive state
-    this.updateReactiveState()
+    // Update computed state
+    this.updateComputedState()
   }
 
-  // Update reactive state for UI
-  private updateReactiveState(): void {
-    this.state.contentUnits = this.resourceManager.getContentUnits()
-    this.state.formattedContentUnits = this.resourceManager.formatContentUnits()
-    this.state.productionRate = this.generatorManager.getTotalProductionRate() * this.getGlobalMultiplier()
-    this.state.prestigeLevel = this.getPrestigeLevel()
+  // Update computed state values
+  private updateComputedState(): void {
+    this.state.formattedContentUnits = this.formatContentUnits()
     this.state.globalMultiplier = this.getGlobalMultiplier()
     this.state.prestigeThreshold = this.getPrestigeThreshold()
     this.state.canPrestige = this.canPrestige()
-    this.state.generators = this.generatorManager.getAllGenerators()
-    this.state.upgrades = this.upgradeManager.getAllUpgrades()
     this.state.taskProgress = this.getTaskProgress()
-    
-    // Update narrative state
-    this.state.narrative.societalStability = this.narrativeManager.getSocietalStability()
-    this.state.narrative.viewedEvents = this.narrativeManager.getViewedEvents()
-    this.state.narrative.currentEvents = this.narrativeManager.getCurrentEvents()
-    
+
     // Update prestige state
     const prestigeInfo = this.getPrestigeInfo()
     this.state.prestige.level = prestigeInfo.level
@@ -191,81 +265,344 @@ export class GameManager {
   public clickForContent(): void {
     // Apply global prestige multiplier to manual clicks
     const clickValue = 1 * this.getGlobalMultiplier()
-    this.resourceManager.addContentUnits(clickValue)
+    this.addContentUnits(clickValue)
 
     // Check narrative triggers for content units
-    const currentContentUnits = this.resourceManager.getContentUnits()
-    this.narrativeManager.checkContentUnitsTrigger(currentContentUnits)
+    this.checkContentUnitsTrigger(this.state.contentUnits)
 
-    // Update reactive state immediately for responsive UI
-    this.updateReactiveState()
+    // Update computed state immediately for responsive UI
+    this.updateComputedState()
   }
 
+  // ===== RESOURCE MANAGEMENT =====
 
-  // Purchase generator wrapper
-  public purchaseGenerator(generatorId: string): boolean {
-    const success = this.generatorManager.purchaseGenerator(generatorId)
+  // Add Content Units
+  public addContentUnits(amount: number): void {
+    this.state.contentUnits += amount
+    this.state.lifetimeContentUnits += amount
+  }
 
-    // Trigger narrative events for generator purchase
-    if (success) {
-      this.narrativeManager.checkGeneratorPurchaseTrigger(generatorId)
-      // Update reactive state immediately for responsive UI
-      this.updateReactiveState()
+  // Spend Content Units (returns true if successful)
+  public spendContentUnits(amount: number): boolean {
+    if (this.state.contentUnits >= amount) {
+      this.state.contentUnits -= amount
+      return true
+    }
+    return false
+  }
+
+  // Check if player can afford amount
+  public canAfford(amount: number): boolean {
+    return this.state.contentUnits >= amount
+  }
+
+  // Format currency for display
+  public formatContentUnits(amount?: number): string {
+    const value = amount !== undefined ? amount : this.state.contentUnits
+
+    // Handle scientific notation for very large numbers
+    if (value >= 1e18) {
+      return value.toExponential(2) + ' HCU'
     }
 
-    return success
+    // Handle quadrillions
+    if (value >= 1e15) {
+      return (value / 1e15).toFixed(2) + 'Q HCU'
+    }
+
+    // Handle trillions
+    if (value >= 1e12) {
+      return (value / 1e12).toFixed(2) + 'T HCU'
+    }
+
+    // Handle billions
+    if (value >= 1e9) {
+      return (value / 1e9).toFixed(2) + 'B HCU'
+    }
+
+    // Handle millions
+    if (value >= 1e6) {
+      return (value / 1e6).toFixed(2) + 'M HCU'
+    }
+
+    // Handle thousands
+    if (value >= 1e3) {
+      return (value / 1e3).toFixed(2) + 'K HCU'
+    }
+
+    // Handle smaller numbers with 2 decimals
+    return value.toFixed(2) + ' HCU'
   }
 
-  // Get generator cost wrapper
+  // ===== GENERATOR MANAGEMENT =====
+
+  // Get generator by ID
+  public getGenerator(id: string): GeneratorConfig | undefined {
+    return this.generators.get(id)
+  }
+
+  // Calculate current cost for next purchase
   public getGeneratorCost(generatorId: string): number {
-    return this.generatorManager.getGeneratorCost(generatorId)
+    const generator = this.generators.get(generatorId)
+    if (!generator) return 0
+
+    // cost_next = cost_base × (rate_growth)^owned
+    return Math.floor(generator.baseCost * Math.pow(generator.growthRate, generator.owned))
+  }
+
+  // Purchase generator
+  public purchaseGenerator(generatorId: string): boolean {
+    const generator = this.generators.get(generatorId)
+    if (!generator) return false
+
+    const cost = this.getGeneratorCost(generatorId)
+
+    if (this.canAfford(cost)) {
+      if (this.spendContentUnits(cost)) {
+        generator.owned++
+        this.state.generators = Array.from(this.generators.values())
+
+        // Trigger narrative events for generator purchase
+        this.checkGeneratorPurchaseTrigger(generatorId)
+
+        // Update computed state immediately for responsive UI
+        this.updateComputedState()
+        return true
+      }
+    }
+
+    return false
   }
 
   // Check if generator can be purchased
   public canPurchaseGenerator(generatorId: string): boolean {
-    return this.generatorManager.canPurchaseGenerator(generatorId)
+    const cost = this.getGeneratorCost(generatorId)
+    return this.canAfford(cost)
   }
 
-  // Get resource manager for direct access
-  public getResourceManager(): ResourceManager {
-    return this.resourceManager
-  }
+  // Get total production rate (CPS) from all generators
+  public getTotalProductionRate(): number {
+    let totalRate = 0
 
-  // Get generator manager for direct access
-  public getGeneratorManager(): GeneratorManager {
-    return this.generatorManager
-  }
+    for (const generator of this.generators.values()) {
+      let generatorRate = generator.baseProduction * generator.owned
 
-  // Upgrade-related methods
-  public purchaseUpgrade(upgradeId: string): boolean {
-    const success = this.upgradeManager.purchaseUpgrade(upgradeId)
+      // Apply upgrade multipliers
+      generatorRate *= this.getGeneratorMultiplier(generator.id)
 
-    // Trigger narrative events for upgrade purchase
-    if (success) {
-      this.narrativeManager.checkUpgradeTrigger(upgradeId)
-      // Update reactive state immediately for responsive UI
-      this.updateReactiveState()
+      totalRate += generatorRate
     }
 
-    return success
+    // Apply global multiplier from upgrades only (not prestige)
+    totalRate *= this.getUpgradeGlobalMultiplier()
+
+    return totalRate
   }
 
+  // Get specific generator production rate
+  public getGeneratorProductionRate(id: string): number {
+    const generator = this.generators.get(id)
+    if (!generator) return 0
+
+    let rate = generator.baseProduction * generator.owned
+    rate *= this.getGeneratorMultiplier(generator.id)
+
+    return rate
+  }
+
+  // ===== UPGRADE MANAGEMENT =====
+
+  // Get upgrade by ID
+  public getUpgrade(id: string): UpgradeConfig | undefined {
+    return this.upgrades.get(id)
+  }
+
+  // Check if upgrade requirements are met
+  public areUpgradeRequirementsMet(upgradeId: string): boolean {
+    const upgrade = this.upgrades.get(upgradeId)
+    if (!upgrade) return false
+
+    for (const requirement of upgrade.requirements) {
+      const generator = this.generators.get(requirement.generatorId)
+      if (!generator || generator.owned < requirement.minOwned) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  // Check if upgrade can be purchased
   public canPurchaseUpgrade(upgradeId: string): boolean {
-    return this.upgradeManager.canPurchaseUpgrade(upgradeId)
+    const upgrade = this.upgrades.get(upgradeId)
+    if (!upgrade) return false
+
+    return (
+      !upgrade.isPurchased &&
+      this.canAfford(upgrade.cost) &&
+      this.areUpgradeRequirementsMet(upgradeId)
+    )
   }
 
-  public getUpgradeManager(): UpgradeManager {
-    return this.upgradeManager
+  // Purchase upgrade
+  public purchaseUpgrade(upgradeId: string): boolean {
+    const upgrade = this.upgrades.get(upgradeId)
+    if (!upgrade) return false
+
+    if (!this.canPurchaseUpgrade(upgradeId)) {
+      return false
+    }
+
+    if (this.spendContentUnits(upgrade.cost)) {
+      upgrade.isPurchased = true
+      this.state.upgrades = Array.from(this.upgrades.values())
+
+      // Trigger narrative events for upgrade purchase
+      this.checkUpgradeTrigger(upgradeId)
+
+      // Update computed state immediately for responsive UI
+      this.updateComputedState()
+      return true
+    }
+
+    return false
   }
 
-  public getNarrativeManager(): NarrativeManager {
-    return this.narrativeManager
+  // Get production multiplier for a specific generator
+  public getGeneratorMultiplier(generatorId: string): number {
+    let multiplier = 1
+
+    for (const upgrade of this.upgrades.values()) {
+      if (
+        upgrade.isPurchased &&
+        upgrade.targetGenerator === generatorId &&
+        upgrade.effectType === 'production_multiplier'
+      ) {
+        multiplier *= upgrade.effectValue
+      }
+    }
+
+    return multiplier
   }
 
-  // Get current prestige level
-  public getPrestigeLevel(): number {
-    return this.state.prestigeLevel
+  // Get global multiplier from upgrades only (not prestige)
+  public getUpgradeGlobalMultiplier(): number {
+    let multiplier = 1
+
+    for (const upgrade of this.upgrades.values()) {
+      if (upgrade.isPurchased && upgrade.effectType === 'global_multiplier') {
+        multiplier *= upgrade.effectValue
+      }
+    }
+
+    return multiplier
   }
+
+  // ===== NARRATIVE MANAGEMENT =====
+
+  // Subscribe to narrative events
+  public onNarrativeEvent(callback: (event: NarrativeEvent) => void): void {
+    this.eventCallbacks.push(callback)
+  }
+
+  // Trigger narrative events based on game state
+  public checkGameStartTrigger(): void {
+    this.checkNarrativeTrigger('gameStart')
+  }
+
+  public checkContentUnitsTrigger(currentContentUnits: number): void {
+    this.checkNarrativeTrigger('contentUnits', currentContentUnits)
+  }
+
+  public checkGeneratorPurchaseTrigger(generatorId: string): void {
+    this.checkNarrativeTrigger('generatorPurchase', undefined, generatorId)
+  }
+
+  public checkUpgradeTrigger(upgradeId: string): void {
+    this.checkNarrativeTrigger('upgrade', undefined, upgradeId)
+  }
+
+  public checkPrestigeTrigger(prestigeLevel: number): void {
+    this.checkNarrativeTrigger('prestige', prestigeLevel)
+  }
+
+  public checkTimeElapsedTrigger(): void {
+    const timeElapsed = Date.now() - this.state.narrative.gameStartTime
+    this.checkNarrativeTrigger('timeElapsed', timeElapsed)
+  }
+
+  private checkNarrativeTrigger(
+    triggerType: string,
+    triggerValue?: number,
+    triggerCondition?: string,
+  ): void {
+    const eligibleEvents = this.state.narrative.currentStoryEvents.filter((event) => {
+      // Skip already viewed events
+      if (event.isViewed) return false
+
+      // Check trigger type
+      if (event.triggerType !== triggerType) return false
+
+      // Check trigger value (if specified)
+      if (event.triggerValue !== undefined) {
+        if (triggerValue === undefined || triggerValue < event.triggerValue) {
+          return false
+        }
+      }
+
+      // Check trigger condition (if specified)
+      if (event.triggerCondition !== undefined) {
+        if (triggerCondition !== event.triggerCondition) {
+          return false
+        }
+      }
+
+      return true
+    })
+
+    // Sort by priority (highest first)
+    eligibleEvents.sort((a, b) => b.priority - a.priority)
+
+    // Process each eligible event
+    eligibleEvents.forEach((event) => {
+      this.triggerNarrativeEvent(event)
+    })
+  }
+
+  private triggerNarrativeEvent(event: NarrativeEvent): void {
+    // Mark event as viewed
+    event.isViewed = true
+    this.state.narrative.viewedEvents.push(event.id)
+
+    // Apply societal stability impact
+    this.state.narrative.societalStability = Math.max(
+      0,
+      Math.min(100, this.state.narrative.societalStability + event.societalStabilityImpact),
+    )
+
+    // Add to pending events for display
+    this.state.narrative.pendingEvents.push(event)
+
+    // Notify subscribers
+    this.eventCallbacks.forEach((callback) => callback(event))
+
+    console.log(`Narrative Event Triggered: ${event.title}`)
+    console.log(`Societal Stability: ${this.state.narrative.societalStability}%`)
+  }
+
+
+  // Get the next pending event to display
+  public getNextPendingEvent(): NarrativeEvent | null {
+    return this.state.narrative.pendingEvents.shift() || null
+  }
+
+  // Check if there are pending events
+  public hasPendingEvents(): boolean {
+    return this.state.narrative.pendingEvents.length > 0
+  }
+
+  // ===== PRESTIGE MANAGEMENT =====
+
 
   // Calculate global multiplier based on prestige level
   public getGlobalMultiplier(): number {
@@ -279,7 +616,7 @@ export class GameManager {
 
   // Check if player can prestige (has enough current HCU for next level)
   public canPrestige(): boolean {
-    const currentHCU = this.resourceManager.getContentUnits()
+    const currentHCU = this.state.contentUnits
     const nextThreshold = 1000 * Math.pow(10, this.state.prestigeLevel)
     return currentHCU >= nextThreshold
   }
@@ -290,40 +627,40 @@ export class GameManager {
     }
 
     // Trigger narrative events for prestige
-    this.narrativeManager.checkPrestigeTrigger(this.state.prestigeLevel)
+    this.checkPrestigeTrigger(this.state.prestigeLevel)
 
     // Increase prestige level
     this.state.prestigeLevel++
 
     // Reset game state (but keep lifetime HCU)
-    this.resourceManager.resetContentUnits()
+    this.state.contentUnits = 0
     this.resetGenerators()
     this.resetUpgrades()
 
     // Reset narrative tracking but keep story progress
-    this.narrativeManager.resetForPrestige()
+    this.state.narrative.pendingEvents = []
     this.lastContentUnitsCheck = 0
 
-    // Update reactive state immediately
-    this.updateReactiveState()
+    // Update computed state immediately
+    this.updateComputedState()
 
     return true
   }
 
   private resetGenerators(): void {
     // Reset all generator owned counts
-    const generators = this.generatorManager.getAllGenerators()
-    for (const generator of generators) {
+    for (const generator of this.generators.values()) {
       generator.owned = 0
     }
+    this.state.generators = Array.from(this.generators.values())
   }
 
   private resetUpgrades(): void {
     // Reset all upgrade purchases
-    const upgrades = this.upgradeManager.getAllUpgrades()
-    for (const upgrade of upgrades) {
+    for (const upgrade of this.upgrades.values()) {
       upgrade.isPurchased = false
     }
+    this.state.upgrades = Array.from(this.upgrades.values())
   }
 
   public getPrestigeInfo() {
@@ -383,7 +720,7 @@ export class GameManager {
     const generators: {
       [key: string]: { owned: number }
     } = {}
-    for (const generator of this.generatorManager.getAllGenerators()) {
+    for (const generator of this.generators.values()) {
       generators[generator.id] = {
         owned: generator.owned,
       }
@@ -391,7 +728,7 @@ export class GameManager {
 
     // Serialize upgrades - only store purchased IDs
     const purchasedUpgrades: string[] = []
-    for (const upgrade of this.upgradeManager.getAllUpgrades()) {
+    for (const upgrade of this.upgrades.values()) {
       if (upgrade.isPurchased) {
         purchasedUpgrades.push(upgrade.id)
       }
@@ -400,12 +737,12 @@ export class GameManager {
     return {
       version: '1.0.0',
       timestamp: Date.now(),
-      contentUnits: this.resourceManager.getContentUnits(),
-      lifetimeContentUnits: this.resourceManager.getLifetimeContentUnits(),
+      contentUnits: this.state.contentUnits,
+      lifetimeContentUnits: this.state.lifetimeContentUnits,
       prestigeLevel: this.state.prestigeLevel,
       generators,
       purchasedUpgrades,
-      narrative: this.narrativeManager.serializeState(),
+      narrative: this.serializeNarrativeState(),
       hasTriggeredGameStart: this.hasTriggeredGameStart,
       taskStartTime: this.taskStartTime,
       lastContentUnitsCheck: this.lastContentUnitsCheck,
@@ -415,27 +752,28 @@ export class GameManager {
   // Deserialize and apply game state
   private deserializeGameState(gameState: GameState): void {
     // Restore basic state
-    this.resourceManager.setContentUnits(gameState.contentUnits)
-    this.resourceManager.setLifetimeContentUnits(gameState.lifetimeContentUnits)
-    
+    this.state.contentUnits = gameState.contentUnits
+    this.state.lifetimeContentUnits = gameState.lifetimeContentUnits
+
     // Restore prestige level
     this.state.prestigeLevel = gameState.prestigeLevel
 
     // Restore generators
     for (const generatorId in gameState.generators) {
-      const generator = this.generatorManager.getGenerator(generatorId)
+      const generator = this.generators.get(generatorId)
       if (generator) {
         const savedGenerator = gameState.generators[generatorId]
         generator.owned = savedGenerator.owned
       }
     }
+    this.state.generators = Array.from(this.generators.values())
 
     // Restore upgrades
-    this.upgradeManager.setPurchasedUpgrades(gameState.purchasedUpgrades)
+    this.setPurchasedUpgrades(gameState.purchasedUpgrades)
 
     // Restore narrative state
     if (gameState.narrative) {
-      this.narrativeManager.deserializeState(gameState.narrative)
+      this.deserializeNarrativeState(gameState.narrative)
     }
 
     // Restore narrative tracking
@@ -445,8 +783,58 @@ export class GameManager {
     // Restore timer state
     this.taskStartTime = gameState.taskStartTime ?? Date.now()
 
-    // Initialize reactive state after loading
-    this.updateReactiveState()
+    // Initialize computed state after loading
+    this.updateComputedState()
+  }
+
+  // Set purchased upgrades from array of IDs (for save loading)
+  private setPurchasedUpgrades(upgradeIds: string[]): void {
+    // Reset all upgrades first
+    for (const upgrade of this.upgrades.values()) {
+      upgrade.isPurchased = false
+    }
+
+    // Set purchased upgrades
+    for (const upgradeId of upgradeIds) {
+      const upgrade = this.upgrades.get(upgradeId)
+      if (upgrade) {
+        upgrade.isPurchased = true
+      }
+    }
+    this.state.upgrades = Array.from(this.upgrades.values())
+  }
+
+  // Serialize narrative state
+  private serializeNarrativeState(): unknown {
+    return {
+      viewedEvents: this.state.narrative.viewedEvents,
+      societalStability: this.state.narrative.societalStability,
+      gameStartTime: this.state.narrative.gameStartTime,
+    }
+  }
+
+  // Deserialize narrative state
+  private deserializeNarrativeState(savedState: unknown): void {
+    if (savedState && typeof savedState === 'object') {
+      const state = savedState as Record<string, unknown>
+
+      if (Array.isArray(state.viewedEvents)) {
+        this.state.narrative.viewedEvents = state.viewedEvents as string[]
+
+        // Mark events as viewed
+        this.state.narrative.currentStoryEvents.forEach((event) => {
+          event.isViewed = this.state.narrative.viewedEvents.includes(event.id)
+        })
+      }
+
+      if (typeof state.societalStability === 'number') {
+        this.state.narrative.societalStability = state.societalStability
+      }
+
+      if (typeof state.gameStartTime === 'number') {
+        this.state.narrative.gameStartTime = state.gameStartTime
+      }
+    }
   }
 
   // Auto-save system
@@ -523,7 +911,7 @@ export class GameManager {
     }
 
     // Grant reward
-    this.resourceManager.addContentUnits(this.taskReward)
+    this.addContentUnits(this.taskReward)
 
     // Reset timer
     this.taskStartTime = Date.now()

@@ -57,15 +57,13 @@ interface Props {
 
 const props = defineProps<Props>()
 const gameManager = GameManager.getInstance()
-const upgradeManager = gameManager.getUpgradeManager()
-const generatorManager = gameManager.getGeneratorManager()
 
 const isPurchasing = ref(false)
 const showPurchaseEffect = ref(false)
 
 // Reactive computed properties directly from game state
 const upgrade = computed(() => {
-  const upgradeData = gameManager.state.upgrades.find(u => u.id === props.upgradeId)
+  const upgradeData = gameManager.state.upgrades.find((u) => u.id === props.upgradeId)
   return (
     upgradeData || {
       id: '',
@@ -84,9 +82,9 @@ const upgrade = computed(() => {
 // Check requirements
 const requirementsMet = computed(() => {
   if (!upgrade.value.requirements) return true
-  
-  return upgrade.value.requirements.every(req => {
-    const generator = gameManager.state.generators.find(g => g.id === req.generatorId)
+
+  return upgrade.value.requirements.every((req) => {
+    const generator = gameManager.state.generators.find((g) => g.id === req.generatorId)
     return generator && generator.owned >= req.minOwned
   })
 })
@@ -103,13 +101,13 @@ const canPurchase = computed(() => {
 
 // Get generator name by ID
 const getGeneratorName = (generatorId: string): string => {
-  const generator = gameManager.state.generators.find(g => g.id === generatorId)
+  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
   return generator ? generator.name : 'Unknown Generator'
 }
 
 // Get generator owned count
 const getGeneratorOwned = (generatorId: string): number => {
-  const generator = gameManager.state.generators.find(g => g.id === generatorId)
+  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
   return generator ? generator.owned : 0
 }
 
