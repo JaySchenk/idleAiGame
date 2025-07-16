@@ -41,7 +41,11 @@ onMounted(() => {
 
           <div class="section">
             <h2 class="section-title">Upgrades</h2>
-            <UpgradeButton upgrade-id="automatedContentScript" />
+            <UpgradeButton 
+              v-for="upgrade in gameManager.state.upgrades" 
+              :key="upgrade.id"
+              :upgrade-id="upgrade.id" 
+            />
           </div>
         </div>
 

@@ -13,5 +13,20 @@
         "minOwned": 5
       }
     ]
+  },
+  {
+    "id": "clickbaitOptimizer",
+    "name": "Clickbait Optimizer",
+    "description": "Increases Clickbait Engine production by 50%",
+    "cost": 250,
+    "targetGenerator": "clickbaitEngine",
+    "effectType": "production_multiplier",
+    "effectValue": 1.5,
+    "requirements": [
+      {
+        "generatorId": "clickbaitEngine",
+        "minOwned": 3
+      }
+    ]
   }
 ]
