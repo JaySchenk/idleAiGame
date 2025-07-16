@@ -1,92 +1,57 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { RouterLink, RouterView } from 'vue-router'
 import ResourceDisplay from './components/ResourceDisplay.vue'
-import GeneratorPurchaseButton from './components/GeneratorPurchaseButton.vue'
-import ManualClickerButton from './components/ManualClickerButton.vue'
-import ProgressBar from './components/ProgressBar.vue'
-import UpgradeButton from './components/UpgradeButton.vue'
-import PrestigeButton from './components/PrestigeButton.vue'
-import SaveGameButton from './components/SaveGameButton.vue'
-import NarrativeDisplay from './components/NarrativeDisplay.vue'
-
-onMounted(() => {
-  // Ensure Phaser game is initialized when Vue mounts
-  // The Phaser game is already initialized in main.ts
-})
 </script>
 
 <template>
-  <div class="game-container">
-    <!-- Game UI Layer -->
-    <div class="ui-layer">
-      <div class="ui-header">
-        <h1 class="game-title">Hollow Content Empire</h1>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-top">
+        <div class="title-nav-section">
+          <h1 class="app-title">Hollow Content Empire</h1>
+          <nav class="nav-menu">
+            <RouterLink to="/" class="nav-link">Game</RouterLink>
+            <RouterLink to="/about" class="nav-link">About</RouterLink>
+          </nav>
+        </div>
         <ResourceDisplay />
       </div>
-      
-      <div class="ui-main">
-        <div class="ui-left">
-          <div class="section">
-            <h2 class="section-title">Manual Generation</h2>
-            <ManualClickerButton />
-          </div>
-          
-          <div class="section">
-            <h2 class="section-title">Automation</h2>
-            <GeneratorPurchaseButton />
-          </div>
-          
-          <div class="section">
-            <h2 class="section-title">Upgrades</h2>
-            <UpgradeButton upgrade-id="automatedContentScript" />
-          </div>
-        </div>
-        
-        <div class="ui-right">
-          <div class="section">
-            <h2 class="section-title">Task Progress</h2>
-            <ProgressBar />
-          </div>
-          
-          <div class="section">
-            <h2 class="section-title">Prestige</h2>
-            <PrestigeButton />
-          </div>
-          
-          <div class="section">
-            <h2 class="section-title">Save Game</h2>
-            <SaveGameButton />
-          </div>
-          
-          <div class="section">
-            <h2 class="section-title">System Chronicle</h2>
-            <NarrativeDisplay />
-          </div>
-        </div>
-      </div>
-    </div>
+    </header>
+    
+    <main class="app-main">
+      <RouterView />
+    </main>
   </div>
 </template>
 
 <style scoped>
-.game-container {
+.app-container {
   width: 100%;
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 2rem;
-  padding: 2rem;
-  box-sizing: border-box;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
 }
 
-.ui-header {
+.app-header {
+  padding: 1rem 2rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-top {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 2rem;
   align-items: start;
 }
 
-.game-title {
+.title-nav-section {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.app-title {
   font-size: 2.5rem;
   font-weight: bold;
   color: #ffffff;
@@ -94,60 +59,54 @@ onMounted(() => {
   margin: 0;
 }
 
-.ui-main {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  align-items: start;
+.nav-menu {
+  display: flex;
+  gap: 1.5rem;
 }
 
-.ui-left,
-.ui-right {
-  display: grid;
-  gap: 2rem;
-}
-
-.section {
-  display: grid;
-  gap: 1rem;
-}
-
-.section-title {
-  font-size: 1.3rem;
-  font-weight: bold;
+.nav-link {
   color: #ffffff;
-  margin: 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.nav-link:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: rgba(0, 255, 136, 0.3);
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.nav-link.router-link-active {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+  text-shadow: 0 0 15px rgba(0, 255, 136, 0.7);
+}
+
+.app-main {
+  overflow: auto;
 }
 
 /* Responsive design */
-@media (max-width: 1024px) {
-  .ui-main {
+@media (max-width: 768px) {
+  .header-top {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
-  .ui-header {
-    grid-template-columns: 1fr;
+  .title-nav-section {
     text-align: center;
   }
   
-  .game-title {
-    font-size: 2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .game-container {
-    padding: 1rem;
-  }
-  
-  .game-title {
+  .app-title {
     font-size: 1.5rem;
   }
   
-  .section-title {
-    font-size: 1.1rem;
+  .nav-menu {
+    justify-content: center;
   }
 }
 </style>
