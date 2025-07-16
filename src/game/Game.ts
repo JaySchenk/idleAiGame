@@ -4,6 +4,7 @@ import { UpgradeManager } from './Upgrades'
 import { SaveManager } from './SaveManager'
 import { NarrativeManager } from './NarrativeManager'
 import type { GameState } from './SaveManager'
+import { reactive } from 'vue'
 
 export class GameManager {
   private static instance: GameManager
@@ -13,12 +14,8 @@ export class GameManager {
   private saveManager: SaveManager
   private narrativeManager: NarrativeManager
   private gameLoop: number | null = null
-  private isRunning: boolean = false
   private tickRate: number = 100 // 100ms tick rate
   private lastTickTime: number = 0
-
-  // Prestige system
-  private prestigeLevel: number = 0
 
   // Auto-save system
   private autoSaveInterval: number | null = null
@@ -34,6 +31,40 @@ export class GameManager {
   private taskStartTime: number = Date.now()
   private taskDuration: number = 30000
   private taskReward: number = 10
+
+  // Reactive state for UI
+  public state = reactive({
+    isRunning: false,
+    contentUnits: 0,
+    formattedContentUnits: '0',
+    productionRate: 0,
+    prestigeLevel: 0,
+    globalMultiplier: 1,
+    prestigeThreshold: 1000,
+    canPrestige: false,
+    generators: [] as any[],
+    upgrades: [] as any[],
+    narrative: {
+      societalStability: 100,
+      viewedEvents: [] as any[],
+      currentEvents: [] as any[]
+    },
+    prestige: {
+      level: 0,
+      globalMultiplier: 1,
+      threshold: 1000,
+      canPrestige: false,
+      nextMultiplier: 1.25
+    },
+    taskProgress: {
+      timeElapsed: 0,
+      timeRemaining: 30000,
+      progressPercent: 0,
+      isComplete: false,
+      rewardAmount: 10,
+      duration: 30000,
+    }
+  })
 
   private constructor() {
     this.resourceManager = ResourceManager.getInstance()
@@ -61,9 +92,9 @@ export class GameManager {
 
   // Start the game loop
   public startGameLoop(): void {
-    if (this.isRunning) return
+    if (this.state.isRunning) return
 
-    this.isRunning = true
+    this.state.isRunning = true
     this.lastTickTime = Date.now()
 
     this.gameLoop = setInterval(() => {
@@ -86,7 +117,7 @@ export class GameManager {
       clearInterval(this.gameLoop)
       this.gameLoop = null
     }
-    this.isRunning = false
+    this.state.isRunning = false
 
     // Stop auto-save
     this.stopAutoSave()
@@ -124,6 +155,36 @@ export class GameManager {
 
     // Check time elapsed triggers
     this.narrativeManager.checkTimeElapsedTrigger()
+
+    // Update reactive state
+    this.updateReactiveState()
+  }
+
+  // Update reactive state for UI
+  private updateReactiveState(): void {
+    this.state.contentUnits = this.resourceManager.getContentUnits()
+    this.state.formattedContentUnits = this.resourceManager.formatContentUnits()
+    this.state.productionRate = this.generatorManager.getTotalProductionRate() * this.getGlobalMultiplier()
+    this.state.prestigeLevel = this.getPrestigeLevel()
+    this.state.globalMultiplier = this.getGlobalMultiplier()
+    this.state.prestigeThreshold = this.getPrestigeThreshold()
+    this.state.canPrestige = this.canPrestige()
+    this.state.generators = this.generatorManager.getAllGenerators()
+    this.state.upgrades = this.upgradeManager.getAllUpgrades()
+    this.state.taskProgress = this.getTaskProgress()
+    
+    // Update narrative state
+    this.state.narrative.societalStability = this.narrativeManager.getSocietalStability()
+    this.state.narrative.viewedEvents = this.narrativeManager.getViewedEvents()
+    this.state.narrative.currentEvents = this.narrativeManager.getCurrentEvents()
+    
+    // Update prestige state
+    const prestigeInfo = this.getPrestigeInfo()
+    this.state.prestige.level = prestigeInfo.level
+    this.state.prestige.globalMultiplier = prestigeInfo.globalMultiplier
+    this.state.prestige.threshold = prestigeInfo.threshold
+    this.state.prestige.canPrestige = prestigeInfo.canPrestige
+    this.state.prestige.nextMultiplier = prestigeInfo.nextMultiplier
   }
 
   // Manual content generation (clicker mechanic)
@@ -135,22 +196,11 @@ export class GameManager {
     // Check narrative triggers for content units
     const currentContentUnits = this.resourceManager.getContentUnits()
     this.narrativeManager.checkContentUnitsTrigger(currentContentUnits)
+
+    // Update reactive state immediately for responsive UI
+    this.updateReactiveState()
   }
 
-  // Get current game state for UI
-  public getGameState() {
-    return {
-      contentUnits: this.resourceManager.getContentUnits(),
-      formattedContentUnits: this.resourceManager.formatContentUnits(),
-      productionRate: this.generatorManager.getTotalProductionRate() * this.getGlobalMultiplier(),
-      generators: this.generatorManager.getAllGenerators(),
-      isRunning: this.isRunning,
-      prestigeLevel: this.getPrestigeLevel(),
-      globalMultiplier: this.getGlobalMultiplier(),
-      prestigeThreshold: this.getPrestigeThreshold(),
-      canPrestige: this.canPrestige(),
-    }
-  }
 
   // Purchase generator wrapper
   public purchaseGenerator(generatorId: string): boolean {
@@ -159,6 +209,8 @@ export class GameManager {
     // Trigger narrative events for generator purchase
     if (success) {
       this.narrativeManager.checkGeneratorPurchaseTrigger(generatorId)
+      // Update reactive state immediately for responsive UI
+      this.updateReactiveState()
     }
 
     return success
@@ -191,6 +243,8 @@ export class GameManager {
     // Trigger narrative events for upgrade purchase
     if (success) {
       this.narrativeManager.checkUpgradeTrigger(upgradeId)
+      // Update reactive state immediately for responsive UI
+      this.updateReactiveState()
     }
 
     return success
@@ -210,23 +264,23 @@ export class GameManager {
 
   // Get current prestige level
   public getPrestigeLevel(): number {
-    return this.prestigeLevel
+    return this.state.prestigeLevel
   }
 
   // Calculate global multiplier based on prestige level
   public getGlobalMultiplier(): number {
-    return Math.pow(1.25, this.prestigeLevel)
+    return Math.pow(1.25, this.state.prestigeLevel)
   }
 
   // Calculate current prestige threshold
   public getPrestigeThreshold(): number {
-    return 1000 * Math.pow(10, this.prestigeLevel)
+    return 1000 * Math.pow(10, this.state.prestigeLevel)
   }
 
   // Check if player can prestige (has enough current HCU for next level)
   public canPrestige(): boolean {
     const currentHCU = this.resourceManager.getContentUnits()
-    const nextThreshold = 1000 * Math.pow(10, this.prestigeLevel)
+    const nextThreshold = 1000 * Math.pow(10, this.state.prestigeLevel)
     return currentHCU >= nextThreshold
   }
 
@@ -236,10 +290,10 @@ export class GameManager {
     }
 
     // Trigger narrative events for prestige
-    this.narrativeManager.checkPrestigeTrigger(this.prestigeLevel)
+    this.narrativeManager.checkPrestigeTrigger(this.state.prestigeLevel)
 
     // Increase prestige level
-    this.prestigeLevel++
+    this.state.prestigeLevel++
 
     // Reset game state (but keep lifetime HCU)
     this.resourceManager.resetContentUnits()
@@ -249,6 +303,9 @@ export class GameManager {
     // Reset narrative tracking but keep story progress
     this.narrativeManager.resetForPrestige()
     this.lastContentUnitsCheck = 0
+
+    // Update reactive state immediately
+    this.updateReactiveState()
 
     return true
   }
@@ -271,11 +328,11 @@ export class GameManager {
 
   public getPrestigeInfo() {
     return {
-      level: this.prestigeLevel,
+      level: this.state.prestigeLevel,
       globalMultiplier: this.getGlobalMultiplier(),
       threshold: this.getPrestigeThreshold(),
       canPrestige: this.canPrestige(),
-      nextMultiplier: Math.pow(1.25, this.prestigeLevel + 1),
+      nextMultiplier: Math.pow(1.25, this.state.prestigeLevel + 1),
     }
   }
 
@@ -345,7 +402,7 @@ export class GameManager {
       timestamp: Date.now(),
       contentUnits: this.resourceManager.getContentUnits(),
       lifetimeContentUnits: this.resourceManager.getLifetimeContentUnits(),
-      prestigeLevel: this.prestigeLevel,
+      prestigeLevel: this.state.prestigeLevel,
       generators,
       purchasedUpgrades,
       narrative: this.narrativeManager.serializeState(),
@@ -362,7 +419,7 @@ export class GameManager {
     this.resourceManager.setLifetimeContentUnits(gameState.lifetimeContentUnits)
     
     // Restore prestige level
-    this.prestigeLevel = gameState.prestigeLevel
+    this.state.prestigeLevel = gameState.prestigeLevel
 
     // Restore generators
     for (const generatorId in gameState.generators) {
@@ -387,6 +444,9 @@ export class GameManager {
 
     // Restore timer state
     this.taskStartTime = gameState.taskStartTime ?? Date.now()
+
+    // Initialize reactive state after loading
+    this.updateReactiveState()
   }
 
   // Auto-save system

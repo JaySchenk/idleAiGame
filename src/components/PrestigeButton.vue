@@ -34,8 +34,8 @@
         <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
       <div class="progress-text">
-        <HCUDisplay :amount="gameManager.getResourceManager().getLifetimeContentUnits()" :show-unit="false" /> /
-        <HCUDisplay :amount="prestigeInfo.threshold" /> Lifetime
+        <HCUDisplay :amount="gameManager.state.contentUnits" :show-unit="false" /> /
+        <HCUDisplay :amount="prestigeInfo.threshold" :show-unit="false" /> HCU
       </div>
     </div>
 
@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { GameManager } from '../game/Game'
 import HCUDisplay from './HCUDisplay.vue'
 
@@ -79,17 +79,14 @@ const gameManager = GameManager.getInstance()
 
 const isRebooting = ref(false)
 const showRebootEffect = ref(false)
-const gameState = ref(gameManager.getGameState())
 
-let updateInterval: number | null = null
+// Reactive computed properties directly from game state
+const prestigeInfo = computed(() => gameManager.state.prestige)
 
-// Get prestige info (now properly reactive since it's calculated from gameState)
-const prestigeInfo = computed(() => gameManager.getPrestigeInfo())
-
-// Calculate progress to prestige (based on lifetime HCU)
+// Calculate progress to prestige (based on current HCU)
 const progressPercent = computed(() => {
-  const lifetime = gameManager.getResourceManager().getLifetimeContentUnits()
-  const progress = (lifetime / prestigeInfo.value.threshold) * 100
+  const currentHCU = gameManager.state.contentUnits
+  const progress = (currentHCU / prestigeInfo.value.threshold) * 100
   return Math.min(100, progress)
 })
 
@@ -116,21 +113,6 @@ const performReboot = async () => {
 
   isRebooting.value = false
 }
-
-// Update game state
-const updateGameState = () => {
-  gameState.value = gameManager.getGameState()
-}
-
-onMounted(() => {
-  updateInterval = setInterval(updateGameState, 100)
-})
-
-onUnmounted(() => {
-  if (updateInterval) {
-    clearInterval(updateInterval)
-  }
-})
 </script>
 
 <style scoped>

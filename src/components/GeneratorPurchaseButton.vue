@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { GameManager } from '../game/Game'
 import HCUDisplay from './HCUDisplay.vue'
 
@@ -27,28 +27,29 @@ const gameManager = GameManager.getInstance()
 const generatorId = 'basicAdBotFarm'
 const generatorName = 'Mindless Ad-Bot Farm'
 
-const ownedCount = ref(0)
-const cost = ref(0)
-const canAfford = ref(false)
 const isPurchasing = ref(false)
-const actualProductionRate = ref(0)
 
-let updateInterval: number | null = null
+// Reactive computed properties directly from game state
+const ownedCount = computed(() => {
+  const generator = gameManager.state.generators.find(g => g.id === generatorId)
+  return generator ? generator.owned : 0
+})
 
+const cost = computed(() => {
+  const generator = gameManager.state.generators.find(g => g.id === generatorId)
+  if (!generator) return 0
+  return generator.baseCost * Math.pow(generator.growthRate, generator.owned)
+})
 
-// Update component state from game
-const updateState = () => {
-  const gameState = gameManager.getGameState()
-  const generator = gameState.generators.find((g) => g.id === generatorId)
+const canAfford = computed(() => {
+  return gameManager.state.contentUnits >= cost.value
+})
 
-  if (generator) {
-    ownedCount.value = generator.owned
-    cost.value = gameManager.getGeneratorCost(generatorId)
-    canAfford.value = gameManager.canPurchaseGenerator(generatorId)
-    // Get actual production rate from generator manager
-    actualProductionRate.value = gameManager.getGeneratorManager().getGeneratorProductionRate(generatorId)
-  }
-}
+const actualProductionRate = computed(() => {
+  const generator = gameManager.state.generators.find(g => g.id === generatorId)
+  if (!generator) return 0
+  return generator.baseProduction * generator.owned * gameManager.state.globalMultiplier
+})
 
 // Handle purchase with visual feedback
 const handlePurchase = async () => {
@@ -59,25 +60,9 @@ const handlePurchase = async () => {
   // Visual feedback delay
   setTimeout(() => {
     const success = gameManager.purchaseGenerator(generatorId)
-    if (success) {
-      // Immediately update state after purchase
-      updateState()
-    }
     isPurchasing.value = false
   }, 100)
 }
-
-onMounted(() => {
-  updateState()
-  // Update state every 100ms for real-time updates
-  updateInterval = setInterval(updateState, 100)
-})
-
-onUnmounted(() => {
-  if (updateInterval) {
-    clearInterval(updateInterval)
-  }
-})
 </script>
 
 <style scoped>

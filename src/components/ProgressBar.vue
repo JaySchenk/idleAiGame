@@ -28,21 +28,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { GameManager } from '../game/Game'
 import HCUDisplay from './HCUDisplay.vue'
 
 const gameManager = GameManager.getInstance()
 const showCompletionEffect = ref(false)
-const taskProgress = ref(gameManager.getTaskProgress())
 
-let updateInterval: number | null = null
 let lastProgressPercent = 0
 
-// Computed properties for reactive UI
-const timeRemaining = computed(() => taskProgress.value.timeRemaining)
-const progressPercent = computed(() => taskProgress.value.progressPercent)
-const rewardAmount = computed(() => taskProgress.value.rewardAmount)
+// Reactive computed properties directly from game state
+const timeRemaining = computed(() => gameManager.state.taskProgress.timeRemaining)
+const progressPercent = computed(() => gameManager.state.taskProgress.progressPercent)
+const rewardAmount = computed(() => gameManager.state.taskProgress.rewardAmount)
 
 // Format time in seconds
 const formatTime = (milliseconds: number): string => {
@@ -52,7 +50,7 @@ const formatTime = (milliseconds: number): string => {
 
 // Handle completion animation trigger
 const checkForCompletion = () => {
-  const currentProgress = taskProgress.value.progressPercent
+  const currentProgress = progressPercent.value
 
   // Task completed - trigger animation
   if (currentProgress === 0 && lastProgressPercent > 90) {
@@ -65,22 +63,8 @@ const checkForCompletion = () => {
   lastProgressPercent = currentProgress
 }
 
-// Update UI state from game loop
-const updateUI = () => {
-  taskProgress.value = gameManager.getTaskProgress()
-  checkForCompletion()
-}
-
-onMounted(() => {
-  // Update UI every 100ms for smooth animation
-  updateInterval = setInterval(updateUI, 100)
-})
-
-onUnmounted(() => {
-  if (updateInterval) {
-    clearInterval(updateInterval)
-  }
-})
+// Watch for progress changes to trigger completion animation
+watch(progressPercent, checkForCompletion)
 </script>
 
 <style scoped>

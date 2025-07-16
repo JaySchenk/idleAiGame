@@ -14,34 +14,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import { GameManager } from '../game/Game'
 import HCUDisplay from './HCUDisplay.vue'
 
 const gameManager = GameManager.getInstance()
-const contentUnits = ref(0)
-const productionRate = ref(0)
 
-let updateInterval: number | null = null
-
-// Update display values from game state
-const updateDisplay = () => {
-  const gameState = gameManager.getGameState()
-  contentUnits.value = gameState.contentUnits
-  productionRate.value = gameState.productionRate
-}
-
-onMounted(() => {
-  updateDisplay()
-  // Update display every 100ms for smooth real-time updates
-  updateInterval = setInterval(updateDisplay, 100)
-})
-
-onUnmounted(() => {
-  if (updateInterval) {
-    clearInterval(updateInterval)
-  }
-})
+// Reactive computed properties directly from game state
+const contentUnits = computed(() => gameManager.state.contentUnits)
+const productionRate = computed(() => gameManager.state.productionRate)
 </script>
 
 <style scoped>

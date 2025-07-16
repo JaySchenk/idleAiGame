@@ -12,7 +12,7 @@
           <div class="narrative-stability">
             <span class="stability-label">Societal Stability: </span>
             <span class="stability-value" :class="getStabilityClass()">
-              {{ narrativeManager.getSocietalStability() }}%
+              {{ gameManager.state.narrative.societalStability }}%
             </span>
           </div>
         </div>
@@ -30,12 +30,12 @@
         <h4>System Status</h4>
         <div class="stability-indicator" :class="getStabilityClass()">
           <span class="stability-text"
-            >Stability: {{ narrativeManager.getSocietalStability() }}%</span
+            >Stability: {{ gameManager.state.narrative.societalStability }}%</span
           >
           <div class="stability-bar">
             <div
               class="stability-fill"
-              :style="{ width: narrativeManager.getSocietalStability() + '%' }"
+              :style="{ width: gameManager.state.narrative.societalStability + '%' }"
             ></div>
           </div>
         </div>
@@ -66,10 +66,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { NarrativeManager } from '../game/NarrativeManager'
+import { GameManager } from '../game/Game'
 import type { NarrativeEvent } from '../assets/narratives'
 
-const narrativeManager = NarrativeManager.getInstance()
+const gameManager = GameManager.getInstance()
+const narrativeManager = gameManager.getNarrativeManager()
 
 // Component state
 const showModal = ref(false)
@@ -82,8 +83,8 @@ const showArchive = ref(false)
 let typewriterInterval: number | null = null
 let currentCharIndex = 0
 
-// Archive state
-const viewedEvents = computed(() => narrativeManager.getViewedEvents())
+// Archive state using reactive state
+const viewedEvents = computed(() => gameManager.state.narrative.viewedEvents)
 const hasViewedEvents = computed(() => viewedEvents.value.length > 0)
 
 // Event handling
@@ -150,7 +151,7 @@ const reviewEvent = (event: NarrativeEvent) => {
 
 // Styling helpers
 const getStabilityClass = () => {
-  const stability = narrativeManager.getSocietalStability()
+  const stability = gameManager.state.narrative.societalStability
   if (stability >= 80) return 'stability-high'
   if (stability >= 50) return 'stability-medium'
   if (stability >= 25) return 'stability-low'

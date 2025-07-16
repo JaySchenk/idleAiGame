@@ -3,7 +3,7 @@ export interface GameState {
   version: string
   timestamp: number
   contentUnits: number
-  lifetimeContentUnits: number // Total lifetime HCU generated (used to calculate prestige level)
+  lifetimeContentUnits: number // Total lifetime HCU generated
   prestigeLevel: number // Current prestige level (determines global multiplier)
   generators: {
     [generatorId: string]: {

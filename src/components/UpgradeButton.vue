@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { GameManager } from '../game/Game'
 import HCUDisplay from './HCUDisplay.vue'
 
@@ -62,13 +62,10 @@ const generatorManager = gameManager.getGeneratorManager()
 
 const isPurchasing = ref(false)
 const showPurchaseEffect = ref(false)
-const gameState = ref(gameManager.getGameState())
 
-let updateInterval: number | null = null
-
-// Get upgrade data
+// Reactive computed properties directly from game state
 const upgrade = computed(() => {
-  const upgradeData = upgradeManager.getUpgrade(props.upgradeId)
+  const upgradeData = gameManager.state.upgrades.find(u => u.id === props.upgradeId)
   return (
     upgradeData || {
       id: '',
@@ -86,28 +83,33 @@ const upgrade = computed(() => {
 
 // Check requirements
 const requirementsMet = computed(() => {
-  return upgradeManager.areRequirementsMet(props.upgradeId)
+  if (!upgrade.value.requirements) return true
+  
+  return upgrade.value.requirements.every(req => {
+    const generator = gameManager.state.generators.find(g => g.id === req.generatorId)
+    return generator && generator.owned >= req.minOwned
+  })
 })
 
 // Check if can afford
 const canAfford = computed(() => {
-  return gameState.value.contentUnits >= upgrade.value.cost
+  return gameManager.state.contentUnits >= upgrade.value.cost
 })
 
 // Check if can purchase
 const canPurchase = computed(() => {
-  return upgradeManager.canPurchaseUpgrade(props.upgradeId)
+  return !upgrade.value.isPurchased && requirementsMet.value && canAfford.value
 })
 
 // Get generator name by ID
 const getGeneratorName = (generatorId: string): string => {
-  const generator = generatorManager.getGenerator(generatorId)
+  const generator = gameManager.state.generators.find(g => g.id === generatorId)
   return generator ? generator.name : 'Unknown Generator'
 }
 
 // Get generator owned count
 const getGeneratorOwned = (generatorId: string): number => {
-  const generator = generatorManager.getGenerator(generatorId)
+  const generator = gameManager.state.generators.find(g => g.id === generatorId)
   return generator ? generator.owned : 0
 }
 
@@ -134,21 +136,6 @@ const purchaseUpgrade = async () => {
 
   isPurchasing.value = false
 }
-
-// Update game state
-const updateGameState = () => {
-  gameState.value = gameManager.getGameState()
-}
-
-onMounted(() => {
-  updateInterval = setInterval(updateGameState, 100)
-})
-
-onUnmounted(() => {
-  if (updateInterval) {
-    clearInterval(updateInterval)
-  }
-})
 </script>
 
 <style scoped>
