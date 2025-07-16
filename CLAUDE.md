@@ -1,20 +1,18 @@
 # Hollow Content Empire - Dystopian Idle Game
 
 ## Project Overview
-A dystopian idle game built with Vue 3 + Phaser 3 dual-layer architecture. Players generate "Hollow Content Units" through manual clicks and automated generators while following a narrative about AI systems being co-opted by corporate interests.
+A dystopian idle game built with Vue 3 + TypeScript. Players generate "Hollow Content Units" through manual clicks and automated generators while following a narrative about AI systems being co-opted by corporate interests.
 
 ## Tech Stack
 - **Frontend**: Vue 3 (Composition API) + TypeScript
-- **Game Engine**: Phaser 3 (visual effects, background canvas)
 - **Build Tool**: Vite with code splitting
 - **State Management**: Custom singleton pattern (not Pinia)
 - **Styling**: Custom CSS with dark dystopian theme
 - **Testing**: Vitest + Vue Test Utils
 
 ## Architecture
-**Dual-Layer Design**:
-- **Canvas Layer** (z-index: 1): Phaser 3 background with dynamic visual decay
-- **UI Layer** (z-index: 2): Vue 3 interactive components overlay
+**Single-Layer Design**:
+- **UI Layer**: Vue 3 components with custom CSS styling
 
 ## Development Commands
 ```bash
@@ -35,7 +33,6 @@ src/
 │   ├── Upgrades.ts         # UpgradeManager - progression
 │   ├── SaveManager.ts      # Save/load with localStorage
 │   ├── NarrativeManager.ts # Story progression system
-│   └── MainScene.ts        # Phaser scene with visual effects
 ├── components/             # Vue 3 UI components
 │   ├── ResourceDisplay.vue
 │   ├── GeneratorPurchaseButton.vue
@@ -66,7 +63,7 @@ src/
 - **Generators**: "Mindless Ad-Bot Farm" - exponential costs (base: 10, growth: 1.15x)
 - **Upgrades**: "Soul-Crushing Automation" - production multipliers
 - **Prestige**: "Societal Collapse Reset" - global multipliers (1.25x per level)
-- **Narrative**: 13 milestone-based story events with visual decay
+- **Narrative**: 13 milestone-based story events
 - **Save System**: Auto-save every 30 seconds + manual save button
 - **Progression Data**: See `progression-system.json` for complete system definition
 
@@ -85,9 +82,7 @@ src/
 ## Important Notes
 - **Custom Implementation**: Uses custom singleton pattern for game state management
 - **Game Loop**: 100ms tick rate with delta time calculations
-- **Visual Effects**: Background decay tied to narrative progression
 - **Theme**: Dystopian terminology throughout ("Hollow", "Mindless", "Soul-Crushing")
-- **Performance**: 60fps target with hardware-accelerated animations
 
 ## Next Steps
 1. Implement comprehensive error handling and input validation

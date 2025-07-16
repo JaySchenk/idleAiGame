@@ -19,7 +19,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          phaser: ['phaser'],
           vue: ['vue', 'vue-router', 'pinia']
         }
       }
