@@ -83,7 +83,7 @@ src/
 - J: Deployment Configuration
 
 ## Important Notes
-- **Custom Implementation**: IGT library replaced due to package issues
+- **Custom Implementation**: Uses custom singleton pattern for game state management
 - **Game Loop**: 100ms tick rate with delta time calculations
 - **Visual Effects**: Background decay tied to narrative progression
 - **Theme**: Dystopian terminology throughout ("Hollow", "Mindless", "Soul-Crushing")

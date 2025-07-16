@@ -14,7 +14,6 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "incremental-game-template": "^1.2.4",
     "phaser": "^3.90.0",
     "pinia": "^3.0.3",
     "vue": "^3.5.17",
