@@ -74,7 +74,7 @@ src/
 - **Narrative**: 13 milestone-based story events
 - **Save System**: Auto-save every 30 seconds + manual save button
 - **State Management**: Hybrid approach - store essential state, calculate derived values with formulas
-- **Progression Data**: See `progression-system.json` for complete system definition
+- **Configuration**: Game configuration loaded from JSON files in `/config/` directory (generators, narratives, upgrades)
 
 ## Current Implementation Status
 
