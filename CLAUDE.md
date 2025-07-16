@@ -1,20 +1,25 @@
 # Hollow Content Empire - Dystopian Idle Game
 
 ## Project Overview
+
 A dystopian idle game built with Vue 3 + TypeScript. Players generate "Hollow Content Units" through manual clicks and automated generators while following a narrative about AI systems being co-opted by corporate interests.
 
 ## Tech Stack
+
 - **Frontend**: Vue 3 (Composition API) + TypeScript
 - **Build Tool**: Vite with code splitting
-- **State Management**: Custom singleton pattern (not Pinia)
+- **State Management**: Custom singleton pattern
 - **Styling**: Custom CSS with dark dystopian theme
 - **Testing**: Vitest + Vue Test Utils
 
 ## Architecture
+
 **Single-Layer Design**:
+
 - **UI Layer**: Vue 3 components with custom CSS styling
 
 ## Development Commands
+
 ```bash
 npm run dev          # Start development server with hot reload
 npm run build        # Build for production
@@ -24,6 +29,7 @@ npm run format       # Prettier code formatting
 ```
 
 ## Project Structure
+
 ```
 src/
 ├── game/                    # Core game logic (TypeScript singletons)
@@ -50,6 +56,7 @@ src/
 ```
 
 ## Code Conventions
+
 - **TypeScript**: Required for all game logic
 - **Singleton Pattern**: All managers (GameManager, ResourceManager, etc.)
 - **Vue 3 Composition API**: Use `<script setup>` syntax
@@ -59,6 +66,7 @@ src/
 - **Error Handling**: Wrap critical operations in try-catch blocks
 
 ## Game Systems
+
 - **Currency**: "Hollow Content Units" (HCU) - primary resource
 - **Generators**: "Mindless Ad-Bot Farm" - exponential costs (base: 10, growth: 1.15x)
 - **Upgrades**: "Soul-Crushing Automation" - production multipliers
@@ -68,29 +76,35 @@ src/
 - **Progression Data**: See `progression-system.json` for complete system definition
 
 ## Current Implementation Status
+
 **✅ Completed**:
+
 - A-F: Foundation, Core Loop, UI, Progression, Save System, Narrative
 - All major game mechanics functional
 - Comprehensive visual feedback and animations
 
 **⏳ Pending**:
+
 - G: Error Handling & Edge Cases
 - H: Performance Optimization
 - I: Testing Framework
 - J: Deployment Configuration
 
 ## Important Notes
+
 - **Custom Implementation**: Uses custom singleton pattern for game state management
 - **Game Loop**: 100ms tick rate with delta time calculations
 - **Theme**: Dystopian terminology throughout ("Hollow", "Mindless", "Soul-Crushing")
 
 ## Next Steps
+
 1. Implement comprehensive error handling and input validation
 2. Add performance monitoring and optimization
 3. Set up Jest testing framework
 4. Configure production deployment
 
 ## Workflow
+
 - Use `GameManager.getInstance()` to access game state
 - Test in browser after significant changes
 - Run lint/format before committing
