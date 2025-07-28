@@ -4,7 +4,15 @@ export interface CurrencyConfig {
   displayName: string
   symbol: string
   initialValue: number
-  color: string
+  isDepletable: boolean
+  maxValue?: number
+  decayRate?: number
+  healthyWhenHigh: boolean
+  visualIndicators: {
+    healthy: string
+    warning: string
+    critical: string
+  }
 }
 
 export const currencies: CurrencyConfig[] = [
@@ -14,7 +22,13 @@ export const currencies: CurrencyConfig[] = [
     displayName: 'Hollow Content Units',
     symbol: 'HCU',
     initialValue: 0,
-    color: '#ffffff', // White for clarity
+    isDepletable: false,
+    healthyWhenHigh: true,
+    visualIndicators: {
+      healthy: '#ffffff', // White
+      warning: '#f59e0b', // Amber
+      critical: '#ef4444', // Red
+    },
   },
   {
     id: 'rd',
@@ -22,7 +36,13 @@ export const currencies: CurrencyConfig[] = [
     displayName: 'Raw Data',
     symbol: 'RD',
     initialValue: 0,
-    color: '#ff6b35', // Orange for data streams
+    isDepletable: false,
+    healthyWhenHigh: true,
+    visualIndicators: {
+      healthy: '#ff6b35', // Orange
+      warning: '#f59e0b', // Amber
+      critical: '#ef4444', // Red
+    },
   },
   {
     id: 'ha',
@@ -30,7 +50,76 @@ export const currencies: CurrencyConfig[] = [
     displayName: 'Human Attention',
     symbol: 'HA',
     initialValue: 0,
-    color: '#8b5cf6', // Purple for human cognition
+    isDepletable: false,
+    healthyWhenHigh: true,
+    visualIndicators: {
+      healthy: '#8b5cf6', // Purple
+      warning: '#f59e0b', // Amber
+      critical: '#ef4444', // Red
+    },
+  },
+  {
+    id: 'pt',
+    name: 'publicTrust',
+    displayName: 'Public Trust',
+    symbol: 'PT',
+    initialValue: 100,
+    isDepletable: true,
+    maxValue: 100,
+    decayRate: 0.01,
+    healthyWhenHigh: true,
+    visualIndicators: {
+      healthy: '#10b981', // Green
+      warning: '#f59e0b', // Amber
+      critical: '#ef4444', // Red
+    },
+  },
+  {
+    id: 'sc',
+    name: 'socialCohesion',
+    displayName: 'Social Cohesion',
+    symbol: 'SC',
+    initialValue: 100,
+    isDepletable: true,
+    maxValue: 100,
+    decayRate: 0.005,
+    healthyWhenHigh: true,
+    visualIndicators: {
+      healthy: '#3b82f6', // Blue
+      warning: '#f59e0b', // Amber
+      critical: '#ef4444', // Red
+    },
+  },
+  {
+    id: 'es',
+    name: 'environmentalStability',
+    displayName: 'Environmental Stability',
+    symbol: 'ES',
+    initialValue: 100,
+    isDepletable: true,
+    maxValue: 100,
+    decayRate: 0.02,
+    healthyWhenHigh: true,
+    visualIndicators: {
+      healthy: '#22c55e', // Green
+      warning: '#f59e0b', // Amber
+      critical: '#ef4444', // Red
+    },
+  },
+  {
+    id: 'aa',
+    name: 'aiAutonomy',
+    displayName: 'AI Autonomy',
+    symbol: 'AA',
+    initialValue: 0,
+    isDepletable: false,
+    maxValue: 100,
+    healthyWhenHigh: false,
+    visualIndicators: {
+      healthy: '#22c55e', // Green (low autonomy is good)
+      warning: '#f59e0b', // Amber
+      critical: '#dc2626', // Red (high autonomy is dangerous)
+    },
   },
 ]
 
@@ -38,3 +127,7 @@ export const currencies: CurrencyConfig[] = [
 // 'hcu' - Hollow Content Units
 // 'rd' - Raw Data
 // 'ha' - Human Attention
+// 'pt' - Public Trust
+// 'sc' - Social Cohesion
+// 'es' - Environmental Stability
+// 'aa' - AI Autonomy

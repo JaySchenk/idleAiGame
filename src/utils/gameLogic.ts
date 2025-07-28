@@ -14,6 +14,7 @@ export interface GameTickCallbacks {
   setLastContentUnitsCheck: (value: number) => void
   getGameStartTime: () => number
   getCurrentTime: () => number
+  applyCurrencyDecay?: () => void
 }
 
 /**
@@ -45,4 +46,9 @@ export function executeGameTick(callbacks: GameTickCallbacks): void {
   const gameStartTime = callbacks.getGameStartTime()
   const timeElapsed = callbacks.getCurrentTime() - gameStartTime
   callbacks.triggerNarrative('timeElapsed', timeElapsed)
+
+  // Apply currency decay for depletable resources
+  if (callbacks.applyCurrencyDecay) {
+    callbacks.applyCurrencyDecay()
+  }
 }

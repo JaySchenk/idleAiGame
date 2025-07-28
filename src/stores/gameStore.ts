@@ -170,7 +170,17 @@ export const useGameStore = defineStore(
       if (!gameState.value.currencies[currencyId]) {
         gameState.value.currencies[currencyId] = { current: 0, lifetime: 0 }
       }
-      gameState.value.currencies[currencyId].current += amount
+      
+      const currencyConfig = getCurrencyConfig(currencyId)
+      const currentAmount = gameState.value.currencies[currencyId].current
+      let newAmount = currentAmount + amount
+      
+      // Apply maxValue bounds if defined
+      if (currencyConfig?.maxValue !== undefined) {
+        newAmount = Math.min(newAmount, currencyConfig.maxValue)
+      }
+      
+      gameState.value.currencies[currencyId].current = newAmount
       gameState.value.currencies[currencyId].lifetime += amount
     }
 
@@ -191,6 +201,21 @@ export const useGameStore = defineStore(
      */
     function canAffordCurrency(currencyId: string, amount: number): boolean {
       return getCurrencyAmount(currencyId) >= amount
+    }
+
+    /**
+     * Apply currency decay for depletable resources
+     */
+    function applyCurrencyDecay(): void {
+      for (const currencyConfig of currencies) {
+        if (currencyConfig.isDepletable && currencyConfig.decayRate) {
+          const currentAmount = getCurrencyAmount(currencyConfig.id)
+          if (currentAmount > 0) {
+            const decayAmount = currentAmount * currencyConfig.decayRate
+            gameState.value.currencies[currencyConfig.id].current = Math.max(0, currentAmount - decayAmount)
+          }
+        }
+      }
     }
 
     // ===== GENERATOR MANAGEMENT =====
@@ -396,6 +421,7 @@ export const useGameStore = defineStore(
         getCurrentTime: () => gameLoop.currentTime.value,
         hasTriggeredGameStart: narrativeSystem.getHasTriggeredGameStart,
         setHasTriggeredGameStart: narrativeSystem.setHasTriggeredGameStart,
+        applyCurrencyDecay: applyCurrencyDecay,
       })
     }
 
@@ -429,6 +455,9 @@ export const useGameStore = defineStore(
           getGameStartTime: narrativeSystem.getGameStartTime,
           getCurrentTime: () => gameLoop.currentTime.value,
         })
+
+        // Apply currency decay for depletable resources
+        applyCurrencyDecay()
       }
     }
 

@@ -4,7 +4,7 @@
       v-for="currency in currencies"
       :key="currency.id"
       class="resource-item"
-      :style="{ borderLeftColor: currency.color }"
+      :style="{ borderLeftColor: getBorderColor(currency.id) }"
     >
       <div class="resource-info">
         <div class="resource-label">{{ currency.displayName }}</div>
@@ -40,6 +40,34 @@ function getProductionRate(currencyId: string): number {
   }
   // TODO: Add production rates for other currencies when implemented
   return 0
+}
+
+// Get border color based on currency health status
+function getBorderColor(currencyId: string): string {
+  const config = gameStore.getCurrencyConfig(currencyId)
+  const amount = gameStore.getCurrencyAmount(currencyId)
+  
+  if (!config) return '#ffffff'
+
+  // For currencies with maxValue, use percentage-based health indicators
+  if (config.maxValue !== undefined) {
+    const percentage = (amount / config.maxValue) * 100
+    
+    if (config.healthyWhenHigh) {
+      // For resources where high values are healthy (most resources)
+      if (percentage <= 25) return config.visualIndicators.critical
+      if (percentage <= 50) return config.visualIndicators.warning
+      return config.visualIndicators.healthy
+    } else {
+      // For resources where low values are healthy (e.g., AI Autonomy)
+      if (percentage >= 75) return config.visualIndicators.critical
+      if (percentage >= 50) return config.visualIndicators.warning
+      return config.visualIndicators.healthy
+    }
+  }
+
+  // For currencies without maxValue, use healthy color as default
+  return config.visualIndicators.healthy
 }
 </script>
 
