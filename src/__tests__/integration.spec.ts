@@ -76,15 +76,15 @@ describe('Game Integration Tests', () => {
 
       // Start: Player has 0 HCU
       expect(gameStore.getCurrencyAmount('hcu')).toBe(0)
-      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBe(0)
-      expect(gameStore.prestigeLevel).toBe(0)
+      expect(gameStore.gameState.currencies.hcu?.lifetime || 0).toBe(0)
+      expect(gameStore.gameState.prestigeLevel).toBe(0)
 
       // Phase 1: Manual clicking to get initial resources
       for (let i = 0; i < 10; i++) {
         gameStore.clickForContent()
       }
       expect(gameStore.getCurrencyAmount('hcu')).toBe(10)
-      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBe(10)
+      expect(gameStore.gameState.currencies.hcu?.lifetime || 0).toBe(10)
 
       // Phase 2: Purchase first generator
       expect(((amount: number) => gameStore.canAffordCurrency('hcu', amount))(10)).toBe(true)
@@ -106,14 +106,14 @@ describe('Game Integration Tests', () => {
       expect(gameStore.canPrestige).toBe(true)
 
       // Record pre-prestige state
-      const prePrestigeLifetime = gameStore.lifetimeCurrencyAmounts['hcu']
+      const prePrestigeLifetime = gameStore.gameState.currencies.hcu?.lifetime || 0
 
       gameStore.performPrestige()
 
       // After prestige: current units and generators reset, but lifetime and prestige level persist
       expect(gameStore.getCurrencyAmount('hcu')).toBe(0)
-      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBe(prePrestigeLifetime) // Lifetime persists
-      expect(gameStore.prestigeLevel).toBe(1)
+      expect(gameStore.gameState.currencies.hcu?.lifetime || 0).toBe(prePrestigeLifetime) // Lifetime persists
+      expect(gameStore.gameState.prestigeLevel).toBe(1)
       expect(gameStore.globalMultiplier).toBe(1.25) // 1.25x multiplier
       expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(0)
 
@@ -169,7 +169,7 @@ describe('Game Integration Tests', () => {
               }
               return (
                 gameStore.canPurchaseUpgrade(upgrade.id) ||
-                gameStore.lifetimeCurrencyAmounts['hcu'] >= 10000
+                gameStore.gameState.currencies.hcu?.lifetime || 0 >= 10000
               )
             },
             5000, // Reasonable limit
@@ -283,8 +283,8 @@ describe('Game Integration Tests', () => {
       const gameStore = useGameStore()
       // Set up complex game state
       gameStore.addCurrency('hcu', 50000)
-      gameStore.lifetimeCurrencyAmounts['hcu'] = 75000
-      gameStore.prestigeLevel = 2
+      gameStore.gameState.currencies.hcu.lifetime = 75000
+      gameStore.gameState.prestigeLevel = 2
 
       // Purchase generators and upgrades
       gameStore.purchaseGenerator('basicAdBotFarm')
@@ -293,8 +293,8 @@ describe('Game Integration Tests', () => {
 
       const beforeSave = {
         contentUnits: gameStore.getCurrencyAmount('hcu'),
-        lifetimeContentUnits: gameStore.lifetimeCurrencyAmounts['hcu'],
-        prestigeLevel: gameStore.prestigeLevel,
+        lifetimeContentUnits: gameStore.gameState.currencies.hcu?.lifetime || 0,
+        prestigeLevel: gameStore.gameState.prestigeLevel,
         generatorOwned: gameStore.getGenerator('basicAdBotFarm')!.owned,
         upgradesPurchased: gameStore.getUpgrade('automatedContentScript')!.isPurchased,
       }
@@ -304,8 +304,8 @@ describe('Game Integration Tests', () => {
 
       // Verify state is consistent after operations
       expect(gameStore.getCurrencyAmount('hcu')).toBe(beforeSave.contentUnits)
-      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBe(beforeSave.lifetimeContentUnits)
-      expect(gameStore.prestigeLevel).toBe(beforeSave.prestigeLevel)
+      expect(gameStore.gameState.currencies.hcu?.lifetime || 0).toBe(beforeSave.lifetimeContentUnits)
+      expect(gameStore.gameState.prestigeLevel).toBe(beforeSave.prestigeLevel)
       expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(beforeSave.generatorOwned)
       expect(gameStore.getUpgrade('automatedContentScript')!.isPurchased).toBe(
         beforeSave.upgradesPurchased,
@@ -329,8 +329,8 @@ describe('Game Integration Tests', () => {
 
       // Values should remain valid
       expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThanOrEqual(0)
-      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBeGreaterThanOrEqual(0)
-      expect(gameStore.prestigeLevel).toBeGreaterThanOrEqual(0)
+      expect(gameStore.gameState.currencies.hcu?.lifetime || 0).toBeGreaterThanOrEqual(0)
+      expect(gameStore.gameState.prestigeLevel).toBeGreaterThanOrEqual(0)
     })
 
     it('should handle extreme values without breaking', async () => {
@@ -387,7 +387,7 @@ describe('Game Integration Tests', () => {
 
       // Game state should remain consistent
       expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThanOrEqual(0)
-      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBeGreaterThan(0)
+      expect(gameStore.gameState.currencies.hcu?.lifetime || 0).toBeGreaterThan(0)
     })
   })
 })

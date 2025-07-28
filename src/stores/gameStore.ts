@@ -13,6 +13,19 @@ import { executeGameTick } from '../utils/gameLogic'
 
 export type { GeneratorConfig, UpgradeConfig, NarrativeEvent, CurrencyConfig }
 
+// Unified game state interface
+interface CurrencyState {
+  current: number
+  lifetime: number
+}
+
+interface GameState {
+  currencies: Record<string, CurrencyState>
+  generators: GeneratorConfig[]
+  upgrades: UpgradeConfig[]
+  prestigeLevel: number
+}
+
 export const useGameStore = defineStore(
   'game',
   () => {
@@ -26,24 +39,16 @@ export const useGameStore = defineStore(
     // Initialize task system with game loop's current time
     const taskSystem = useTaskSystem(() => gameLoop.currentTime.value)
 
-    // ===== BASE GAME STATE =====
+    // ===== UNIFIED GAME STATE =====
 
-    // Currencies - initialize from config
-    const currencyAmounts = ref<Record<string, number>>(
-      Object.fromEntries(currencies.map((c) => [c.id, c.initialValue])),
-    )
-    const lifetimeCurrencyAmounts = ref<Record<string, number>>(
-      Object.fromEntries(currencies.map((c) => [c.id, c.initialValue])),
-    )
-
-    // Generators (initialized from config with owned count)
-    const generators = ref<GeneratorConfig[]>(generatorConfigs.map((g) => ({ ...g, owned: 0 })))
-
-    // Upgrades (initialized from config with purchased state)
-    const upgrades = ref<UpgradeConfig[]>(upgradeConfigs.map((u) => ({ ...u, isPurchased: false })))
-
-    // Prestige
-    const prestigeLevel = ref(0)
+    const gameState = ref<GameState>({
+      currencies: Object.fromEntries(
+        currencies.map((c) => [c.id, { current: c.initialValue, lifetime: c.initialValue }])
+      ),
+      generators: generatorConfigs.map((g) => ({ ...g, owned: 0 })),
+      upgrades: upgradeConfigs.map((u) => ({ ...u, isPurchased: false })),
+      prestigeLevel: 0,
+    })
 
     // ===== COMPUTED PROPERTIES (Auto-cached & Reactive) =====
 
@@ -51,7 +56,7 @@ export const useGameStore = defineStore(
      * Global multiplier from prestige system
      */
     const globalMultiplier = computed(() => {
-      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, prestigeLevel.value)
+      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, gameState.value.prestigeLevel)
     })
 
     /**
@@ -60,7 +65,7 @@ export const useGameStore = defineStore(
     const prestigeThreshold = computed(() => {
       return (
         GAME_CONSTANTS.PRESTIGE_THRESHOLD_BASE *
-        Math.pow(GAME_CONSTANTS.PRESTIGE_THRESHOLD_GROWTH, prestigeLevel.value)
+        Math.pow(GAME_CONSTANTS.PRESTIGE_THRESHOLD_GROWTH, gameState.value.prestigeLevel)
       )
     })
 
@@ -75,7 +80,7 @@ export const useGameStore = defineStore(
      * Next prestige multiplier preview
      */
     const nextPrestigeMultiplier = computed(() => {
-      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, prestigeLevel.value + 1)
+      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, gameState.value.prestigeLevel + 1)
     })
 
     /**
@@ -83,7 +88,7 @@ export const useGameStore = defineStore(
      */
     const getGeneratorMultiplier = (generatorId: string) => {
       let multiplier = 1
-      for (const upgrade of upgrades.value) {
+      for (const upgrade of gameState.value.upgrades) {
         if (
           upgrade.isPurchased &&
           upgrade.targetGenerator === generatorId &&
@@ -101,7 +106,7 @@ export const useGameStore = defineStore(
     const productionRate = computed(() => {
       let totalRate = 0
 
-      for (const generator of generators.value) {
+      for (const generator of gameState.value.generators) {
         let generatorRate = generator.baseProduction * generator.owned
 
         // Apply generator-specific upgrade multipliers
@@ -112,7 +117,7 @@ export const useGameStore = defineStore(
 
       // Apply global upgrade multiplier
       let upgradeMultiplier = 1
-      for (const upgrade of upgrades.value) {
+      for (const upgrade of gameState.value.upgrades) {
         if (upgrade.isPurchased && upgrade.effectType === 'global_multiplier') {
           upgradeMultiplier *= upgrade.effectValue
         }
@@ -155,16 +160,18 @@ export const useGameStore = defineStore(
      * Get currency amount by ID
      */
     function getCurrencyAmount(currencyId: string): number {
-      return currencyAmounts.value[currencyId] || 0
+      return gameState.value.currencies[currencyId]?.current || 0
     }
 
     /**
      * Add currency and track lifetime total
      */
     function addCurrency(currencyId: string, amount: number): void {
-      currencyAmounts.value[currencyId] = (currencyAmounts.value[currencyId] || 0) + amount
-      lifetimeCurrencyAmounts.value[currencyId] =
-        (lifetimeCurrencyAmounts.value[currencyId] || 0) + amount
+      if (!gameState.value.currencies[currencyId]) {
+        gameState.value.currencies[currencyId] = { current: 0, lifetime: 0 }
+      }
+      gameState.value.currencies[currencyId].current += amount
+      gameState.value.currencies[currencyId].lifetime += amount
     }
 
     /**
@@ -173,7 +180,7 @@ export const useGameStore = defineStore(
     function spendCurrency(currencyId: string, amount: number): boolean {
       const currentAmount = getCurrencyAmount(currencyId)
       if (currentAmount >= amount) {
-        currencyAmounts.value[currencyId] = currentAmount - amount
+        gameState.value.currencies[currencyId].current = currentAmount - amount
         return true
       }
       return false
@@ -192,14 +199,14 @@ export const useGameStore = defineStore(
      * Get generator by ID
      */
     function getGenerator(id: string): GeneratorConfig | undefined {
-      return generators.value.find((g) => g.id === id)
+      return gameState.value.generators.find((g) => g.id === id)
     }
 
     /**
      * Calculate generator cost based on owned count
      */
     function getGeneratorCost(generatorId: string): number {
-      const generator = generators.value.find((g) => g.id === generatorId)
+      const generator = gameState.value.generators.find((g) => g.id === generatorId)
       if (!generator) return 0
 
       // cost_next = cost_base × (rate_growth)^owned
@@ -218,7 +225,7 @@ export const useGameStore = defineStore(
      * Purchase a generator
      */
     function purchaseGenerator(generatorId: string): boolean {
-      const generator = generators.value.find((g) => g.id === generatorId)
+      const generator = gameState.value.generators.find((g) => g.id === generatorId)
       if (!generator) return false
 
       const cost = getGeneratorCost(generatorId)
@@ -241,7 +248,7 @@ export const useGameStore = defineStore(
      * Get generator production rate
      */
     function getGeneratorProductionRate(generatorId: string): number {
-      const generator = generators.value.find((g) => g.id === generatorId)
+      const generator = gameState.value.generators.find((g) => g.id === generatorId)
       if (!generator) return 0
 
       let rate = generator.baseProduction * generator.owned
@@ -256,18 +263,18 @@ export const useGameStore = defineStore(
      * Get upgrade by ID
      */
     function getUpgrade(id: string): UpgradeConfig | undefined {
-      return upgrades.value.find((u) => u.id === id)
+      return gameState.value.upgrades.find((u) => u.id === id)
     }
 
     /**
      * Check if upgrade requirements are met
      */
     function areUpgradeRequirementsMet(upgradeId: string): boolean {
-      const upgrade = upgrades.value.find((u) => u.id === upgradeId)
+      const upgrade = gameState.value.upgrades.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
       for (const requirement of upgrade.requirements) {
-        const generator = generators.value.find((g) => g.id === requirement.generatorId)
+        const generator = gameState.value.generators.find((g) => g.id === requirement.generatorId)
         if (!generator || generator.owned < requirement.minOwned) {
           return false
         }
@@ -280,7 +287,7 @@ export const useGameStore = defineStore(
      * Check if player can purchase upgrade
      */
     function canPurchaseUpgrade(upgradeId: string): boolean {
-      const upgrade = upgrades.value.find((u) => u.id === upgradeId)
+      const upgrade = gameState.value.upgrades.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
       return (
@@ -294,7 +301,7 @@ export const useGameStore = defineStore(
      * Purchase an upgrade
      */
     function purchaseUpgrade(upgradeId: string): boolean {
-      const upgrade = upgrades.value.find((u) => u.id === upgradeId)
+      const upgrade = gameState.value.upgrades.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
       if (!canPurchaseUpgrade(upgradeId)) {
@@ -336,13 +343,13 @@ export const useGameStore = defineStore(
       }
 
       // Trigger narrative events for prestige
-      narrativeSystem.triggerNarrative('prestige', prestigeLevel.value)
+      narrativeSystem.triggerNarrative('prestige', gameState.value.prestigeLevel)
 
       // Increase prestige level
-      prestigeLevel.value++
+      gameState.value.prestigeLevel++
 
       // Reset game state (but keep lifetime currencies)
-      currencyAmounts.value['hcu'] = 0
+      gameState.value.currencies['hcu'].current = 0
       resetGenerators()
       resetUpgrades()
 
@@ -356,7 +363,7 @@ export const useGameStore = defineStore(
      * Reset all generator owned counts
      */
     function resetGenerators(): void {
-      for (const generator of generators.value) {
+      for (const generator of gameState.value.generators) {
         generator.owned = 0
       }
     }
@@ -365,7 +372,7 @@ export const useGameStore = defineStore(
      * Reset all upgrade purchases
      */
     function resetUpgrades(): void {
-      for (const upgrade of upgrades.value) {
+      for (const upgrade of gameState.value.upgrades) {
         upgrade.isPurchased = false
       }
     }
@@ -386,6 +393,7 @@ export const useGameStore = defineStore(
         getLastContentUnitsCheck: narrativeSystem.getLastContentUnitsCheck,
         setLastContentUnitsCheck: narrativeSystem.setLastContentUnitsCheck,
         getGameStartTime: narrativeSystem.getGameStartTime,
+        getCurrentTime: () => gameLoop.currentTime.value,
         hasTriggeredGameStart: narrativeSystem.getHasTriggeredGameStart,
         setHasTriggeredGameStart: narrativeSystem.setHasTriggeredGameStart,
       })
@@ -427,11 +435,7 @@ export const useGameStore = defineStore(
     return {
       // ===== STATE =====
       isRunning: gameLoop.isRunning,
-      currencyAmounts,
-      lifetimeCurrencyAmounts,
-      generators,
-      upgrades,
-      prestigeLevel,
+      gameState,
       narrative: narrativeSystem.narrative,
       taskStartTime: taskSystem.taskStartTime,
 

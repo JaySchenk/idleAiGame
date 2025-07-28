@@ -31,7 +31,7 @@ onMounted(() => {
           <div class="section">
             <h2 class="section-title">Automation</h2>
             <GeneratorPurchaseButton
-              v-for="generator in gameStore.generators"
+              v-for="generator in gameStore.gameState.generators"
               :key="generator.id"
               :generator-id="generator.id"
             />
@@ -40,7 +40,7 @@ onMounted(() => {
           <div class="section">
             <h2 class="section-title">Upgrades</h2>
             <UpgradeButton
-              v-for="upgrade in gameStore.upgrades"
+              v-for="upgrade in gameStore.gameState.upgrades"
               :key="upgrade.id"
               :upgrade="upgrade"
             />

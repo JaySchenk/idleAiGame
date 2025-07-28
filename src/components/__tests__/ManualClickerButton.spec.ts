@@ -41,7 +41,7 @@ describe('ManualClickerButton', () => {
       const gameStore = useGameStore()
 
       // Mock click value
-      gameStore.prestigeLevel = 1 // This should make click value 1.25
+      gameStore.gameState.prestigeLevel = 1 // This should make click value 1.25
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.clicker-description').text()).toContain('1.25')
@@ -177,7 +177,7 @@ describe('ManualClickerButton', () => {
       const gameStore = useGameStore()
 
       // Set higher click value
-      gameStore.prestigeLevel = 2 // Should be 1.5625
+      gameStore.gameState.prestigeLevel = 2 // Should be 1.5625
       await wrapper.vm.$nextTick()
 
       await wrapper.find('.clicker-button').trigger('click')
@@ -196,7 +196,7 @@ describe('ManualClickerButton', () => {
       expect(wrapper.find('.click-reward').text()).toContain('1')
 
       // Increase prestige level
-      gameStore.prestigeLevel = 1
+      gameStore.gameState.prestigeLevel = 1
       await wrapper.vm.$nextTick()
 
       // Should reflect new click value
@@ -222,7 +222,7 @@ describe('ManualClickerButton', () => {
       const gameStore = useGameStore()
 
       // Set prestige for higher click value
-      gameStore.prestigeLevel = 1 // 1.25x
+      gameStore.gameState.prestigeLevel = 1 // 1.25x
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.click-reward').text()).toContain('1.25')

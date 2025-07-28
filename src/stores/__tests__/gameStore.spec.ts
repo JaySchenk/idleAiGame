@@ -57,10 +57,10 @@ describe('GameStore', () => {
       const store = useGameStore()
 
       expect(store.getCurrencyAmount('hcu')).toBe(0)
-      expect(store.lifetimeCurrencyAmounts['hcu']).toBe(0)
-      expect(store.prestigeLevel).toBe(0)
-      expect(store.generators).toHaveLength(2)
-      expect(store.upgrades).toHaveLength(2)
+      expect(store.gameState.currencies.hcu?.lifetime || 0).toBe(0)
+      expect(store.gameState.prestigeLevel).toBe(0)
+      expect(store.gameState.generators).toHaveLength(2)
+      expect(store.gameState.upgrades).toHaveLength(2)
     })
 
     it('should add content units correctly', () => {
@@ -69,7 +69,7 @@ describe('GameStore', () => {
       store.addCurrency('hcu', 100)
 
       expect(store.getCurrencyAmount('hcu')).toBe(100)
-      expect(store.lifetimeCurrencyAmounts['hcu']).toBe(100)
+      expect(store.gameState.currencies.hcu?.lifetime || 0).toBe(100)
     })
 
     it('should spend content units when available', () => {
@@ -80,7 +80,7 @@ describe('GameStore', () => {
 
       expect(result).toBe(true)
       expect(store.getCurrencyAmount('hcu')).toBe(50)
-      expect(store.lifetimeCurrencyAmounts['hcu']).toBe(100) // Lifetime should not decrease
+      expect(store.gameState.currencies.hcu?.lifetime || 0).toBe(100) // Lifetime should not decrease
     })
 
     it('should not spend content units when insufficient', () => {
@@ -110,7 +110,7 @@ describe('GameStore', () => {
 
         mathTestCases.generatorCosts.forEach(({ baseCost, growthRate, owned, expected }) => {
           // Set up generator with specific owned count
-          const generator = store.generators.find(
+          const generator = store.gameState.generators.find(
             (g) => g.baseCost === baseCost && g.growthRate === growthRate,
           )
           if (generator) {
@@ -142,7 +142,7 @@ describe('GameStore', () => {
     describe('Production Rate Calculations', () => {
       it('should calculate base production rates correctly', () => {
         const store = useGameStore()
-        const generator = store.generators[0]
+        const generator = store.gameState.generators[0]
 
         generator.owned = 5
 
@@ -153,8 +153,8 @@ describe('GameStore', () => {
 
       it('should apply generator-specific multipliers', () => {
         const store = useGameStore()
-        const generator = store.generators[0]
-        const upgrade = store.upgrades[0]
+        const generator = store.gameState.generators[0]
+        const upgrade = store.gameState.upgrades[0]
 
         generator.owned = 4
         upgrade.isPurchased = true
@@ -168,11 +168,11 @@ describe('GameStore', () => {
         const store = useGameStore()
 
         // Set up generators
-        store.generators[0].owned = 5
-        store.generators[1].owned = 2
+        store.gameState.generators[0].owned = 5
+        store.gameState.generators[1].owned = 2
 
         // Set up upgrades
-        store.upgrades[0].isPurchased = true // Generator-specific multiplier (1.25x)
+        store.gameState.upgrades[0].isPurchased = true // Generator-specific multiplier (1.25x)
 
         const totalRate = store.productionRate
 
@@ -185,8 +185,8 @@ describe('GameStore', () => {
       it('should apply prestige multiplier to production', () => {
         const store = useGameStore()
 
-        store.generators[0].owned = 10
-        store.prestigeLevel = 1
+        store.gameState.generators[0].owned = 10
+        store.gameState.prestigeLevel = 1
 
         const totalRate = store.productionRate
 
@@ -201,7 +201,7 @@ describe('GameStore', () => {
         const store = useGameStore()
 
         mathTestCases.prestigeCalculations.forEach(({ level, expectedMultiplier }) => {
-          store.prestigeLevel = level
+          store.gameState.prestigeLevel = level
           expect(store.globalMultiplier).toBeCloseTo(expectedMultiplier, 6)
         })
       })
@@ -210,7 +210,7 @@ describe('GameStore', () => {
         const store = useGameStore()
 
         mathTestCases.prestigeCalculations.forEach(({ level, expectedThreshold }) => {
-          store.prestigeLevel = level
+          store.gameState.prestigeLevel = level
           expect(store.prestigeThreshold).toBe(expectedThreshold)
         })
       })
@@ -218,23 +218,23 @@ describe('GameStore', () => {
       it('should determine prestige eligibility correctly', () => {
         const store = useGameStore()
 
-        store.currencyAmounts['hcu'] = 999
+        store.gameState.currencies.hcu.current = 999
         expect(store.canPrestige).toBe(false)
 
-        store.currencyAmounts['hcu'] = 1000
+        store.gameState.currencies.hcu.current = 1000
         expect(store.canPrestige).toBe(true)
 
-        store.currencyAmounts['hcu'] = 1001
+        store.gameState.currencies.hcu.current = 1001
         expect(store.canPrestige).toBe(true)
       })
 
       it('should calculate next prestige multiplier', () => {
         const store = useGameStore()
 
-        store.prestigeLevel = 0
+        store.gameState.prestigeLevel = 0
         expect(store.nextPrestigeMultiplier).toBe(1.25)
 
-        store.prestigeLevel = 1
+        store.gameState.prestigeLevel = 1
         expect(store.nextPrestigeMultiplier).toBe(1.5625)
       })
     })
@@ -245,10 +245,10 @@ describe('GameStore', () => {
 
         expect(store.clickValue).toBe(1)
 
-        store.prestigeLevel = 1
+        store.gameState.prestigeLevel = 1
         expect(store.clickValue).toBe(1.25)
 
-        store.prestigeLevel = 2
+        store.gameState.prestigeLevel = 2
         expect(store.clickValue).toBeCloseTo(1.5625, 6)
       })
     })
@@ -377,12 +377,12 @@ describe('GameStore', () => {
 
       // Enough generators, not enough money
       generator.owned = 5
-      store.currencyAmounts['hcu'] = 30
+      store.gameState.currencies.hcu.current = 30
       expect(store.canPurchaseUpgrade(upgrade)).toBe(false)
 
       // Both requirements met
       generator.owned = 5
-      store.currencyAmounts['hcu'] = 100
+      store.gameState.currencies.hcu.current = 100
       expect(store.canPurchaseUpgrade(upgrade)).toBe(true)
     })
 
@@ -426,17 +426,17 @@ describe('GameStore', () => {
       store.clickForContent()
 
       expect(store.getCurrencyAmount('hcu')).toBe(1)
-      expect(store.lifetimeCurrencyAmounts['hcu']).toBe(1)
+      expect(store.gameState.currencies.hcu?.lifetime || 0).toBe(1)
     })
 
     it('should apply prestige multiplier to clicks', () => {
       const store = useGameStore()
 
-      store.prestigeLevel = 1
+      store.gameState.prestigeLevel = 1
       store.clickForContent()
 
       expect(store.getCurrencyAmount('hcu')).toBe(1.25)
-      expect(store.lifetimeCurrencyAmounts['hcu']).toBe(1.25)
+      expect(store.gameState.currencies.hcu?.lifetime || 0).toBe(1.25)
     })
   })
 
@@ -446,17 +446,17 @@ describe('GameStore', () => {
 
       // Set up for prestige
       store.addCurrency('hcu', 1000)
-      store.generators[0].owned = 10
-      store.upgrades[0].isPurchased = true
+      store.gameState.generators[0].owned = 10
+      store.gameState.upgrades[0].isPurchased = true
 
       const result = store.performPrestige()
 
       expect(result).toBe(true)
-      expect(store.prestigeLevel).toBe(1)
+      expect(store.gameState.prestigeLevel).toBe(1)
       expect(store.getCurrencyAmount('hcu')).toBe(0)
-      expect(store.generators[0].owned).toBe(0)
-      expect(store.upgrades[0].isPurchased).toBe(false)
-      expect(store.lifetimeCurrencyAmounts['hcu']).toBe(1000) // Should not reset
+      expect(store.gameState.generators[0].owned).toBe(0)
+      expect(store.gameState.upgrades[0].isPurchased).toBe(false)
+      expect(store.gameState.currencies.hcu?.lifetime || 0).toBe(1000) // Should not reset
     })
 
     it('should not perform prestige when not eligible', () => {
@@ -467,32 +467,32 @@ describe('GameStore', () => {
       const result = store.performPrestige()
 
       expect(result).toBe(false)
-      expect(store.prestigeLevel).toBe(0)
+      expect(store.gameState.prestigeLevel).toBe(0)
       expect(store.getCurrencyAmount('hcu')).toBe(500)
     })
 
     it('should reset generators correctly', () => {
       const store = useGameStore()
 
-      store.generators[0].owned = 10
-      store.generators[1].owned = 5
+      store.gameState.generators[0].owned = 10
+      store.gameState.generators[1].owned = 5
 
       store.resetGenerators()
 
-      expect(store.generators[0].owned).toBe(0)
-      expect(store.generators[1].owned).toBe(0)
+      expect(store.gameState.generators[0].owned).toBe(0)
+      expect(store.gameState.generators[1].owned).toBe(0)
     })
 
     it('should reset upgrades correctly', () => {
       const store = useGameStore()
 
-      store.upgrades[0].isPurchased = true
-      store.upgrades[1].isPurchased = true
+      store.gameState.upgrades[0].isPurchased = true
+      store.gameState.upgrades[1].isPurchased = true
 
       store.resetUpgrades()
 
-      expect(store.upgrades[0].isPurchased).toBe(false)
-      expect(store.upgrades[1].isPurchased).toBe(false)
+      expect(store.gameState.upgrades[0].isPurchased).toBe(false)
+      expect(store.gameState.upgrades[1].isPurchased).toBe(false)
     })
   })
 
@@ -504,7 +504,7 @@ describe('GameStore', () => {
       store.addCurrency('hcu', largeNumber)
 
       expect(store.getCurrencyAmount('hcu')).toBe(largeNumber)
-      expect(store.lifetimeCurrencyAmounts['hcu']).toBe(largeNumber)
+      expect(store.gameState.currencies.hcu?.lifetime || 0).toBe(largeNumber)
 
       const formatted = ((amount: number) => store.formatCurrency('hcu', amount))(largeNumber)
       expect(formatted).toBe('1.00Q HCU')
@@ -530,7 +530,7 @@ describe('GameStore', () => {
 
     it('should handle generator cost overflow gracefully', () => {
       const store = useGameStore()
-      const generator = store.generators[0]
+      const generator = store.gameState.generators[0]
 
       // Set to a high owned count that might cause overflow
       generator.owned = 200
@@ -560,7 +560,7 @@ describe('GameStore', () => {
         requirements: [],
       }
 
-      store.upgrades.push(upgradeWithNoReqs)
+      store.gameState.upgrades.push(upgradeWithNoReqs)
 
       expect(store.areUpgradeRequirementsMet(upgradeWithNoReqs.id)).toBe(true)
     })
@@ -586,7 +586,7 @@ describe('GameStore', () => {
       store.addCurrency('hcu', 25)
 
       expect(store.getCurrencyAmount('hcu')).toBe(75)
-      expect(store.lifetimeCurrencyAmounts['hcu']).toBe(125) // Only additions count
+      expect(store.gameState.currencies.hcu?.lifetime || 0).toBe(125) // Only additions count
     })
   })
 })

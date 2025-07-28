@@ -76,7 +76,7 @@ describe('GeneratorPurchaseButton', () => {
       // Purchase generator and set prestige for global multiplier
       gameStore.addCurrency('hcu', 100)
       gameStore.purchaseGenerator('basicAdBotFarm')
-      gameStore.prestigeLevel = 1 // 1.25x multiplier
+      gameStore.gameState.prestigeLevel = 1 // 1.25x multiplier
 
       await wrapper.vm.$nextTick()
 
@@ -306,7 +306,7 @@ describe('GeneratorPurchaseButton', () => {
       expect(wrapper.find('.production-rate').text()).toContain('1')
 
       // Increase prestige level
-      gameStore.prestigeLevel = 1 // 1.25x multiplier
+      gameStore.gameState.prestigeLevel = 1 // 1.25x multiplier
       await wrapper.vm.$nextTick()
 
       // Production rate should include global multiplier (1 * 1.25 = 1.25)

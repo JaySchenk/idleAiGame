@@ -84,13 +84,13 @@ const canPurchase = computed(() => {
 
 // Get generator name by ID
 const getGeneratorName = (generatorId: string): string => {
-  const generator = gameStore.generators.find((g) => g.id === generatorId)
+  const generator = gameStore.gameState.generators.find((g) => g.id === generatorId)
   return generator ? generator.name : 'Unknown Generator'
 }
 
 // Get generator owned count
 const getGeneratorOwned = (generatorId: string): number => {
-  const generator = gameStore.generators.find((g) => g.id === generatorId)
+  const generator = gameStore.gameState.generators.find((g) => g.id === generatorId)
   return generator ? generator.owned : 0
 }
 

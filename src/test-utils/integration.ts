@@ -48,7 +48,7 @@ export function runGameLoopUntil(
 
   if (ticks >= maxTicks) {
     throw new Error(
-      `runGameLoopUntil exceeded maximum ticks (${maxTicks}). Last state: HCU=${gameStore.getCurrencyAmount(HCU)}, Lifetime=${gameStore.lifetimeCurrencyAmounts['hcu']}`,
+      `runGameLoopUntil exceeded maximum ticks (${maxTicks}). Last state: HCU=${gameStore.getCurrencyAmount('hcu')}, Lifetime=${gameStore.gameState.currencies.hcu?.lifetime || 0}`,
     )
   }
 
@@ -112,9 +112,12 @@ export function setupGameWithResources(
     ;((amount: number) => gameStore.addCurrency('hcu', amount))(initialHCU)
   }
   if (initialLifetime > 0) {
-    gameStore.lifetimeCurrencyAmounts['hcu'] = Math.max(
+    if (!gameStore.gameState.currencies.hcu) {
+      gameStore.gameState.currencies.hcu = { current: 0, lifetime: 0 }
+    }
+    gameStore.gameState.currencies.hcu.lifetime = Math.max(
       initialLifetime,
-      gameStore.lifetimeCurrencyAmounts['hcu'],
+      gameStore.gameState.currencies.hcu.lifetime,
     )
   }
 }
