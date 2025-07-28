@@ -1,117 +1,75 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { NarrativeEvent } from '../assets/narratives'
-import generatorsConfig from '../../config/generators.json'
-import upgradesConfig from '../../config/upgrades.json'
-import narrativesConfig from '../../config/narratives.json'
+import { useGameConfig, type GeneratorConfig, type UpgradeConfig } from '../composables/useGameConfig'
+import { useGameLoop } from '../composables/useGameLoop'
+import { useNarrative } from '../composables/useNarrative'
+import { useTaskSystem } from '../composables/useTaskSystem'
 
-export interface GeneratorConfig {
-  id: string
-  name: string
-  baseCost: number
-  growthRate: number
-  baseProduction: number
-  owned: number
-}
-
-export interface UpgradeConfig {
-  id: string
-  name: string
-  description: string
-  cost: number
-  targetGenerator: string
-  effectType: 'production_multiplier' | 'global_multiplier'
-  effectValue: number
-  requirements: {
-    generatorId: string
-    minOwned: number
-  }[]
-  isPurchased: boolean
-}
+export type { GeneratorConfig, UpgradeConfig }
 
 export const useGameStore = defineStore('game', () => {
-  // ===== BASE STATE =====
+  // ===== INITIALIZE COMPOSABLES =====
   
-  // Game control
-  const isRunning = ref(false)
+  const gameConfig = useGameConfig()
+  const gameLoop = useGameLoop()
+  
+  // Initialize with default config
+  const defaultConfig = gameConfig.getDefaultConfig()
+  
+  // Initialize narrative system with narratives
+  const narrativeSystem = useNarrative(defaultConfig.narratives)
+  
+  // Initialize task system with game loop's current time
+  const taskSystem = useTaskSystem(() => gameLoop.currentTime.value)
+  
+  // ===== BASE GAME STATE =====
   
   // Resources
   const contentUnits = ref(0)
   const lifetimeContentUnits = ref(0)
   
-  // Generators
-  const generators = ref<GeneratorConfig[]>(
-    generatorsConfig.map(config => ({
-      ...config,
-      owned: 0,
-    }))
-  )
+  // Generators (initialized from config)
+  const generators = ref<GeneratorConfig[]>(defaultConfig.generators)
   
-  // Upgrades
-  const upgrades = ref<UpgradeConfig[]>(
-    upgradesConfig.map(config => ({
-      ...config,
-      effectType: config.effectType as 'production_multiplier' | 'global_multiplier',
-      isPurchased: false,
-    }))
-  )
+  // Upgrades (initialized from config)
+  const upgrades = ref<UpgradeConfig[]>(defaultConfig.upgrades)
   
   // Prestige
   const prestigeLevel = ref(0)
   
-  // Narrative state
-  const narrative = ref({
-    currentStoryEvents: narrativesConfig.map(config => ({
-      ...config,
-      triggerType: config.triggerType as 'gameStart' | 'contentUnits' | 'generatorPurchase' | 'upgrade' | 'prestige' | 'timeElapsed',
-      isViewed: false
-    })) as NarrativeEvent[],
-    viewedEvents: [] as string[],
-    societalStability: 100,
-    pendingEvents: [] as NarrativeEvent[],
-    isNarrativeActive: false,
-    gameStartTime: Date.now(),
-  })
-  
-  // Task system constants
-  const taskDuration = 30000
-  const taskReward = 10
-  const taskStartTime = ref(Date.now()) // Will be restored from persistence if available
-  const currentTime = ref(Date.now())
-  
-  // Narrative tracking
-  const hasTriggeredGameStart = ref(false)
-  const lastContentUnitsCheck = ref(0)
-  const eventCallbacks = ref<((event: NarrativeEvent) => void)[]>([])
-  
-  // Game loop control
-  let gameLoop: number | null = null
-  
   // ===== COMPUTED PROPERTIES (Auto-cached & Reactive) =====
   
-  // Global multiplier from prestige
+  /**
+   * Global multiplier from prestige system
+   */
   const globalMultiplier = computed(() => {
     return Math.pow(1.25, prestigeLevel.value)
   })
   
-  // Prestige threshold calculation
+  /**
+   * Threshold for prestige eligibility
+   */
   const prestigeThreshold = computed(() => {
     return 1000 * Math.pow(10, prestigeLevel.value)
   })
   
-  // Can prestige check
+  /**
+   * Check if player can prestige
+   */
   const canPrestige = computed(() => {
     return contentUnits.value >= prestigeThreshold.value
   })
   
-  // Next prestige multiplier
+  /**
+   * Next prestige multiplier preview
+   */
   const nextPrestigeMultiplier = computed(() => {
     return Math.pow(1.25, prestigeLevel.value + 1)
   })
   
-  
-  
-  // Generator-specific multiplier
+  /**
+   * Get generator-specific multiplier from upgrades
+   */
   const getGeneratorMultiplier = (generatorId: string) => {
     let multiplier = 1
     for (const upgrade of upgrades.value) {
@@ -126,8 +84,9 @@ export const useGameStore = defineStore('game', () => {
     return multiplier
   }
   
-  
-  // Production rate from all generators (includes all multipliers)
+  /**
+   * Total production rate from all generators (includes all multipliers)
+   */
   const productionRate = computed(() => {
     let totalRate = 0
     
@@ -155,32 +114,18 @@ export const useGameStore = defineStore('game', () => {
     return totalRate
   })
   
-  // Click value for manual clicks
+  /**
+   * Click value for manual clicks
+   */
   const clickValue = computed(() => {
     return 1 * globalMultiplier.value
   })
   
-  // Task progress (time-based, computed from reactive current time)
-  const taskProgress = computed(() => {
-    const timeElapsed = currentTime.value - taskStartTime.value
-    const timeRemaining = Math.max(0, taskDuration - timeElapsed)
-    const progressPercent = Math.min(100, (timeElapsed / taskDuration) * 100)
-    const isComplete = timeElapsed >= taskDuration
-    
-    return {
-      timeElapsed,
-      timeRemaining,
-      progressPercent,
-      isComplete,
-      rewardAmount: taskReward,
-      duration: taskDuration,
-    }
-  })
-  
-  
   // ===== HELPER FUNCTIONS =====
   
-  // Format currency for display
+  /**
+   * Format currency for display
+   */
   function formatContentUnits(amount: number): string {
     // Handle scientific notation for very large numbers
     if (amount >= 1e18) {
@@ -216,93 +161,19 @@ export const useGameStore = defineStore('game', () => {
     return amount.toFixed(2) + ' HCU'
   }
   
-  // ===== NARRATIVE SYSTEM =====
+  // ===== CORE GAME ACTIONS =====
   
-  // Subscribe to narrative events
-  function onNarrativeEvent(callback: (event: NarrativeEvent) => void): void {
-    eventCallbacks.value.push(callback)
-  }
-  
-  // Generic narrative trigger function
-  function triggerNarrative(
-    triggerType: string,
-    triggerValue?: number,
-    triggerCondition?: string,
-  ): void {
-    const eligibleEvents = narrative.value.currentStoryEvents.filter((event) => {
-      // Skip already viewed events
-      if (event.isViewed) return false
-
-      // Check trigger type
-      if (event.triggerType !== triggerType) return false
-
-      // Check trigger value (if specified)
-      if (event.triggerValue !== undefined) {
-        if (triggerValue === undefined || triggerValue < event.triggerValue) {
-          return false
-        }
-      }
-
-      // Check trigger condition (if specified)
-      if (event.triggerCondition !== undefined) {
-        if (triggerCondition !== event.triggerCondition) {
-          return false
-        }
-      }
-
-      return true
-    })
-
-    // Sort by priority (highest first)
-    eligibleEvents.sort((a, b) => b.priority - a.priority)
-
-    // Process each eligible event
-    eligibleEvents.forEach((event) => {
-      triggerNarrativeEvent(event)
-    })
-  }
-  
-  // Trigger a specific narrative event
-  function triggerNarrativeEvent(event: NarrativeEvent): void {
-    // Mark event as viewed
-    event.isViewed = true
-    narrative.value.viewedEvents.push(event.id)
-
-    // Apply societal stability impact
-    narrative.value.societalStability = Math.max(
-      0,
-      Math.min(100, narrative.value.societalStability + event.societalStabilityImpact),
-    )
-
-    // Add to pending events for display
-    narrative.value.pendingEvents.push(event)
-
-    // Notify subscribers
-    eventCallbacks.value.forEach((callback) => callback(event))
-
-    console.log(`Narrative Event Triggered: ${event.title}`)
-    console.log(`Societal Stability: ${narrative.value.societalStability}%`)
-  }
-  
-  // Get the next pending event to display
-  function getNextPendingEvent(): NarrativeEvent | null {
-    return narrative.value.pendingEvents.shift() || null
-  }
-  
-  // Check if there are pending events
-  function hasPendingEvents(): boolean {
-    return narrative.value.pendingEvents.length > 0
-  }
-  
-  
-  // ===== ACTIONS =====
-  
-  // Resource management
+  /**
+   * Add content units and track lifetime total
+   */
   function addContentUnits(amount: number): void {
     contentUnits.value += amount
     lifetimeContentUnits.value += amount
   }
   
+  /**
+   * Spend content units if available
+   */
   function spendContentUnits(amount: number): boolean {
     if (contentUnits.value >= amount) {
       contentUnits.value -= amount
@@ -311,15 +182,25 @@ export const useGameStore = defineStore('game', () => {
     return false
   }
   
+  /**
+   * Check if player can afford a cost
+   */
   function canAfford(amount: number): boolean {
     return contentUnits.value >= amount
   }
   
-  // Generator management
+  // ===== GENERATOR MANAGEMENT =====
+  
+  /**
+   * Get generator by ID
+   */
   function getGenerator(id: string): GeneratorConfig | undefined {
     return generators.value.find(g => g.id === id)
   }
   
+  /**
+   * Calculate generator cost based on owned count
+   */
   function getGeneratorCost(generatorId: string): number {
     const generator = generators.value.find(g => g.id === generatorId)
     if (!generator) return 0
@@ -328,11 +209,17 @@ export const useGameStore = defineStore('game', () => {
     return Math.floor(generator.baseCost * Math.pow(generator.growthRate, generator.owned))
   }
   
+  /**
+   * Check if player can purchase generator
+   */
   function canPurchaseGenerator(generatorId: string): boolean {
     const cost = getGeneratorCost(generatorId)
     return canAfford(cost)
   }
   
+  /**
+   * Purchase a generator
+   */
   function purchaseGenerator(generatorId: string): boolean {
     const generator = generators.value.find(g => g.id === generatorId)
     if (!generator) return false
@@ -344,7 +231,7 @@ export const useGameStore = defineStore('game', () => {
         generator.owned++
         
         // Trigger narrative events for generator purchase
-        triggerNarrative('generatorPurchase', undefined, generatorId)
+        narrativeSystem.triggerNarrative('generatorPurchase', undefined, generatorId)
         
         return true
       }
@@ -353,6 +240,9 @@ export const useGameStore = defineStore('game', () => {
     return false
   }
   
+  /**
+   * Get generator production rate
+   */
   function getGeneratorProductionRate(id: string): number {
     const generator = generators.value.find(g => g.id === id)
     if (!generator) return 0
@@ -363,11 +253,18 @@ export const useGameStore = defineStore('game', () => {
     return rate
   }
   
-  // Upgrade management
+  // ===== UPGRADE MANAGEMENT =====
+  
+  /**
+   * Get upgrade by ID
+   */
   function getUpgrade(id: string): UpgradeConfig | undefined {
     return upgrades.value.find(u => u.id === id)
   }
   
+  /**
+   * Check if upgrade requirements are met
+   */
   function areUpgradeRequirementsMet(upgradeId: string): boolean {
     const upgrade = upgrades.value.find(u => u.id === upgradeId)
     if (!upgrade) return false
@@ -382,6 +279,9 @@ export const useGameStore = defineStore('game', () => {
     return true
   }
   
+  /**
+   * Check if player can purchase upgrade
+   */
   function canPurchaseUpgrade(upgradeId: string): boolean {
     const upgrade = upgrades.value.find(u => u.id === upgradeId)
     if (!upgrade) return false
@@ -393,6 +293,9 @@ export const useGameStore = defineStore('game', () => {
     )
   }
   
+  /**
+   * Purchase an upgrade
+   */
   function purchaseUpgrade(upgradeId: string): boolean {
     const upgrade = upgrades.value.find(u => u.id === upgradeId)
     if (!upgrade) return false
@@ -405,7 +308,7 @@ export const useGameStore = defineStore('game', () => {
       upgrade.isPurchased = true
       
       // Trigger narrative events for upgrade purchase
-      triggerNarrative('upgrade', undefined, upgradeId)
+      narrativeSystem.triggerNarrative('upgrade', undefined, upgradeId)
       
       return true
     }
@@ -413,22 +316,30 @@ export const useGameStore = defineStore('game', () => {
     return false
   }
   
-  // Manual content generation (clicker mechanic)
+  // ===== PLAYER ACTIONS =====
+  
+  /**
+   * Manual content generation (clicker mechanic)
+   */
   function clickForContent(): void {
     addContentUnits(clickValue.value)
     
     // Check narrative triggers for content units
-    triggerNarrative('contentUnits', contentUnits.value)
+    narrativeSystem.triggerNarrative('contentUnits', contentUnits.value)
   }
   
-  // Prestige management
+  // ===== PRESTIGE SYSTEM =====
+  
+  /**
+   * Perform prestige reset
+   */
   function performPrestige(): boolean {
     if (!canPrestige.value) {
       return false
     }
     
     // Trigger narrative events for prestige
-    triggerNarrative('prestige', prestigeLevel.value)
+    narrativeSystem.triggerNarrative('prestige', prestigeLevel.value)
     
     // Increase prestige level
     prestigeLevel.value++
@@ -438,147 +349,117 @@ export const useGameStore = defineStore('game', () => {
     resetGenerators()
     resetUpgrades()
     
-    // Reset narrative tracking but keep story progress
-    narrative.value.pendingEvents = []
+    // Reset narrative system for prestige
+    narrativeSystem.resetForPrestige()
     
     return true
   }
   
+  /**
+   * Reset all generator owned counts
+   */
   function resetGenerators(): void {
-    // Reset all generator owned counts
     for (const generator of generators.value) {
       generator.owned = 0
     }
   }
   
+  /**
+   * Reset all upgrade purchases
+   */
   function resetUpgrades(): void {
-    // Reset all upgrade purchases
     for (const upgrade of upgrades.value) {
       upgrade.isPurchased = false
     }
   }
   
-  // Task management
-  function completeTask(): boolean {
-    const progress = taskProgress.value
-    if (!progress.isComplete) {
-      return false
-    }
-    
-    // Grant reward
-    addContentUnits(taskReward)
-    
-    // Reset timer
-    taskStartTime.value = currentTime.value
-    
-    return true
-  }
+  // ===== GAME LOOP INTEGRATION =====
   
-  // ===== GAME LOOP =====
-  
-  const tickRate = 100 // 100ms tick rate
-  
+  /**
+   * Start the main game loop
+   */
   function startGameLoop(): void {
-    if (gameLoop !== null) return
-    
-    isRunning.value = true
-    
-    gameLoop = setInterval(() => {
-      // Update reactive current time
-      currentTime.value = Date.now()
-      
-      // Calculate passive income from generators (production rate is auto-computed)
-      if (productionRate.value > 0) {
-        const productionThisTick = (productionRate.value * tickRate) / 1000
-        addContentUnits(productionThisTick)
-      }
-      
-      // Check for task completion and auto-complete
-      if (taskProgress.value.isComplete) {
-        completeTask()
-      }
-      
-      // Check narrative triggers based on content units
-      if (Math.floor(contentUnits.value) > Math.floor(lastContentUnitsCheck.value)) {
-        triggerNarrative('contentUnits', contentUnits.value)
-        lastContentUnitsCheck.value = contentUnits.value
-      }
-      
-      // Check time elapsed triggers
-      const timeElapsed = currentTime.value - narrative.value.gameStartTime
-      triggerNarrative('timeElapsed', timeElapsed)
-      
-    }, tickRate)
-    
-    
-    // Trigger game start narrative (only once)
-    if (!hasTriggeredGameStart.value) {
-      triggerNarrative('gameStart')
-      hasTriggeredGameStart.value = true
-    }
+    gameLoop.startGameLoop({
+      addContentUnits,
+      completeTask: () => taskSystem.completeTask(addContentUnits),
+      triggerNarrative: narrativeSystem.triggerNarrative,
+      getProductionRate: () => productionRate.value,
+      getTaskProgress: () => taskSystem.taskProgress.value,
+      getContentUnits: () => contentUnits.value,
+      getLastContentUnitsCheck: narrativeSystem.getLastContentUnitsCheck,
+      setLastContentUnitsCheck: narrativeSystem.setLastContentUnitsCheck,
+      getGameStartTime: narrativeSystem.getGameStartTime,
+      hasTriggeredGameStart: narrativeSystem.getHasTriggeredGameStart,
+      setHasTriggeredGameStart: narrativeSystem.setHasTriggeredGameStart,
+    })
   }
   
+  /**
+   * Stop the main game loop
+   */
   function stopGameLoop(): void {
-    if (gameLoop) {
-      clearInterval(gameLoop)
-      gameLoop = null
-    }
-    isRunning.value = false
+    gameLoop.stopGameLoop()
   }
-  
   
   return {
-    // State
-    isRunning,
+    // ===== STATE =====
+    isRunning: gameLoop.isRunning,
     contentUnits,
     lifetimeContentUnits,
     generators,
     upgrades,
     prestigeLevel,
-    narrative,
-    taskStartTime,
+    narrative: narrativeSystem.narrative,
+    taskStartTime: taskSystem.taskStartTime,
     
-    // Computed
+    // ===== COMPUTED PROPERTIES =====
     globalMultiplier,
     prestigeThreshold,
     canPrestige,
     nextPrestigeMultiplier,
     productionRate,
     clickValue,
-    taskProgress,
+    taskProgress: taskSystem.taskProgress,
     
-    // Helpers
+    // ===== HELPER FUNCTIONS =====
     formatContentUnits,
     getGeneratorMultiplier,
     
-    // Actions
+    // ===== CORE ACTIONS =====
     addContentUnits,
     spendContentUnits,
     canAfford,
+    
+    // ===== GENERATOR ACTIONS =====
     getGenerator,
     getGeneratorCost,
     canPurchaseGenerator,
     purchaseGenerator,
     getGeneratorProductionRate,
+    
+    // ===== UPGRADE ACTIONS =====
     getUpgrade,
     areUpgradeRequirementsMet,
     canPurchaseUpgrade,
     purchaseUpgrade,
+    
+    // ===== PLAYER ACTIONS =====
     clickForContent,
+    
+    // ===== PRESTIGE ACTIONS =====
     performPrestige,
     resetGenerators,
     resetUpgrades,
-    completeTask,
     
-    // Game Loop
+    // ===== GAME LOOP =====
     startGameLoop,
     stopGameLoop,
     
-    // Narrative System
-    onNarrativeEvent,
-    triggerNarrative,
-    getNextPendingEvent,
-    hasPendingEvents,
+    // ===== NARRATIVE SYSTEM =====
+    onNarrativeEvent: narrativeSystem.onNarrativeEvent,
+    triggerNarrative: narrativeSystem.triggerNarrative,
+    getNextPendingEvent: narrativeSystem.getNextPendingEvent,
+    hasPendingEvents: narrativeSystem.hasPendingEvents,
   }
 }, {
   persist: true

@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import HCUDisplay from './HCUDisplay.vue'
 
