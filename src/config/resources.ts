@@ -66,7 +66,7 @@ export const resources: ResourceConfig[] = [
     initialValue: 100,
     isDepletable: true,
     maxValue: 100,
-    decayRate: 0.01,
+    decayRate: 0.0001,
     healthyWhenHigh: true,
     visualIndicators: {
       healthy: '#10b981', // Green
@@ -82,7 +82,7 @@ export const resources: ResourceConfig[] = [
     initialValue: 100,
     isDepletable: true,
     maxValue: 100,
-    decayRate: 0.005,
+    decayRate: 0.00005,
     healthyWhenHigh: true,
     visualIndicators: {
       healthy: '#3b82f6', // Blue
@@ -98,7 +98,7 @@ export const resources: ResourceConfig[] = [
     initialValue: 100,
     isDepletable: true,
     maxValue: 100,
-    decayRate: 0.02,
+    decayRate: 0.0002,
     healthyWhenHigh: true,
     visualIndicators: {
       healthy: '#22c55e', // Green
