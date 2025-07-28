@@ -53,7 +53,7 @@ const canAfford = computed(() => {
 const actualProductionRate = computed(() => {
   const generator = gameManager.state.generators.find((g) => g.id === props.generatorId)
   if (!generator) return 0
-  return generator.baseProduction * generator.owned * gameManager.state.globalMultiplier
+  return generator.baseProduction * generator.owned * gameManager.state.prestige.globalMultiplier
 })
 
 // Handle purchase with visual feedback
