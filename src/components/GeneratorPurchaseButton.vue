@@ -5,7 +5,11 @@
       <div class="generator-stats">
         <span class="owned-count">Owned: {{ ownedCount }}</span>
         <span class="production-rate"
-          >+<HCUDisplay :amount="actualProductionRate" :show-unit="false" />/sec</span
+          >+<CurrencyDisplay
+            :currency-config="HCU"
+            :amount="actualProductionRate"
+            :show-unit="false"
+          />/sec</span
         >
       </div>
     </div>
@@ -15,7 +19,7 @@
       :disabled="!canAfford || isPurchasing"
       @click="handlePurchase"
     >
-      <HCUDisplay :amount="cost" />
+      <CurrencyDisplay :currency-config="HCU" :amount="cost" />
     </button>
   </div>
 </template>
@@ -23,7 +27,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useGameStore, type GeneratorConfig } from '../stores/gameStore'
-import HCUDisplay from './HCUDisplay.vue'
+import { HCU } from '../config/currencies'
+import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const props = defineProps<{
   generator: GeneratorConfig
@@ -35,7 +40,7 @@ const isPurchasing = ref(false)
 // Component-specific computed values (these need computed because they depend on props)
 const ownedCount = computed(() => {
   // Get the reactive owned count from the store, not the static prop
-  const storeGenerator = gameStore.generators.find(g => g.id === props.generator.id)
+  const storeGenerator = gameStore.generators.find((g) => g.id === props.generator.id)
   return storeGenerator ? storeGenerator.owned : 0
 })
 
@@ -44,7 +49,7 @@ const cost = computed(() => {
 })
 
 const canAfford = computed(() => {
-  return gameStore.canAfford(cost.value)
+  return gameStore.canAffordCurrency(HCU, cost.value)
 })
 
 const actualProductionRate = computed(() => {

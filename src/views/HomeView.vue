@@ -30,8 +30,8 @@ onMounted(() => {
 
           <div class="section">
             <h2 class="section-title">Automation</h2>
-            <GeneratorPurchaseButton 
-              v-for="generator in gameStore.generators" 
+            <GeneratorPurchaseButton
+              v-for="generator in gameStore.generators"
               :key="generator.id"
               :generator="generator"
             />
@@ -39,10 +39,10 @@ onMounted(() => {
 
           <div class="section">
             <h2 class="section-title">Upgrades</h2>
-            <UpgradeButton 
-              v-for="upgrade in gameStore.upgrades" 
+            <UpgradeButton
+              v-for="upgrade in gameStore.upgrades"
               :key="upgrade.id"
-              :upgrade="upgrade" 
+              :upgrade="upgrade"
             />
           </div>
         </div>

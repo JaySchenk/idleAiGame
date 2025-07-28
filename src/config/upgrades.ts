@@ -49,7 +49,4 @@ export const CLICKBAIT_OPTIMIZER: UpgradeConfig = {
   isPurchased: false,
 }
 
-export const upgrades: UpgradeConfig[] = [
-  AUTOMATED_CONTENT_SCRIPT,
-  CLICKBAIT_OPTIMIZER,
-]
+export const upgrades: UpgradeConfig[] = [AUTOMATED_CONTENT_SCRIPT, CLICKBAIT_OPTIMIZER]

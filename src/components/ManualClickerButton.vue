@@ -3,7 +3,12 @@
     <div class="clicker-info">
       <div class="clicker-title">Desperate Human Touch</div>
       <div class="clicker-description">
-        Click to generate +<HCUDisplay :amount="gameStore.clickValue" :show-unit="false" /> Hollow Content Unit
+        Click to generate +<CurrencyDisplay
+          :currency-config="HCU"
+          :amount="gameStore.clickValue"
+          :show-unit="false"
+        />
+        Hollow Content Unit
       </div>
     </div>
     <button
@@ -16,7 +21,9 @@
     >
       <div class="click-icon">⚡</div>
       <div class="click-text">CLICK</div>
-      <div class="click-reward">+<HCUDisplay :amount="gameStore.clickValue" /></div>
+      <div class="click-reward">
+        +<CurrencyDisplay :currency-config="HCU" :amount="gameStore.clickValue" />
+      </div>
     </button>
 
     <!-- Floating animation for click feedback -->
@@ -38,7 +45,8 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import HCUDisplay from './HCUDisplay.vue'
+import { HCU } from '../config/currencies'
+import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
 const isClicking = ref(false)

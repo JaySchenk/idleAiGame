@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { createApp } from 'vue'
 import { vi } from 'vitest'
+import { HCU } from '../config/currencies'
 
 /**
  * Integration test utilities that use real composables with programmatic control
@@ -35,21 +36,23 @@ export function runGameLoopTicks(gameStore: any, ticks: number) {
  * @param maxTicks - Maximum number of ticks to prevent infinite loops
  */
 export function runGameLoopUntil(
-  gameStore: any, 
-  condition: () => boolean, 
-  maxTicks: number = 10000
+  gameStore: any,
+  condition: () => boolean,
+  maxTicks: number = 10000,
 ): number {
   let ticks = 0
-  
+
   while (!condition() && ticks < maxTicks) {
     runGameLoopTicks(gameStore, 1)
     ticks++
   }
-  
+
   if (ticks >= maxTicks) {
-    throw new Error(`runGameLoopUntil exceeded maximum ticks (${maxTicks}). Last state: HCU=${gameStore.contentUnits}, Lifetime=${gameStore.lifetimeContentUnits}`)
+    throw new Error(
+      `runGameLoopUntil exceeded maximum ticks (${maxTicks}). Last state: HCU=${gameStore.getCurrencyAmount(HCU)}, Lifetime=${gameStore.lifetimeCurrencyAmounts[HCU.id]}`,
+    )
   }
-  
+
   return ticks
 }
 
@@ -60,11 +63,7 @@ export function runGameLoopUntil(
  * @param maxTicks - Maximum ticks to prevent infinite loops
  */
 export function progressToHCU(gameStore: any, targetHCU: number, maxTicks: number = 10000): number {
-  return runGameLoopUntil(
-    gameStore,
-    () => gameStore.contentUnits >= targetHCU,
-    maxTicks
-  )
+  return runGameLoopUntil(gameStore, () => gameStore.getCurrencyAmount(HCU) >= targetHCU, maxTicks)
 }
 
 /**
@@ -73,11 +72,7 @@ export function progressToHCU(gameStore: any, targetHCU: number, maxTicks: numbe
  * @param maxTicks - Maximum ticks to prevent infinite loops
  */
 export function progressToPrestige(gameStore: any, maxTicks: number = 50000): number {
-  return runGameLoopUntil(
-    gameStore,
-    () => gameStore.canPrestige,
-    maxTicks
-  )
+  return runGameLoopUntil(gameStore, () => gameStore.canPrestige, maxTicks)
 }
 
 /**
@@ -91,15 +86,15 @@ export function purchaseUntilUnaffordable(
   gameStore: any,
   purchaseAction: () => void,
   canAffordCheck: () => boolean,
-  maxPurchases: number = 1000
+  maxPurchases: number = 1000,
 ): number {
   let purchases = 0
-  
+
   while (canAffordCheck() && purchases < maxPurchases) {
     purchaseAction()
     purchases++
   }
-  
+
   return purchases
 }
 
@@ -112,12 +107,15 @@ export function purchaseUntilUnaffordable(
 export function setupGameWithResources(
   gameStore: any,
   initialHCU: number = 0,
-  initialLifetime: number = 0
+  initialLifetime: number = 0,
 ) {
   if (initialHCU > 0) {
-    gameStore.addContentUnits(initialHCU)
+    ;((amount: number) => gameStore.addCurrency(HCU, amount))(initialHCU)
   }
   if (initialLifetime > 0) {
-    gameStore.lifetimeContentUnits = Math.max(initialLifetime, gameStore.lifetimeContentUnits)
+    gameStore.lifetimeCurrencyAmounts[HCU.id] = Math.max(
+      initialLifetime,
+      gameStore.lifetimeCurrencyAmounts[HCU.id],
+    )
   }
 }

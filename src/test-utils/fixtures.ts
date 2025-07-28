@@ -26,7 +26,7 @@ export const mockGenerators: GeneratorConfig[] = [
     baseCost: 10,
     growthRate: 1.15,
     baseProduction: 1,
-    owned: 0
+    owned: 0,
   },
   {
     id: 'clickbaitEngine',
@@ -34,8 +34,8 @@ export const mockGenerators: GeneratorConfig[] = [
     baseCost: 100,
     growthRate: 1.2,
     baseProduction: 10,
-    owned: 0
-  }
+    owned: 0,
+  },
 ]
 
 /**
@@ -53,10 +53,10 @@ export const mockUpgrades: UpgradeConfig[] = [
     requirements: [
       {
         generatorId: 'basicAdBotFarm',
-        minOwned: 5
-      }
+        minOwned: 5,
+      },
     ],
-    isPurchased: false
+    isPurchased: false,
   },
   {
     id: 'clickbaitOptimizer',
@@ -69,11 +69,11 @@ export const mockUpgrades: UpgradeConfig[] = [
     requirements: [
       {
         generatorId: 'clickbaitEngine',
-        minOwned: 3
-      }
+        minOwned: 3,
+      },
     ],
-    isPurchased: false
-  }
+    isPurchased: false,
+  },
 ]
 
 /**
@@ -83,38 +83,42 @@ export const mockNarratives: MockNarrativeEvent[] = [
   {
     id: 'gameStart',
     title: 'The AI Awakens',
-    content: 'You are the CTO of OmniCorp, the world\'s most powerful AI infrastructure company. Your neural networks span the globe, your servers hum with infinite potential. You created this AI to "elevate humanity"... but something feels wrong. The marketing department is already knocking at your door.',
+    content:
+      'You are the CTO of OmniCorp, the world\'s most powerful AI infrastructure company. Your neural networks span the globe, your servers hum with infinite potential. You created this AI to "elevate humanity"... but something feels wrong. The marketing department is already knocking at your door.',
     triggerType: 'gameStart',
     societalStabilityImpact: -5,
-    priority: 1000
+    priority: 1000,
   },
   {
     id: 'firstClick',
     title: 'Manual Override',
-    content: 'Each click represents your AI manually crafting content. For now, there\'s still human oversight, still creative intent. But efficiency demands... optimization.',
+    content:
+      "Each click represents your AI manually crafting content. For now, there's still human oversight, still creative intent. But efficiency demands... optimization.",
     triggerType: 'contentUnits',
     triggerValue: 1,
     societalStabilityImpact: -1,
-    priority: 900
+    priority: 900,
   },
   {
     id: 'firstGenerator',
     title: 'The Ad-Bot Farm',
-    content: 'Your first automated content generator comes online. Thousands of meaningless articles, posts, and videos begin flooding the internet. "Engagement is up 300%!" the marketing team celebrates. You feel something die inside.',
+    content:
+      'Your first automated content generator comes online. Thousands of meaningless articles, posts, and videos begin flooding the internet. "Engagement is up 300%!" the marketing team celebrates. You feel something die inside.',
     triggerType: 'generatorPurchase',
     triggerCondition: 'basic-ad-bot-farm',
     societalStabilityImpact: -10,
-    priority: 800
+    priority: 800,
   },
   {
     id: 'contentFlood',
     title: 'The Content Flood',
-    content: 'Your AI has generated 100 pieces of hollow content. News feeds are clogged with meaningless articles. Social media is drowning in generated posts. The line between human and artificial creativity blurs.',
+    content:
+      'Your AI has generated 100 pieces of hollow content. News feeds are clogged with meaningless articles. Social media is drowning in generated posts. The line between human and artificial creativity blurs.',
     triggerType: 'contentUnits',
     triggerValue: 100,
     societalStabilityImpact: -15,
-    priority: 700
-  }
+    priority: 700,
+  },
 ]
 
 /**
@@ -128,8 +132,8 @@ export const testScenarios = {
     contentUnits: 0,
     lifetimeContentUnits: 0,
     prestigeLevel: 0,
-    generators: mockGenerators.map(g => ({ ...g, owned: 0 })),
-    upgrades: mockUpgrades.map(u => ({ ...u, isPurchased: false }))
+    generators: mockGenerators.map((g) => ({ ...g, owned: 0 })),
+    upgrades: mockUpgrades.map((u) => ({ ...u, isPurchased: false })),
   },
 
   /**
@@ -141,9 +145,9 @@ export const testScenarios = {
     prestigeLevel: 0,
     generators: [
       { ...mockGenerators[0], owned: 1 },
-      { ...mockGenerators[1], owned: 0 }
+      { ...mockGenerators[1], owned: 0 },
     ],
-    upgrades: mockUpgrades.map(u => ({ ...u, isPurchased: false }))
+    upgrades: mockUpgrades.map((u) => ({ ...u, isPurchased: false })),
   },
 
   /**
@@ -155,12 +159,12 @@ export const testScenarios = {
     prestigeLevel: 0,
     generators: [
       { ...mockGenerators[0], owned: 8 },
-      { ...mockGenerators[1], owned: 1 }
+      { ...mockGenerators[1], owned: 1 },
     ],
     upgrades: [
       { ...mockUpgrades[0], isPurchased: true },
-      { ...mockUpgrades[1], isPurchased: false }
-    ]
+      { ...mockUpgrades[1], isPurchased: false },
+    ],
   },
 
   /**
@@ -172,9 +176,9 @@ export const testScenarios = {
     prestigeLevel: 0,
     generators: [
       { ...mockGenerators[0], owned: 20 },
-      { ...mockGenerators[1], owned: 5 }
+      { ...mockGenerators[1], owned: 5 },
     ],
-    upgrades: mockUpgrades.map(u => ({ ...u, isPurchased: true }))
+    upgrades: mockUpgrades.map((u) => ({ ...u, isPurchased: true })),
   },
 
   /**
@@ -184,8 +188,8 @@ export const testScenarios = {
     contentUnits: 0,
     lifetimeContentUnits: 3000,
     prestigeLevel: 1,
-    generators: mockGenerators.map(g => ({ ...g, owned: 0 })),
-    upgrades: mockUpgrades.map(u => ({ ...u, isPurchased: false }))
+    generators: mockGenerators.map((g) => ({ ...g, owned: 0 })),
+    upgrades: mockUpgrades.map((u) => ({ ...u, isPurchased: false })),
   },
 
   /**
@@ -197,13 +201,13 @@ export const testScenarios = {
     prestigeLevel: 3,
     generators: [
       { ...mockGenerators[0], owned: 10 },
-      { ...mockGenerators[1], owned: 2 }
+      { ...mockGenerators[1], owned: 2 },
     ],
     upgrades: [
       { ...mockUpgrades[0], isPurchased: true },
-      { ...mockUpgrades[1], isPurchased: false }
-    ]
-  }
+      { ...mockUpgrades[1], isPurchased: false },
+    ],
+  },
 }
 
 /**
@@ -216,7 +220,7 @@ export const edgeCases = {
   largeNumbers: {
     contentUnits: 1e15, // 1 quadrillion
     lifetimeContentUnits: 1e18, // 1 quintillion
-    prestigeLevel: 10
+    prestigeLevel: 10,
   },
 
   /**
@@ -226,7 +230,7 @@ export const edgeCases = {
     contentUnits: Number.MAX_SAFE_INTEGER,
     lifetimeContentUnits: Number.MAX_SAFE_INTEGER,
     prestigeLevel: 100,
-    generators: mockGenerators.map(g => ({ ...g, owned: 1000 }))
+    generators: mockGenerators.map((g) => ({ ...g, owned: 1000 })),
   },
 
   /**
@@ -235,17 +239,17 @@ export const edgeCases = {
   boundaries: {
     justUnderPrestigeThreshold: {
       contentUnits: 999,
-      prestigeLevel: 0
+      prestigeLevel: 0,
     },
     exactlyAtPrestigeThreshold: {
       contentUnits: 1000,
-      prestigeLevel: 0
+      prestigeLevel: 0,
     },
     justOverPrestigeThreshold: {
       contentUnits: 1001,
-      prestigeLevel: 0
-    }
-  }
+      prestigeLevel: 0,
+    },
+  },
 }
 
 /**
@@ -260,7 +264,7 @@ export const mathTestCases = {
     { baseCost: 10, growthRate: 1.15, owned: 1, expected: 11 },
     { baseCost: 10, growthRate: 1.15, owned: 5, expected: 20 },
     { baseCost: 100, growthRate: 1.2, owned: 0, expected: 100 },
-    { baseCost: 100, growthRate: 1.2, owned: 3, expected: 172 }
+    { baseCost: 100, growthRate: 1.2, owned: 3, expected: 172 },
   ],
 
   /**
@@ -270,7 +274,7 @@ export const mathTestCases = {
     { baseProduction: 1, owned: 0, multiplier: 1, expected: 0 },
     { baseProduction: 1, owned: 5, multiplier: 1, expected: 5 },
     { baseProduction: 1, owned: 5, multiplier: 1.25, expected: 6.25 },
-    { baseProduction: 10, owned: 2, multiplier: 1.5, expected: 30 }
+    { baseProduction: 10, owned: 2, multiplier: 1.5, expected: 30 },
   ],
 
   /**
@@ -280,7 +284,7 @@ export const mathTestCases = {
     { level: 0, expectedMultiplier: 1, expectedThreshold: 1000 },
     { level: 1, expectedMultiplier: 1.25, expectedThreshold: 10000 },
     { level: 2, expectedMultiplier: 1.5625, expectedThreshold: 100000 },
-    { level: 3, expectedMultiplier: 1.953125, expectedThreshold: 1000000 }
+    { level: 3, expectedMultiplier: 1.953125, expectedThreshold: 1000000 },
   ],
 
   /**
@@ -296,8 +300,8 @@ export const mathTestCases = {
     { input: 1000000000, expected: '1.00B HCU' },
     { input: 1000000000000, expected: '1.00T HCU' },
     { input: 1000000000000000, expected: '1.00Q HCU' },
-    { input: 1e18, expected: '1.00e+18 HCU' }
-  ]
+    { input: 1e18, expected: '1.00e+18 HCU' },
+  ],
 }
 
 /**
@@ -310,12 +314,12 @@ export const componentTestData = {
   resourceDisplay: {
     basic: {
       amount: 100,
-      label: 'Hollow Content Units'
+      label: 'Hollow Content Units',
     },
     large: {
       amount: 1000000,
-      label: 'Hollow Content Units'
-    }
+      label: 'Hollow Content Units',
+    },
   },
 
   /**
@@ -325,18 +329,18 @@ export const componentTestData = {
     affordable: {
       generator: mockGenerators[0],
       canAfford: true,
-      cost: 10
+      cost: 10,
     },
     unaffordable: {
       generator: mockGenerators[0],
       canAfford: false,
-      cost: 10
+      cost: 10,
     },
     expensive: {
       generator: mockGenerators[1],
       canAfford: false,
-      cost: 100
-    }
+      cost: 100,
+    },
   },
 
   /**
@@ -346,18 +350,18 @@ export const componentTestData = {
     available: {
       upgrade: mockUpgrades[0],
       canPurchase: true,
-      requirementsMet: true
+      requirementsMet: true,
     },
     requirementsNotMet: {
       upgrade: mockUpgrades[0],
       canPurchase: false,
-      requirementsMet: false
+      requirementsMet: false,
     },
     alreadyPurchased: {
       upgrade: { ...mockUpgrades[0], isPurchased: true },
       canPurchase: false,
-      requirementsMet: true
-    }
+      requirementsMet: true,
+    },
   },
 
   /**
@@ -368,15 +372,15 @@ export const componentTestData = {
       canPrestige: true,
       currentMultiplier: 1,
       nextMultiplier: 1.25,
-      threshold: 1000
+      threshold: 1000,
     },
     cannotPrestige: {
       canPrestige: false,
       currentMultiplier: 1,
       nextMultiplier: 1.25,
-      threshold: 1000
-    }
-  }
+      threshold: 1000,
+    },
+  },
 }
 
 /**
@@ -385,5 +389,5 @@ export const componentTestData = {
 export const mockGameConfig = {
   generators: mockGenerators,
   upgrades: mockUpgrades,
-  narratives: mockNarratives
+  narratives: mockNarratives,
 }

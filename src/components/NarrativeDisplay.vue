@@ -71,7 +71,6 @@ import type { NarrativeEvent } from '../assets/narratives'
 
 const gameStore = useGameStore()
 
-
 // Component state
 const showModal = ref(false)
 const currentEvent = ref<NarrativeEvent | null>(null)
@@ -84,8 +83,8 @@ let typewriterInterval: number | null = null
 let currentCharIndex = 0
 
 // Archive state using reactive state
-const viewedEvents = computed(() => 
-  gameStore.narrative.currentStoryEvents.filter(event => event.isViewed)
+const viewedEvents = computed(() =>
+  gameStore.narrative.currentStoryEvents.filter((event) => event.isViewed),
 )
 const hasViewedEvents = computed(() => viewedEvents.value.length > 0)
 
@@ -181,13 +180,13 @@ const checkForPendingEvents = () => {
 onMounted(() => {
   // Subscribe to narrative events
   gameStore.onNarrativeEvent(handleNarrativeEvent)
-  
+
   // Check for any pending events on mount
   checkForPendingEvents()
-  
+
   // Set up periodic check for pending events (as backup)
   const pendingEventInterval = setInterval(checkForPendingEvents, 1000)
-  
+
   // Clean up interval on unmount
   onUnmounted(() => {
     clearInterval(pendingEventInterval)

@@ -7,22 +7,34 @@
 
     <div class="progress-bar-container">
       <div class="progress-bar-background">
-        <div class="progress-bar-fill" :style="{ width: gameStore.taskProgress.progressPercent + '%' }"></div>
+        <div
+          class="progress-bar-fill"
+          :style="{ width: gameStore.taskProgress.progressPercent + '%' }"
+        ></div>
       </div>
-      <div class="progress-percentage">{{ Math.floor(gameStore.taskProgress.progressPercent) }}%</div>
+      <div class="progress-percentage">
+        {{ Math.floor(gameStore.taskProgress.progressPercent) }}%
+      </div>
     </div>
 
     <div class="progress-reward">
       <span class="reward-text">Reward: </span>
       <span class="reward-amount"
-        >+<HCUDisplay :amount="gameStore.taskProgress.rewardAmount" :show-unit="false" /> Hollow Content Units</span
+        >+<CurrencyDisplay
+          :currency-config="HCU"
+          :amount="gameStore.taskProgress.rewardAmount"
+          :show-unit="false"
+        />
+        Hollow Content Units</span
       >
     </div>
 
     <!-- Completion animation -->
     <div v-if="showCompletionEffect" class="completion-effect">
       <div class="completion-text">Task Complete!</div>
-      <div class="completion-reward">+<HCUDisplay :amount="gameStore.taskProgress.rewardAmount" /></div>
+      <div class="completion-reward">
+        +<CurrencyDisplay :currency-config="HCU" :amount="gameStore.taskProgress.rewardAmount" />
+      </div>
     </div>
   </div>
 </template>
@@ -30,13 +42,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import HCUDisplay from './HCUDisplay.vue'
+import { HCU } from '../config/currencies'
+import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
 const showCompletionEffect = ref(false)
 
 let lastProgressPercent = 0
-
 
 // Access reactive store properties directly (maintaining reactivity)
 

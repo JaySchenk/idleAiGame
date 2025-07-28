@@ -1,21 +1,28 @@
 <template>
   <div class="resource-display">
     <div class="resource-item primary">
-      <div class="resource-label">Hollow Content Units</div>
+      <div class="resource-label">{{ HCU.displayName }}</div>
       <div class="resource-value">
-        <HCUDisplay :amount="gameStore.contentUnits" />
+        <CurrencyDisplay :currency-config="HCU" :amount="gameStore.getCurrencyAmount(HCU)" />
       </div>
     </div>
     <div class="resource-item secondary">
       <div class="resource-label">Hollow Content per Second</div>
-      <div class="resource-value"><HCUDisplay :amount="gameStore.productionRate" :show-unit="false" />/s</div>
+      <div class="resource-value">
+        <CurrencyDisplay
+          :currency-config="HCU"
+          :amount="gameStore.productionRate"
+          :show-unit="false"
+        />/s
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useGameStore } from '../stores/gameStore'
-import HCUDisplay from './HCUDisplay.vue'
+import { HCU } from '../config/currencies'
+import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
 </script>

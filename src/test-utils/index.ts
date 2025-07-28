@@ -21,7 +21,7 @@ export function createTestPinia() {
  * Helper to wait for Vue reactivity updates
  */
 export async function nextTick() {
-  return new Promise(resolve => setTimeout(resolve, 0))
+  return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
 /**
@@ -68,8 +68,8 @@ export function createMockGameState(overrides: Partial<MockGameState> = {}): Moc
         owned: 0,
         baseCost: 10,
         baseProduction: 1,
-        growthRate: 1.15
-      }
+        growthRate: 1.15,
+      },
     ],
     upgrades: [
       {
@@ -77,10 +77,10 @@ export function createMockGameState(overrides: Partial<MockGameState> = {}): Moc
         isPurchased: false,
         cost: 100,
         effectType: 'production_multiplier',
-        effectValue: 2
-      }
+        effectValue: 2,
+      },
     ],
-    ...overrides
+    ...overrides,
   }
 }
 
@@ -98,9 +98,9 @@ export class GameProgressionHelper {
           owned: 3,
           baseCost: 10,
           baseProduction: 1,
-          growthRate: 1.15
-        }
-      ]
+          growthRate: 1.15,
+        },
+      ],
     })
   }
 
@@ -114,8 +114,8 @@ export class GameProgressionHelper {
           owned: 15,
           baseCost: 10,
           baseProduction: 1,
-          growthRate: 1.15
-        }
+          growthRate: 1.15,
+        },
       ],
       upgrades: [
         {
@@ -123,9 +123,9 @@ export class GameProgressionHelper {
           isPurchased: true,
           cost: 100,
           effectType: 'production_multiplier',
-          effectValue: 2
-        }
-      ]
+          effectValue: 2,
+        },
+      ],
     })
   }
 
@@ -139,8 +139,8 @@ export class GameProgressionHelper {
           owned: 25,
           baseCost: 10,
           baseProduction: 1,
-          growthRate: 1.15
-        }
+          growthRate: 1.15,
+        },
       ],
       upgrades: [
         {
@@ -148,9 +148,9 @@ export class GameProgressionHelper {
           isPurchased: true,
           cost: 100,
           effectType: 'production_multiplier',
-          effectValue: 2
-        }
-      ]
+          effectValue: 2,
+        },
+      ],
     })
   }
 }
@@ -193,7 +193,7 @@ export class MathTestHelpers {
       { input: 1000000000, expected: '1.00B HCU' },
       { input: 1000000000000, expected: '1.00T HCU' },
       { input: 1000000000000000, expected: '1.00Q HCU' },
-      { input: 1e18, expected: '1.00e+18 HCU' }
+      { input: 1e18, expected: '1.00e+18 HCU' },
     ]
   }
 }

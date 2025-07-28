@@ -3,7 +3,7 @@
     <div class="upgrade-header">
       <h3 class="upgrade-title">{{ upgrade.name }}</h3>
       <div class="upgrade-cost">
-        <HCUDisplay :amount="upgrade.cost" />
+        <CurrencyDisplay :currency-config="HCU" :amount="upgrade.cost" />
       </div>
     </div>
 
@@ -49,7 +49,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useGameStore, type UpgradeConfig } from '../stores/gameStore'
-import HCUDisplay from './HCUDisplay.vue'
+import { HCU } from '../config/currencies'
+import CurrencyDisplay from './CurrencyDisplay.vue'
 
 interface Props {
   upgrade: UpgradeConfig
@@ -60,7 +61,6 @@ const gameStore = useGameStore()
 
 const isPurchasing = ref(false)
 const showPurchaseEffect = ref(false)
-
 
 // Reactive computed properties from Pinia store
 const upgrade = computed(() => {
@@ -74,7 +74,7 @@ const requirementsMet = computed(() => {
 
 // Check if can afford
 const canAfford = computed(() => {
-  return gameStore.canAfford(upgrade.value.cost)
+  return gameStore.canAffordCurrency(HCU, upgrade.value.cost)
 })
 
 // Check if can purchase

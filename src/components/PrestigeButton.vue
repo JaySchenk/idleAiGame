@@ -23,7 +23,7 @@
       <div class="stat-item">
         <div class="stat-label">Threshold:</div>
         <div class="stat-value">
-          <HCUDisplay :amount="gameStore.prestigeThreshold" />
+          <CurrencyDisplay :currency-config="HCU" :amount="gameStore.prestigeThreshold" />
         </div>
       </div>
     </div>
@@ -34,8 +34,18 @@
         <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
       <div class="progress-text">
-        <HCUDisplay :amount="gameStore.contentUnits" :show-unit="false" /> /
-        <HCUDisplay :amount="gameStore.prestigeThreshold" :show-unit="false" /> HCU
+        <CurrencyDisplay
+          :currency-config="HCU"
+          :amount="gameStore.getCurrencyAmount(HCU)"
+          :show-unit="false"
+        />
+        /
+        <CurrencyDisplay
+          :currency-config="HCU"
+          :amount="gameStore.prestigeThreshold"
+          :show-unit="false"
+        />
+        HCU
       </div>
     </div>
 
@@ -53,8 +63,9 @@
       <span v-else>
         🔄 Reboot System
         <small class="multiplier-gain"
-          >+{{ ((gameStore.nextPrestigeMultiplier - gameStore.globalMultiplier) * 100).toFixed(0) }}%
-          Production</small
+          >+{{
+            ((gameStore.nextPrestigeMultiplier - gameStore.globalMultiplier) * 100).toFixed(0)
+          }}% Production</small
         >
       </span>
     </button>
@@ -73,7 +84,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import HCUDisplay from './HCUDisplay.vue'
+import { HCU } from '../config/currencies'
+import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
 
@@ -82,7 +94,7 @@ const showRebootEffect = ref(false)
 
 // Calculate progress to prestige (based on current HCU)
 const progressPercent = computed(() => {
-  const currentHCU = gameStore.contentUnits
+  const currentHCU = gameStore.getCurrencyAmount(HCU)
   const progress = (currentHCU / gameStore.prestigeThreshold) * 100
   return Math.min(100, progress)
 })

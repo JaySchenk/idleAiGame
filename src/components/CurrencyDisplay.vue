@@ -1,11 +1,15 @@
 <template>
-  <span class="hcu-display">{{ formattedAmount }}</span>
+  <span class="currency-display" :style="{ color: currencyConfig.color }">{{
+    formattedAmount
+  }}</span>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { CurrencyConfig } from '../config/currencies'
 
 interface Props {
+  currencyConfig: CurrencyConfig
   amount: number
   showUnit?: boolean
 }
@@ -15,8 +19,8 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const formattedAmount = computed(() => {
-  const { amount, showUnit } = props
-  const unit = showUnit ? ' HCU' : ''
+  const { amount, showUnit, currencyConfig } = props
+  const unit = showUnit ? ` ${currencyConfig.symbol}` : ''
 
   // Handle scientific notation for very large numbers
   if (amount >= 1e18) {
@@ -54,7 +58,7 @@ const formattedAmount = computed(() => {
 </script>
 
 <style scoped>
-.hcu-display {
+.currency-display {
   font-family: 'Courier New', monospace;
   font-weight: bold;
 }

@@ -14,19 +14,19 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
     isNarrativeActive: false,
     gameStartTime: Date.now(),
   })
-  
+
   // Narrative tracking state
   const hasTriggeredGameStart = ref(false)
   const lastContentUnitsCheck = ref(0)
   const eventCallbacks = ref<((event: NarrativeEvent) => void)[]>([])
-  
+
   /**
    * Subscribe to narrative events
    */
   function onNarrativeEvent(callback: (event: NarrativeEvent) => void): void {
     eventCallbacks.value.push(callback)
   }
-  
+
   /**
    * Generic narrative trigger function
    * Finds and triggers eligible events based on criteria
@@ -68,7 +68,7 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
       triggerNarrativeEvent(event)
     })
   }
-  
+
   /**
    * Trigger a specific narrative event
    * Marks event as viewed, applies effects, and notifies subscribers
@@ -93,42 +93,46 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
     console.log(`Narrative Event Triggered: ${event.title}`)
     console.log(`Societal Stability: ${narrative.value.societalStability}%`)
   }
-  
+
   /**
    * Get the next pending event to display
    */
   function getNextPendingEvent(): NarrativeEvent | null {
     return narrative.value.pendingEvents.shift() || null
   }
-  
+
   /**
    * Check if there are pending events
    */
   function hasPendingEvents(): boolean {
     return narrative.value.pendingEvents.length > 0
   }
-  
+
   /**
    * Reset narrative state for prestige (but keep story progress)
    */
   function resetForPrestige(): void {
     narrative.value.pendingEvents = []
   }
-  
+
   // Getters for game loop integration
   const getLastContentUnitsCheck = () => lastContentUnitsCheck.value
-  const setLastContentUnitsCheck = (value: number) => { lastContentUnitsCheck.value = value }
+  const setLastContentUnitsCheck = (value: number) => {
+    lastContentUnitsCheck.value = value
+  }
   const getGameStartTime = () => narrative.value.gameStartTime
   const getHasTriggeredGameStart = () => hasTriggeredGameStart.value
-  const setHasTriggeredGameStart = (value: boolean) => { hasTriggeredGameStart.value = value }
-  
+  const setHasTriggeredGameStart = (value: boolean) => {
+    hasTriggeredGameStart.value = value
+  }
+
   return {
     // State
     narrative,
     hasTriggeredGameStart,
     lastContentUnitsCheck,
     eventCallbacks,
-    
+
     // Actions
     onNarrativeEvent,
     triggerNarrative,
@@ -136,7 +140,7 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
     getNextPendingEvent,
     hasPendingEvents,
     resetForPrestige,
-    
+
     // Game loop integration helpers
     getLastContentUnitsCheck,
     setLastContentUnitsCheck,

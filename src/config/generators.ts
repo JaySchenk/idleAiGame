@@ -25,7 +25,4 @@ export const CLICKBAIT_ENGINE: GeneratorConfig = {
   owned: 0,
 }
 
-export const generators: GeneratorConfig[] = [
-  BASIC_AD_BOT_FARM,
-  CLICKBAIT_ENGINE,
-]
+export const generators: GeneratorConfig[] = [BASIC_AD_BOT_FARM, CLICKBAIT_ENGINE]
