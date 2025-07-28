@@ -47,8 +47,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useGameStore, type UpgradeConfig } from '../stores/gameStore'
+import { usePurchaseAnimation } from '../composables/usePurchaseAnimation'
 // Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
@@ -59,8 +60,7 @@ interface Props {
 const props = defineProps<Props>()
 const gameStore = useGameStore()
 
-const isPurchasing = ref(false)
-const showPurchaseEffect = ref(false)
+const { isPurchasing, showPurchaseEffect, executePurchase } = usePurchaseAnimation()
 
 // Reactive computed properties from Pinia store
 const upgrade = computed(() => {
@@ -96,26 +96,9 @@ const getGeneratorOwned = (generatorId: string): number => {
 
 // Purchase upgrade
 const purchaseUpgrade = async () => {
-  if (!canPurchase.value || isPurchasing.value) return
+  if (!canPurchase.value) return
 
-  isPurchasing.value = true
-
-  // Add slight delay for visual feedback
-  await new Promise((resolve) => setTimeout(resolve, 100))
-
-  const success = gameStore.purchaseUpgrade(props.upgrade.id)
-
-  if (success) {
-    // Show purchase effect
-    showPurchaseEffect.value = true
-
-    // Hide effect after animation
-    setTimeout(() => {
-      showPurchaseEffect.value = false
-    }, 2000)
-  }
-
-  isPurchasing.value = false
+  await executePurchase(() => gameStore.purchaseUpgrade(props.upgrade.id))
 }
 </script>
 

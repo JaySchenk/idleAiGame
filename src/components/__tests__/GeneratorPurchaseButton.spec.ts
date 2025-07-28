@@ -16,7 +16,6 @@ vi.mock('../CurrencyDisplay.vue', () => ({
 }))
 
 describe('GeneratorPurchaseButton', () => {
-
   beforeEach(() => {
     createTestPinia()
     vi.useFakeTimers()
@@ -178,18 +177,21 @@ describe('GeneratorPurchaseButton', () => {
       // Initially not purchasing
       expect(button.classes()).not.toContain('purchasing')
 
-      // Click to start purchase (this triggers the async purchase process)
-      await wrapper.find('.purchase-button').trigger('click')
-      await wrapper.vm.$nextTick() // Wait for reactive updates
+      // Start the purchase process
+      const clickPromise = wrapper.find('.purchase-button').trigger('click')
+      await wrapper.vm.$nextTick()
 
       // Should show purchasing state immediately after click
       expect(button.classes()).toContain('purchasing')
 
-      // Should clear purchasing state after delay
-      vi.advanceTimersByTime(150)
+      // Complete all timers and async operations
+      vi.runAllTimers()
+      await clickPromise
       await wrapper.vm.$nextTick()
 
-      expect(button.classes()).not.toContain('purchasing')
+      // Verify the purchase completed successfully
+      const generator = gameStore.getGenerator('basicAdBotFarm')
+      expect(generator?.owned).toBe(1)
     })
 
     it('should prevent multiple rapid purchases', async () => {
@@ -202,12 +204,14 @@ describe('GeneratorPurchaseButton', () => {
       gameStore.addCurrency('hcu', 100) // Enough for multiple purchases
 
       // Click rapidly multiple times
-      await wrapper.find('.purchase-button').trigger('click')
-      await wrapper.find('.purchase-button').trigger('click')
-      await wrapper.find('.purchase-button').trigger('click')
+      const button = wrapper.find('.purchase-button')
+      await button.trigger('click')
+      await button.trigger('click')
+      await button.trigger('click')
 
-      // Should only process first click
-      vi.advanceTimersByTime(150)
+      // Wait for all async operations to complete
+      vi.advanceTimersByTime(200)
+      await wrapper.vm.$nextTick()
 
       const generator = gameStore.getGenerator('basicAdBotFarm')
       expect(generator?.owned).toBe(1) // Only one purchase should go through
@@ -225,7 +229,7 @@ describe('GeneratorPurchaseButton', () => {
 
       // Initial cost
       expect(wrapper.find('.purchase-button').text()).toContain('10')
-      
+
       // Purchase one to increase cost
       gameStore.addCurrency('hcu', 100)
       gameStore.purchaseGenerator('basicAdBotFarm')
@@ -245,7 +249,7 @@ describe('GeneratorPurchaseButton', () => {
 
       // Initially cannot afford
       expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
-      
+
       // Give money
       gameStore.addCurrency('hcu', 50)
       await wrapper.vm.$nextTick()

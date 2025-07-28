@@ -1,12 +1,13 @@
 import { ref, computed } from 'vue'
+import { GAME_CONSTANTS } from '../config/gameConstants'
 
 /**
  * Task system composable that manages time-based tasks and rewards
  */
 export function useTaskSystem(currentTime: () => number) {
   // Task system constants
-  const taskDuration = 30000 // 30 seconds
-  const taskReward = 10
+  const taskDuration = GAME_CONSTANTS.TASK_DURATION
+  const taskReward = GAME_CONSTANTS.TASK_REWARD
 
   // Task state
   const taskStartTime = ref(Date.now()) // Will be restored from persistence if available

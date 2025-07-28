@@ -67,7 +67,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import type { NarrativeEvent } from '../assets/narratives'
+import type { NarrativeEvent } from '../config/narratives'
 
 const gameStore = useGameStore()
 
@@ -137,7 +137,6 @@ const closeModal = () => {
   currentEvent.value = null
   displayText.value = ''
 }
-
 
 const reviewEvent = (event: NarrativeEvent) => {
   currentEvent.value = event

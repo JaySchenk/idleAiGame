@@ -56,7 +56,7 @@ describe('CurrencyDisplay', () => {
       })
 
       const element = wrapper.find('.currency-display')
-      expect(element.attributes('style')).toMatch(/color:\s*(#00ff41|rgb\(0,\s*255,\s*65\))/)
+      expect(element.attributes('style')).toMatch(/color:\s*(#ffffff|rgb\(255,\s*255,\s*255\))/)
     })
   })
 
@@ -96,7 +96,7 @@ describe('CurrencyDisplay', () => {
       })
 
       expect(hcuWrapper.find('.currency-display').attributes('style')).toMatch(
-        /color:\s*(#00ff41|rgb\(0,\s*255,\s*65\))/,
+        /color:\s*(#ffffff|rgb\(255,\s*255,\s*255\))/,
       )
       expect(rdWrapper.find('.currency-display').attributes('style')).toMatch(
         /color:\s*(#ff6b35|rgb\(255,\s*107,\s*53\))/,

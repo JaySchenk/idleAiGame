@@ -573,7 +573,9 @@ describe('GameStore', () => {
 
       expect(store.getCurrencyAmount('hcu')).toBe(maxSafeInt)
       expect(((amount: number) => store.canAffordCurrency('hcu', amount))(maxSafeInt)).toBe(true)
-      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(maxSafeInt + 1)).toBe(false)
+      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(maxSafeInt + 1)).toBe(
+        false,
+      )
     })
 
     it('should maintain consistent lifetime content units', () => {

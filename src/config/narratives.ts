@@ -163,5 +163,5 @@ export const narratives: NarrativeEvent[] = [
 
 // Narrative access by ID:
 // 'gameStart', 'firstClick', 'firstGenerator', 'contentFlood', 'corporateInterest'
-// 'firstUpgrade', 'massScale', 'socialMediaTakeover', 'firstPrestige' 
+// 'firstUpgrade', 'massScale', 'socialMediaTakeover', 'firstPrestige'
 // 'politicalInfluence', 'culturalCollapse', 'secondPrestige', 'finalRealization'

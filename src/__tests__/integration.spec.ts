@@ -60,7 +60,6 @@ vi.mock('../components/NarrativeDisplay.vue', () => ({
 }))
 
 describe('Game Integration Tests', () => {
-
   beforeEach(() => {
     createIntegrationTestPinia()
     vi.useFakeTimers()

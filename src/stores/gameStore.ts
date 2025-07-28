@@ -7,6 +7,9 @@ import { narratives, type NarrativeEvent } from '../config/narratives'
 import { useGameLoop } from '../composables/useGameLoop'
 import { useNarrative } from '../composables/useNarrative'
 import { useTaskSystem } from '../composables/useTaskSystem'
+import { formatCurrency } from '../utils/formatters'
+import { GAME_CONSTANTS } from '../config/gameConstants'
+import { executeGameTick } from '../utils/gameLogic'
 
 export type { GeneratorConfig, UpgradeConfig, NarrativeEvent, CurrencyConfig }
 
@@ -48,14 +51,17 @@ export const useGameStore = defineStore(
      * Global multiplier from prestige system
      */
     const globalMultiplier = computed(() => {
-      return Math.pow(1.25, prestigeLevel.value)
+      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, prestigeLevel.value)
     })
 
     /**
      * Threshold for prestige eligibility
      */
     const prestigeThreshold = computed(() => {
-      return 1000 * Math.pow(10, prestigeLevel.value)
+      return (
+        GAME_CONSTANTS.PRESTIGE_THRESHOLD_BASE *
+        Math.pow(GAME_CONSTANTS.PRESTIGE_THRESHOLD_GROWTH, prestigeLevel.value)
+      )
     })
 
     /**
@@ -69,7 +75,7 @@ export const useGameStore = defineStore(
      * Next prestige multiplier preview
      */
     const nextPrestigeMultiplier = computed(() => {
-      return Math.pow(1.25, prestigeLevel.value + 1)
+      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, prestigeLevel.value + 1)
     })
 
     /**
@@ -131,44 +137,9 @@ export const useGameStore = defineStore(
     /**
      * Format currency for display
      */
-    function formatCurrency(currencyId: string, amount: number): string {
+    function formatCurrencyById(currencyId: string, amount: number): string {
       const currency = getCurrencyConfig(currencyId)
-      if (!currency) return amount.toString()
-      
-      const unit = ` ${currency.symbol}`
-
-      // Handle scientific notation for very large numbers
-      if (amount >= 1e18) {
-        return amount.toExponential(2) + unit
-      }
-
-      // Handle quadrillions
-      if (amount >= 1e15) {
-        return (amount / 1e15).toFixed(2) + 'Q' + unit
-      }
-
-      // Handle trillions
-      if (amount >= 1e12) {
-        return (amount / 1e12).toFixed(2) + 'T' + unit
-      }
-
-      // Handle billions
-      if (amount >= 1e9) {
-        return (amount / 1e9).toFixed(2) + 'B' + unit
-      }
-
-      // Handle millions
-      if (amount >= 1e6) {
-        return (amount / 1e6).toFixed(2) + 'M' + unit
-      }
-
-      // Handle thousands
-      if (amount >= 1e3) {
-        return (amount / 1e3).toFixed(2) + 'K' + unit
-      }
-
-      // Handle smaller numbers with 2 decimals
-      return amount.toFixed(2) + unit
+      return formatCurrency(currency, amount)
     }
 
     // ===== CORE GAME ACTIONS =====
@@ -436,31 +407,20 @@ export const useGameStore = defineStore(
         const tickRate = gameLoop.tickRate
         gameLoop.currentTime.value += tickRate
 
-        // Calculate passive income from generators
-        const currentProductionRate = productionRate.value
-        if (currentProductionRate > 0) {
-          const productionThisTick = (currentProductionRate * tickRate) / 1000
-          addCurrency('hcu', productionThisTick)
-        }
-
-        // Check for task completion and auto-complete
-        const taskProgress = taskSystem.taskProgress.value
-        if (taskProgress.isComplete) {
-          taskSystem.completeTask((amount: number) => addCurrency('hcu', amount))
-        }
-
-        // Check narrative triggers based on content units
-        const currentContentUnits = getCurrencyAmount('hcu')
-        const lastContentUnitsCheck = narrativeSystem.getLastContentUnitsCheck()
-        if (Math.floor(currentContentUnits) > Math.floor(lastContentUnitsCheck)) {
-          narrativeSystem.triggerNarrative('contentUnits', currentContentUnits)
-          narrativeSystem.setLastContentUnitsCheck(currentContentUnits)
-        }
-
-        // Check time elapsed triggers
-        const gameStartTime = narrativeSystem.getGameStartTime()
-        const timeElapsed = gameLoop.currentTime.value - gameStartTime
-        narrativeSystem.triggerNarrative('timeElapsed', timeElapsed)
+        // Execute shared game tick logic
+        executeGameTick({
+          addContentUnits: (amount: number) => addCurrency('hcu', amount),
+          completeTask: () =>
+            taskSystem.completeTask((amount: number) => addCurrency('hcu', amount)),
+          triggerNarrative: narrativeSystem.triggerNarrative,
+          getProductionRate: () => productionRate.value,
+          getTaskProgress: () => taskSystem.taskProgress.value,
+          getContentUnits: () => getCurrencyAmount('hcu'),
+          getLastContentUnitsCheck: narrativeSystem.getLastContentUnitsCheck,
+          setLastContentUnitsCheck: narrativeSystem.setLastContentUnitsCheck,
+          getGameStartTime: narrativeSystem.getGameStartTime,
+          getCurrentTime: () => gameLoop.currentTime.value,
+        })
       }
     }
 
@@ -485,7 +445,7 @@ export const useGameStore = defineStore(
       taskProgress: taskSystem.taskProgress,
 
       // ===== HELPER FUNCTIONS =====
-      formatCurrency,
+      formatCurrency: formatCurrencyById,
       getGeneratorMultiplier,
 
       // ===== CURRENCY ACTIONS =====

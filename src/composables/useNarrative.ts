@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { NarrativeEvent } from '../assets/narratives'
+import type { NarrativeEvent } from '../config/narratives'
 
 /**
  * Narrative system composable that manages story events, triggers, and progression

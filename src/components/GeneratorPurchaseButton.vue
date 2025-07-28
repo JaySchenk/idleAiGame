@@ -25,8 +25,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useGameStore, type GeneratorConfig } from '../stores/gameStore'
+import { computed } from 'vue'
+import { useGameStore } from '../stores/gameStore'
+import { usePurchaseAnimation } from '../composables/usePurchaseAnimation'
 // Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
@@ -35,7 +36,7 @@ const props = defineProps<{
 }>()
 
 const gameStore = useGameStore()
-const isPurchasing = ref(false)
+const { isPurchasing, executePurchaseSimple } = usePurchaseAnimation()
 
 // Get generator from store
 const generator = computed(() => gameStore.getGenerator(props.generatorId))
@@ -59,15 +60,9 @@ const actualProductionRate = computed(() => {
 
 // Handle purchase with visual feedback
 const handlePurchase = async () => {
-  if (!canAfford.value || isPurchasing.value) return
+  if (!canAfford.value) return
 
-  isPurchasing.value = true
-
-  // Visual feedback delay
-  setTimeout(() => {
-    gameStore.purchaseGenerator(props.generatorId)
-    isPurchasing.value = false
-  }, 100)
+  await executePurchaseSimple(() => gameStore.purchaseGenerator(props.generatorId))
 }
 </script>
 
