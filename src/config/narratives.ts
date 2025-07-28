@@ -44,7 +44,7 @@ export const narratives: NarrativeEvent[] = [
     content:
       'Your first automated content generator comes online. Thousands of meaningless articles, posts, and videos begin flooding the internet. "Engagement is up 300%!" the marketing team celebrates. You feel something die inside.',
     triggerType: 'generatorPurchase',
-    triggerCondition: 'basic-ad-bot-farm',
+    triggerCondition: 'basicAdBotFarm',
     isViewed: false,
     societalStabilityImpact: -10,
     priority: 800,
