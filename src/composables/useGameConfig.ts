@@ -1,65 +1,40 @@
-import type { NarrativeEvent } from '../assets/narratives'
-import generatorsConfig from '../../config/generators.json'
-import upgradesConfig from '../../config/upgrades.json'
-import narrativesConfig from '../../config/narratives.json'
+import { generators, type GeneratorConfig } from '../config/generators'
+import { upgrades, type UpgradeConfig } from '../config/upgrades'
+import { narratives, type NarrativeEvent } from '../config/narratives'
 
-export interface GeneratorConfig {
-  id: string
-  name: string
-  baseCost: number
-  growthRate: number
-  baseProduction: number
-  owned: number
-}
-
-export interface UpgradeConfig {
-  id: string
-  name: string
-  description: string
-  cost: number
-  targetGenerator: string
-  effectType: 'production_multiplier' | 'global_multiplier'
-  effectValue: number
-  requirements: {
-    generatorId: string
-    minOwned: number
-  }[]
-  isPurchased: boolean
-}
+export type { GeneratorConfig, UpgradeConfig, NarrativeEvent }
 
 /**
  * Game configuration composable that handles loading and initializing
- * game data from JSON configuration files
+ * game data from TypeScript configuration files
  */
 export function useGameConfig() {
   /**
    * Initialize generators with default owned count of 0
    */
   function initializeGenerators(): GeneratorConfig[] {
-    return generatorsConfig.map(config => ({
+    return generators.map(config => ({
       ...config,
       owned: 0,
     }))
   }
   
   /**
-   * Initialize upgrades with proper type casting and purchased state
+   * Initialize upgrades with purchased state
    */
   function initializeUpgrades(): UpgradeConfig[] {
-    return upgradesConfig.map(config => ({
+    return upgrades.map(config => ({
       ...config,
-      effectType: config.effectType as 'production_multiplier' | 'global_multiplier',
       isPurchased: false,
     }))
   }
   
   /**
-   * Initialize narrative events with proper type casting and viewed state
+   * Initialize narrative events with viewed state
    */
   function initializeNarratives(): NarrativeEvent[] {
-    return narrativesConfig.map(config => ({
+    return narratives.map(config => ({
       ...config,
-      triggerType: config.triggerType as 'gameStart' | 'contentUnits' | 'generatorPurchase' | 'upgrade' | 'prestige' | 'timeElapsed',
       isViewed: false
     }))
   }

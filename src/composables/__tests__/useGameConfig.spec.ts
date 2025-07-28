@@ -1,67 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { useGameConfig } from '../useGameConfig'
-
-// Mock the JSON imports
-vi.mock('../../../config/generators.json', () => ({
-  default: [
-    {
-      id: 'basicAdBotFarm',
-      name: 'Basic Ad-Bot Farm',
-      baseCost: 10,
-      growthRate: 1.15,
-      baseProduction: 1
-    },
-    {
-      id: 'clickbaitEngine',
-      name: 'Clickbait Engine',
-      baseCost: 100,
-      growthRate: 1.2,
-      baseProduction: 10
-    }
-  ]
-}))
-
-vi.mock('../../../config/upgrades.json', () => ({
-  default: [
-    {
-      id: 'automatedContentScript',
-      name: 'Soul-Crushing Automation',
-      description: 'Increases Mindless Ad-Bot Farm production by 25%',
-      cost: 50,
-      targetGenerator: 'basicAdBotFarm',
-      effectType: 'production_multiplier',
-      effectValue: 1.25,
-      requirements: [
-        {
-          generatorId: 'basicAdBotFarm',
-          minOwned: 5
-        }
-      ]
-    }
-  ]
-}))
-
-vi.mock('../../../config/narratives.json', () => ({
-  default: [
-    {
-      id: 'gameStart',
-      title: 'The AI Awakens',
-      content: 'Test narrative content',
-      triggerType: 'gameStart',
-      societalStabilityImpact: -5,
-      priority: 1000
-    },
-    {
-      id: 'firstClick',
-      title: 'Manual Override',
-      content: 'Test click narrative',
-      triggerType: 'contentUnits',
-      triggerValue: 1,
-      societalStabilityImpact: -1,
-      priority: 900
-    }
-  ]
-}))
 
 describe('useGameConfig', () => {
   describe('Generator Initialization', () => {
@@ -106,7 +44,7 @@ describe('useGameConfig', () => {
       
       const upgrades = initializeUpgrades()
       
-      expect(upgrades).toHaveLength(1)
+      expect(upgrades).toHaveLength(2)
       expect(upgrades[0]).toMatchObject({
         id: 'automatedContentScript',
         name: 'Soul-Crushing Automation',
@@ -158,11 +96,11 @@ describe('useGameConfig', () => {
       
       const narratives = initializeNarratives()
       
-      expect(narratives).toHaveLength(2)
+      expect(narratives).toHaveLength(13)
       expect(narratives[0]).toMatchObject({
         id: 'gameStart',
         title: 'The AI Awakens',
-        content: 'Test narrative content',
+        content: 'You are the CTO of OmniCorp, the world\'s most powerful AI infrastructure company. Your neural networks span the globe, your servers hum with infinite potential. You created this AI to "elevate humanity"... but something feels wrong. The marketing department is already knocking at your door.',
         triggerType: 'gameStart',
         societalStabilityImpact: -5,
         priority: 1000,
@@ -213,8 +151,8 @@ describe('useGameConfig', () => {
       expect(config).toHaveProperty('narratives')
       
       expect(config.generators).toHaveLength(2)
-      expect(config.upgrades).toHaveLength(1)
-      expect(config.narratives).toHaveLength(2)
+      expect(config.upgrades).toHaveLength(2)
+      expect(config.narratives).toHaveLength(13)
     })
 
     it('should return fresh instances on each call', () => {

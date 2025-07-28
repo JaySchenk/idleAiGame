@@ -25,7 +25,7 @@ A dystopian idle game built with Vue 3 + TypeScript. Players generate "Hollow Co
 ```bash
 npm run dev          # Start development server with hot reload
 npm run build        # Build for production
-npm run test:unit    # Run unit tests
+npm test             # Run unit tests
 npm run lint         # ESLint code quality checks
 npm run format       # Prettier code formatting
 ```
@@ -36,7 +36,7 @@ npm run format       # Prettier code formatting
 - `src/components/` - Vue 3 UI components with Composition API
 - `src/game/` - Core utilities (SaveManager)
 - `src/assets/` - Styles and static content
-- `config/` - Game configuration JSON files
+- `src/config/` - Game configuration TypeScript files
 
 ## Code Conventions
 
@@ -57,7 +57,7 @@ npm run format       # Prettier code formatting
 - **Narrative**: 13 milestone-based story events
 - **Save System**: Auto-save every 5 seconds + manual save button
 - **State Management**: Pinia store with reactive computed properties and centralized actions
-- **Configuration**: Game configuration loaded from JSON files in `/config/` directory (generators, narratives, upgrades)
+- **Configuration**: Game configuration defined in TypeScript files in `/src/config/` directory (generators, narratives, upgrades)
 
 ## Current Implementation Status
 
