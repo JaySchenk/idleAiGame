@@ -4,20 +4,19 @@ import { createTestPinia } from '../../test-utils'
 import { ComponentTestHelpers } from '../../test-utils'
 import GeneratorPurchaseButton from '../GeneratorPurchaseButton.vue'
 import { useGameStore } from '../../stores/gameStore'
-import { BASIC_AD_BOT_FARM, CLICKBAIT_ENGINE } from '../../config/generators'
-import { AUTOMATED_CONTENT_SCRIPT } from '../../config/upgrades'
-import { HCU } from '../../config/currencies'
+// Use string IDs directly instead of importing config objects
 
 // Mock the CurrencyDisplay component
 vi.mock('../CurrencyDisplay.vue', () => ({
   default: {
     name: 'CurrencyDisplay',
-    props: ['currencyConfig', 'amount', 'showUnit'],
-    template: '<span>{{ amount }} {{ showUnit !== false ? currencyConfig.symbol : "" }}</span>',
+    props: ['currencyId', 'amount', 'showUnit'],
+    template: '<span>{{ amount }} {{ showUnit !== false ? "HCU" : "" }}</span>',
   },
 }))
 
 describe('GeneratorPurchaseButton', () => {
+
   beforeEach(() => {
     createTestPinia()
     vi.useFakeTimers()
@@ -31,7 +30,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should render with correct generator information', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
 
@@ -44,14 +43,13 @@ describe('GeneratorPurchaseButton', () => {
     it('should display current generator stats', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()(
-        // Purchase a generator to test owned count display
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(100)
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+      const gameStore = useGameStore()
+      // Purchase a generator to test owned count display
+      gameStore.addCurrency('hcu', 100)
+      gameStore.purchaseGenerator('basicAdBotFarm')
 
       await wrapper.vm.$nextTick()
 
@@ -61,7 +59,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should display correct cost', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
 
@@ -72,14 +70,13 @@ describe('GeneratorPurchaseButton', () => {
     it('should display production rate with global multiplier', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()(
-        // Purchase generator and set prestige for global multiplier
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(100)
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+      const gameStore = useGameStore()
+      // Purchase generator and set prestige for global multiplier
+      gameStore.addCurrency('hcu', 100)
+      gameStore.purchaseGenerator('basicAdBotFarm')
       gameStore.prestigeLevel = 1 // 1.25x multiplier
 
       await wrapper.vm.$nextTick()
@@ -93,13 +90,12 @@ describe('GeneratorPurchaseButton', () => {
     it('should allow purchase when player can afford', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()(
-        // Give player enough money
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(50)
+      const gameStore = useGameStore()
+      // Give player enough money
+      gameStore.addCurrency('hcu', 50)
       await wrapper.vm.$nextTick()
 
       const button = wrapper.find('.purchase-button')
@@ -110,7 +106,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should prevent purchase when player cannot afford', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
       const gameStore = useGameStore()
@@ -127,13 +123,12 @@ describe('GeneratorPurchaseButton', () => {
     it('should execute purchase when clicked and affordable', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()(
-        // Give player money
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(50)
+      const gameStore = useGameStore()
+      // Give player money
+      gameStore.addCurrency('hcu', 50)
       await wrapper.vm.$nextTick() // Make sure reactivity updates
       const initialUnits = gameStore.getCurrencyAmount('hcu')
 
@@ -152,7 +147,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should not execute purchase when clicked but unaffordable', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
       const gameStore = useGameStore()
@@ -171,10 +166,11 @@ describe('GeneratorPurchaseButton', () => {
     it('should show purchasing state during purchase', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency('hcu', amount))(50)
+      const gameStore = useGameStore()
+      gameStore.addCurrency('hcu', 50)
       await wrapper.vm.$nextTick()
 
       const button = wrapper.find('.purchase-button')
@@ -199,10 +195,11 @@ describe('GeneratorPurchaseButton', () => {
     it('should prevent multiple rapid purchases', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency('hcu', amount))(100) // Enough for multiple purchases
+      const gameStore = useGameStore()
+      gameStore.addCurrency('hcu', 100) // Enough for multiple purchases
 
       // Click rapidly multiple times
       await wrapper.find('.purchase-button').trigger('click')
@@ -221,17 +218,17 @@ describe('GeneratorPurchaseButton', () => {
     it('should update cost when generator count changes', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
       const gameStore = useGameStore()
 
       // Initial cost
-      expect(wrapper.find('.purchase-button').text()).toContain('10')(
-        // Purchase one to increase cost
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(100)
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+      expect(wrapper.find('.purchase-button').text()).toContain('10')
+      
+      // Purchase one to increase cost
+      gameStore.addCurrency('hcu', 100)
+      gameStore.purchaseGenerator('basicAdBotFarm')
       await wrapper.vm.$nextTick()
 
       // Cost should have increased (10 * 1.15^1 = 11)
@@ -241,23 +238,23 @@ describe('GeneratorPurchaseButton', () => {
     it('should update affordability when player money changes', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
       const gameStore = useGameStore()
 
       // Initially cannot afford
-      expect(wrapper.find('.purchase-button').classes()).toContain('disabled')(
-        // Give money
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(50)
+      expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
+      
+      // Give money
+      gameStore.addCurrency('hcu', 50)
       await wrapper.vm.$nextTick()
 
       // Should now be affordable
       expect(wrapper.find('.purchase-button').classes()).not.toContain('disabled')
 
       // Spend money
-      gameStore.spendContentUnits(50)
+      gameStore.spendCurrency('hcu', 50)
       await wrapper.vm.$nextTick()
 
       // Should be unaffordable again
@@ -267,15 +264,14 @@ describe('GeneratorPurchaseButton', () => {
     it('should update production rate when upgrades are purchased', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()(
-        // Purchase generators to enable upgrade
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(200)
+      const gameStore = useGameStore()
+      // Purchase generators to enable upgrade
+      gameStore.addCurrency('hcu', 200)
       for (let i = 0; i < 5; i++) {
-        gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+        gameStore.purchaseGenerator('basicAdBotFarm')
       }
 
       // Initial production rate (5 * 1 = 5)
@@ -283,7 +279,7 @@ describe('GeneratorPurchaseButton', () => {
       expect(wrapper.find('.production-rate').text()).toContain('5')
 
       // Purchase upgrade that affects this generator
-      gameStore.purchaseUpgrade(AUTOMATED_CONTENT_SCRIPT)
+      gameStore.purchaseUpgrade('automatedContentScript')
       await wrapper.vm.$nextTick()
 
       // Production rate should increase (5 * 1.25 = 6.25)
@@ -293,14 +289,13 @@ describe('GeneratorPurchaseButton', () => {
     it('should update production rate when prestige level changes', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()(
-        // Purchase a generator
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(50)
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+      const gameStore = useGameStore()
+      // Purchase a generator
+      gameStore.addCurrency('hcu', 50)
+      gameStore.purchaseGenerator('basicAdBotFarm')
       await wrapper.vm.$nextTick()
 
       // Initial production rate (1 * 1 = 1)
@@ -319,7 +314,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should work with different generator configurations', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: CLICKBAIT_ENGINE,
+          generatorId: 'clickbaitEngine',
         },
       })
 
@@ -333,13 +328,12 @@ describe('GeneratorPurchaseButton', () => {
     it('should handle extremely high costs', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()(
-        // Purchase many generators to get very high cost
-        (amount: number) => gameStore.addCurrency('hcu', amount),
-      )(1000000)
+      const gameStore = useGameStore()
+      // Purchase many generators to get very high cost
+      gameStore.addCurrency('hcu', 1000000)
       const generator = gameStore.getGenerator('basicAdBotFarm')!
       generator.owned = 50 // This should create a very high cost
 
@@ -354,7 +348,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should handle zero production generators', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
 
@@ -366,10 +360,11 @@ describe('GeneratorPurchaseButton', () => {
     it('should handle component unmounting during purchase', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
-      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency('hcu', amount))(50)
+      const gameStore = useGameStore()
+      gameStore.addCurrency('hcu', 50)
 
       // Start purchase
       await wrapper.find('.purchase-button').trigger('click')
@@ -384,13 +379,13 @@ describe('GeneratorPurchaseButton', () => {
     it('should handle rapid prop changes', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
 
       // Change props rapidly
       await wrapper.setProps({
-        generator: CLICKBAIT_ENGINE,
+        generatorId: 'clickbaitEngine',
       })
 
       expect(wrapper.find('.generator-name').text()).toBe('Clickbait Engine')
@@ -398,7 +393,7 @@ describe('GeneratorPurchaseButton', () => {
 
       // Should not throw during rapid changes
       await wrapper.setProps({
-        generator: BASIC_AD_BOT_FARM,
+        generatorId: 'basicAdBotFarm',
       })
 
       expect(wrapper.find('.generator-name').text()).toBe('Basic Ad-Bot Farm')
@@ -410,7 +405,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should have proper button semantics', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
 
@@ -422,7 +417,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should provide clear visual feedback for disabled state', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
 
@@ -436,7 +431,7 @@ describe('GeneratorPurchaseButton', () => {
     it('should show clear information hierarchy', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
-          generator: BASIC_AD_BOT_FARM,
+          generatorId: 'basicAdBotFarm',
         },
       })
 

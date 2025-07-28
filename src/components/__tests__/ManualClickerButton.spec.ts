@@ -10,8 +10,8 @@ import { HCU } from '../../config/currencies'
 vi.mock('../CurrencyDisplay.vue', () => ({
   default: {
     name: 'CurrencyDisplay',
-    props: ['currencyConfig', 'amount', 'showUnit'],
-    template: '<span>{{ amount }} {{ showUnit !== false ? currencyConfig.symbol : "" }}</span>',
+    props: ['currencyId', 'amount', 'showUnit'],
+    template: '<span>{{ amount }} {{ showUnit !== false ? "HCU" : "" }}</span>',
   },
 }))
 
@@ -73,11 +73,11 @@ describe('ManualClickerButton', () => {
       const wrapper = mount(ManualClickerButton)
       const gameStore = useGameStore()
 
-      const initialUnits = gameStore.getCurrencyAmount(HCU)
+      const initialUnits = gameStore.getCurrencyAmount('hcu')
 
       await wrapper.find('.clicker-button').trigger('click')
 
-      expect(gameStore.getCurrencyAmount(HCU)).toBeGreaterThan(initialUnits)
+      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThan(initialUnits)
     })
 
     it('should show visual feedback during click', async () => {
@@ -280,7 +280,7 @@ describe('ManualClickerButton', () => {
       const wrapper = mount(ManualClickerButton)
       const gameStore = useGameStore()
 
-      const initialUnits = gameStore.getCurrencyAmount(HCU)
+      const initialUnits = gameStore.getCurrencyAmount('hcu')
 
       // Rapid clicks
       for (let i = 0; i < 5; i++) {
@@ -288,7 +288,7 @@ describe('ManualClickerButton', () => {
       }
 
       // Should have processed all clicks
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(initialUnits + 5)
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(initialUnits + 5)
 
       // Should have all animations (before cleanup)
       expect(wrapper.findAll('.click-animation')).toHaveLength(5)

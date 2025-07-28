@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { createApp } from 'vue'
 import type { App } from 'vue'
+import { vi } from 'vitest'
 
 /**
  * Test utilities for Hollow Content Empire idle game

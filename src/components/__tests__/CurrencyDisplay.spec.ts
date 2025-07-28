@@ -1,15 +1,19 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import CurrencyDisplay from '../CurrencyDisplay.vue'
-import { HCU, RAW_DATA } from '../../config/currencies'
+import { createTestPinia } from '../../test-utils'
 import { mathTestCases } from '../../test-utils/fixtures'
 
 describe('CurrencyDisplay', () => {
+  beforeEach(() => {
+    createTestPinia()
+  })
+
   describe('Basic Rendering', () => {
     it('should render amount with default unit', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
@@ -21,7 +25,7 @@ describe('CurrencyDisplay', () => {
     it('should render amount without unit when showUnit is false', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
           showUnit: false,
         },
@@ -34,7 +38,7 @@ describe('CurrencyDisplay', () => {
     it('should have proper CSS class applied', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
@@ -46,7 +50,7 @@ describe('CurrencyDisplay', () => {
     it('should apply currency color styling', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
@@ -60,14 +64,14 @@ describe('CurrencyDisplay', () => {
     it('should display different currency symbols', () => {
       const hcuWrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
 
       const rdWrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: RAW_DATA,
+          currencyId: 'rd',
           amount: 100,
         },
       })
@@ -79,14 +83,14 @@ describe('CurrencyDisplay', () => {
     it('should apply different currency colors', () => {
       const hcuWrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
 
       const rdWrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: RAW_DATA,
+          currencyId: 'rd',
           amount: 100,
         },
       })
@@ -105,7 +109,7 @@ describe('CurrencyDisplay', () => {
       mathTestCases.currencyFormatting.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount: input,
           },
         })
@@ -117,7 +121,7 @@ describe('CurrencyDisplay', () => {
     it('should handle zero correctly', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 0,
         },
       })
@@ -128,7 +132,7 @@ describe('CurrencyDisplay', () => {
     it('should handle negative numbers', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: -50,
         },
       })
@@ -148,7 +152,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount: input,
           },
         })
@@ -169,7 +173,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount: input,
           },
         })
@@ -188,7 +192,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount: input,
           },
         })
@@ -207,7 +211,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount: input,
           },
         })
@@ -226,7 +230,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount: input,
           },
         })
@@ -245,7 +249,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount: input,
           },
         })
@@ -264,7 +268,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount: input,
           },
         })
@@ -278,7 +282,7 @@ describe('CurrencyDisplay', () => {
     it('should show unit by default', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 1000,
         },
       })
@@ -300,7 +304,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach((amount) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount,
             showUnit: false,
           },
@@ -314,7 +318,7 @@ describe('CurrencyDisplay', () => {
     it('should show unit when showUnit is explicitly true', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 1000,
           showUnit: true,
         },
@@ -328,7 +332,7 @@ describe('CurrencyDisplay', () => {
     it('should update when amount prop changes', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
@@ -343,7 +347,7 @@ describe('CurrencyDisplay', () => {
     it('should update when showUnit prop changes', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
           showUnit: true,
         },
@@ -359,14 +363,14 @@ describe('CurrencyDisplay', () => {
     it('should update when currencyConfig changes', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
 
       expect(wrapper.text()).toBe('100.00 HCU')
 
-      await wrapper.setProps({ currencyConfig: RAW_DATA })
+      await wrapper.setProps({ currencyId: 'rd' })
 
       expect(wrapper.text()).toBe('100.00 RD')
     })
@@ -374,7 +378,7 @@ describe('CurrencyDisplay', () => {
     it('should handle rapid prop changes', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
@@ -395,7 +399,7 @@ describe('CurrencyDisplay', () => {
     it('should handle Infinity', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: Infinity,
         },
       })
@@ -406,7 +410,7 @@ describe('CurrencyDisplay', () => {
     it('should handle NaN', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: NaN,
         },
       })
@@ -417,7 +421,7 @@ describe('CurrencyDisplay', () => {
     it('should handle very small positive numbers', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 0.001,
         },
       })
@@ -428,7 +432,7 @@ describe('CurrencyDisplay', () => {
     it('should handle very small negative numbers', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: -0.001,
         },
       })
@@ -439,7 +443,7 @@ describe('CurrencyDisplay', () => {
     it('should handle maximum safe integer', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: Number.MAX_SAFE_INTEGER,
         },
       })
@@ -451,7 +455,7 @@ describe('CurrencyDisplay', () => {
     it('should handle minimum safe integer', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: Number.MIN_SAFE_INTEGER,
         },
       })
@@ -471,7 +475,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach((amount) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount,
           },
         })
@@ -494,7 +498,7 @@ describe('CurrencyDisplay', () => {
       const wrappers = testCases.map(({ amount }) =>
         mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount,
           },
         }),
@@ -511,7 +515,7 @@ describe('CurrencyDisplay', () => {
     it('should not cause memory leaks with computed properties', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyConfig: HCU,
+          currencyId: 'hcu',
           amount: 100,
         },
       })
@@ -542,7 +546,7 @@ describe('CurrencyDisplay', () => {
       gameValues.forEach(({ amount, stage }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount,
           },
         })
@@ -566,7 +570,7 @@ describe('CurrencyDisplay', () => {
       fractionalValues.forEach((amount) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyConfig: HCU,
+            currencyId: 'hcu',
             amount,
           },
         })

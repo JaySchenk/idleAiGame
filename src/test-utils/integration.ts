@@ -1,7 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { createApp } from 'vue'
 import { vi } from 'vitest'
-import { HCU } from '../config/currencies'
 
 /**
  * Integration test utilities that use real composables with programmatic control
@@ -49,7 +48,7 @@ export function runGameLoopUntil(
 
   if (ticks >= maxTicks) {
     throw new Error(
-      `runGameLoopUntil exceeded maximum ticks (${maxTicks}). Last state: HCU=${gameStore.getCurrencyAmount(HCU)}, Lifetime=${gameStore.lifetimeCurrencyAmounts[HCU.id]}`,
+      `runGameLoopUntil exceeded maximum ticks (${maxTicks}). Last state: HCU=${gameStore.getCurrencyAmount(HCU)}, Lifetime=${gameStore.lifetimeCurrencyAmounts['hcu']}`,
     )
   }
 
@@ -110,12 +109,12 @@ export function setupGameWithResources(
   initialLifetime: number = 0,
 ) {
   if (initialHCU > 0) {
-    ;((amount: number) => gameStore.addCurrency(HCU, amount))(initialHCU)
+    ;((amount: number) => gameStore.addCurrency('hcu', amount))(initialHCU)
   }
   if (initialLifetime > 0) {
-    gameStore.lifetimeCurrencyAmounts[HCU.id] = Math.max(
+    gameStore.lifetimeCurrencyAmounts['hcu'] = Math.max(
       initialLifetime,
-      gameStore.lifetimeCurrencyAmounts[HCU.id],
+      gameStore.lifetimeCurrencyAmounts['hcu'],
     )
   }
 }

@@ -7,9 +7,7 @@ import {
   setupGameWithResources,
 } from '../test-utils/integration'
 import { useGameStore } from '../stores/gameStore'
-import { BASIC_AD_BOT_FARM, CLICKBAIT_ENGINE } from '../config/generators'
-import { AUTOMATED_CONTENT_SCRIPT } from '../config/upgrades'
-import { HCU } from '../config/currencies'
+// Use string IDs directly instead of importing config objects
 
 // Mock all components to focus on integration logic
 vi.mock('../components/ResourceDisplay.vue', () => ({
@@ -62,6 +60,7 @@ vi.mock('../components/NarrativeDisplay.vue', () => ({
 }))
 
 describe('Game Integration Tests', () => {
+
   beforeEach(() => {
     createIntegrationTestPinia()
     vi.useFakeTimers()
@@ -78,7 +77,7 @@ describe('Game Integration Tests', () => {
 
       // Start: Player has 0 HCU
       expect(gameStore.getCurrencyAmount('hcu')).toBe(0)
-      expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBe(0)
+      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBe(0)
       expect(gameStore.prestigeLevel).toBe(0)
 
       // Phase 1: Manual clicking to get initial resources
@@ -86,13 +85,13 @@ describe('Game Integration Tests', () => {
         gameStore.clickForContent()
       }
       expect(gameStore.getCurrencyAmount('hcu')).toBe(10)
-      expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBe(10)
+      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBe(10)
 
       // Phase 2: Purchase first generator
       expect(((amount: number) => gameStore.canAffordCurrency('hcu', amount))(10)).toBe(true)
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
+      gameStore.purchaseGenerator('basicAdBotFarm')
 
-      const generator = gameStore.getGenerator(BASIC_AD_BOT_FARM.id)!
+      const generator = gameStore.getGenerator('basicAdBotFarm')!
       expect(generator.owned).toBe(1)
       expect(gameStore.getCurrencyAmount('hcu')).toBe(0) // Spent all on generator
 
@@ -108,16 +107,16 @@ describe('Game Integration Tests', () => {
       expect(gameStore.canPrestige).toBe(true)
 
       // Record pre-prestige state
-      const prePrestigeLifetime = gameStore.lifetimeCurrencyAmounts[HCU.id]
+      const prePrestigeLifetime = gameStore.lifetimeCurrencyAmounts['hcu']
 
       gameStore.performPrestige()
 
       // After prestige: current units and generators reset, but lifetime and prestige level persist
       expect(gameStore.getCurrencyAmount('hcu')).toBe(0)
-      expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBe(prePrestigeLifetime) // Lifetime persists
+      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBe(prePrestigeLifetime) // Lifetime persists
       expect(gameStore.prestigeLevel).toBe(1)
       expect(gameStore.globalMultiplier).toBe(1.25) // 1.25x multiplier
-      expect(gameStore.getGenerator(BASIC_AD_BOT_FARM.id)!.owned).toBe(0)
+      expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(0)
 
       // Test that post-prestige progression is faster due to multiplier
       for (let i = 0; i < 10; i++) {
@@ -137,10 +136,10 @@ describe('Game Integration Tests', () => {
       // Buy multiple generators quickly
       purchaseUntilUnaffordable(
         gameStore,
-        () => gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id),
+        () => gameStore.purchaseGenerator('basicAdBotFarm'),
         () =>
           ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
-            gameStore.getGeneratorCost(BASIC_AD_BOT_FARM.id),
+            gameStore.getGeneratorCost('basicAdBotFarm'),
           ),
         10,
       )
@@ -153,7 +152,7 @@ describe('Game Integration Tests', () => {
       expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThan(1000) // Should have earned more
 
       // Purchase upgrades when available
-      const availableUpgrades = [AUTOMATED_CONTENT_SCRIPT]
+      const availableUpgrades = ['automatedContentScript']
 
       for (const upgrade of availableUpgrades) {
         // Progress until upgrade is affordable or we have enough lifetime HCU
@@ -164,14 +163,14 @@ describe('Game Integration Tests', () => {
               // Keep buying generators during progression
               if (
                 ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
-                  gameStore.getGeneratorCost(BASIC_AD_BOT_FARM.id),
+                  gameStore.getGeneratorCost('basicAdBotFarm'),
                 )
               ) {
-                gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
+                gameStore.purchaseGenerator('basicAdBotFarm')
               }
               return (
                 gameStore.canPurchaseUpgrade(upgrade.id) ||
-                gameStore.lifetimeCurrencyAmounts[HCU.id] >= 10000
+                gameStore.lifetimeCurrencyAmounts['hcu'] >= 10000
               )
             },
             5000, // Reasonable limit
@@ -201,23 +200,23 @@ describe('Game Integration Tests', () => {
       setupGameWithResources(gameStore, 100000, 100000)
 
       // Purchase multiple types of generators
-      const generatorTypes = [BASIC_AD_BOT_FARM, CLICKBAIT_ENGINE]
+      const generatorTypes = ['basicAdBotFarm', 'clickbaitEngine']
 
-      for (const generatorConfig of generatorTypes) {
-        const generator = gameStore.getGenerator(generatorConfig.id)
+      for (const generatorId of generatorTypes) {
+        const generator = gameStore.getGenerator(generatorId)
         if (generator) {
           // Purchase several of each type
           purchaseUntilUnaffordable(
             gameStore,
-            () => gameStore.purchaseGenerator(generatorConfig.id),
+            () => gameStore.purchaseGenerator(generatorId),
             () =>
               ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
-                gameStore.getGeneratorCost(generatorConfig.id),
+                gameStore.getGeneratorCost(generatorId),
               ),
             5,
           )
 
-          expect(gameStore.getGenerator(generatorConfig.id)!.owned).toBeGreaterThan(0)
+          expect(gameStore.getGenerator(generatorId)!.owned).toBeGreaterThan(0)
         }
       }
 
@@ -242,7 +241,7 @@ describe('Game Integration Tests', () => {
       for (const milestone of milestones) {
         // First buy some generators to enable progression
         if (gameStore.getCurrencyAmount('hcu') >= 10) {
-          gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
+          gameStore.purchaseGenerator('basicAdBotFarm')
         }
 
         // Progress to each milestone using game loop with production
@@ -253,10 +252,10 @@ describe('Game Integration Tests', () => {
               // Keep buying generators when affordable during progression
               if (
                 ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
-                  gameStore.getGeneratorCost(BASIC_AD_BOT_FARM.id),
+                  gameStore.getGeneratorCost('basicAdBotFarm'),
                 )
               ) {
-                gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
+                gameStore.purchaseGenerator('basicAdBotFarm')
               }
               return gameStore.getCurrencyAmount('hcu') >= milestone
             },
@@ -285,17 +284,17 @@ describe('Game Integration Tests', () => {
       const gameStore = useGameStore()
       // Set up complex game state
       gameStore.addCurrency('hcu', 50000)
-      gameStore.lifetimeCurrencyAmounts[HCU.id] = 75000
+      gameStore.lifetimeCurrencyAmounts['hcu'] = 75000
       gameStore.prestigeLevel = 2
 
       // Purchase generators and upgrades
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
-      gameStore.purchaseUpgrade(AUTOMATED_CONTENT_SCRIPT.id)
+      gameStore.purchaseGenerator('basicAdBotFarm')
+      gameStore.purchaseGenerator('basicAdBotFarm')
+      gameStore.purchaseUpgrade('automatedContentScript')
 
       const beforeSave = {
         contentUnits: gameStore.getCurrencyAmount('hcu'),
-        lifetimeContentUnits: gameStore.lifetimeCurrencyAmounts[HCU.id],
+        lifetimeContentUnits: gameStore.lifetimeCurrencyAmounts['hcu'],
         prestigeLevel: gameStore.prestigeLevel,
         generatorOwned: gameStore.getGenerator('basicAdBotFarm')!.owned,
         upgradesPurchased: gameStore.getUpgrade('automatedContentScript')!.isPurchased,
@@ -306,7 +305,7 @@ describe('Game Integration Tests', () => {
 
       // Verify state is consistent after operations
       expect(gameStore.getCurrencyAmount('hcu')).toBe(beforeSave.contentUnits)
-      expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBe(beforeSave.lifetimeContentUnits)
+      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBe(beforeSave.lifetimeContentUnits)
       expect(gameStore.prestigeLevel).toBe(beforeSave.prestigeLevel)
       expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(beforeSave.generatorOwned)
       expect(gameStore.getUpgrade('automatedContentScript')!.isPurchased).toBe(
@@ -331,7 +330,7 @@ describe('Game Integration Tests', () => {
 
       // Values should remain valid
       expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThanOrEqual(0)
-      expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBeGreaterThanOrEqual(0)
+      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBeGreaterThanOrEqual(0)
       expect(gameStore.prestigeLevel).toBeGreaterThanOrEqual(0)
     })
 
@@ -341,12 +340,11 @@ describe('Game Integration Tests', () => {
       // Test with very large numbers
       gameStore.addCurrency('hcu', Number.MAX_SAFE_INTEGER)
       expect(() => {
-        gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
+        gameStore.purchaseGenerator('basicAdBotFarm')
         vi.advanceTimersByTime(1000)
       }).not.toThrow()
       // Test with very small numbers
-      gameStore.spendCurrency('hcu',
-      )(gameStore.getCurrencyAmount('hcu') - 0.01)
+      gameStore.spendCurrency('hcu', gameStore.getCurrencyAmount('hcu') - 0.01)
       expect(() => {
         gameStore.clickForContent()
         vi.advanceTimersByTime(1000)
@@ -369,10 +367,10 @@ describe('Game Integration Tests', () => {
         if (i % 10 === 0) {
           if (
             ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
-              gameStore.getGeneratorCost(BASIC_AD_BOT_FARM.id),
+              gameStore.getGeneratorCost('basicAdBotFarm'),
             )
           ) {
-            gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
+            gameStore.purchaseGenerator('basicAdBotFarm')
           }
         }
 
@@ -390,7 +388,7 @@ describe('Game Integration Tests', () => {
 
       // Game state should remain consistent
       expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThanOrEqual(0)
-      expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBeGreaterThan(0)
+      expect(gameStore.lifetimeCurrencyAmounts['hcu']).toBeGreaterThan(0)
     })
   })
 })

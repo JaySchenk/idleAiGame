@@ -1,7 +1,7 @@
 <template>
   <div class="generator-purchase">
     <div class="generator-info">
-      <div class="generator-name">{{ props.generator.name }}</div>
+      <div class="generator-name">{{ generator?.name }}</div>
       <div class="generator-stats">
         <span class="owned-count">Owned: {{ ownedCount }}</span>
         <span class="production-rate"
@@ -31,21 +31,22 @@ import { useGameStore, type GeneratorConfig } from '../stores/gameStore'
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const props = defineProps<{
-  generator: GeneratorConfig
+  generatorId: string
 }>()
 
 const gameStore = useGameStore()
 const isPurchasing = ref(false)
 
+// Get generator from store
+const generator = computed(() => gameStore.getGenerator(props.generatorId))
+
 // Component-specific computed values (these need computed because they depend on props)
 const ownedCount = computed(() => {
-  // Get the reactive owned count from the store, not the static prop
-  const storeGenerator = gameStore.generators.find((g) => g.id === props.generator.id)
-  return storeGenerator ? storeGenerator.owned : 0
+  return generator.value?.owned ?? 0
 })
 
 const cost = computed(() => {
-  return gameStore.getGeneratorCost(props.generator.id)
+  return gameStore.getGeneratorCost(props.generatorId)
 })
 
 const canAfford = computed(() => {
@@ -53,7 +54,7 @@ const canAfford = computed(() => {
 })
 
 const actualProductionRate = computed(() => {
-  return gameStore.getGeneratorProductionRate(props.generator.id) * gameStore.globalMultiplier
+  return gameStore.getGeneratorProductionRate(props.generatorId) * gameStore.globalMultiplier
 })
 
 // Handle purchase with visual feedback
@@ -64,7 +65,7 @@ const handlePurchase = async () => {
 
   // Visual feedback delay
   setTimeout(() => {
-    gameStore.purchaseGenerator(props.generator.id)
+    gameStore.purchaseGenerator(props.generatorId)
     isPurchasing.value = false
   }, 100)
 }
