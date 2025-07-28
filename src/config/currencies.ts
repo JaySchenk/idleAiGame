@@ -14,7 +14,7 @@ export const currencies: CurrencyConfig[] = [
     displayName: 'Hollow Content Units',
     symbol: 'HCU',
     initialValue: 0,
-    color: '#00ff41', // Matrix green for dystopian feel
+    color: '#ffffff', // White for clarity
   },
   {
     id: 'rd',

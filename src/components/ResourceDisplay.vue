@@ -73,9 +73,6 @@ const gameStore = useGameStore()
   font-family: 'Courier New', monospace;
 }
 
-.resource-item.primary .resource-value {
-  color: #00ff88;
-}
 
 .resource-item.secondary .resource-value {
   color: #0088ff;
