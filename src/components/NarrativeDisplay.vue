@@ -12,7 +12,7 @@
           <div class="narrative-stability">
             <span class="stability-label">Societal Stability: </span>
             <span class="stability-value" :class="getStabilityClass()">
-              {{ gameManager.state.narrative.societalStability }}%
+              {{ gameStore.narrative.societalStability }}%
             </span>
           </div>
         </div>
@@ -30,12 +30,12 @@
         <h4>System Status</h4>
         <div class="stability-indicator" :class="getStabilityClass()">
           <span class="stability-text"
-            >Stability: {{ gameManager.state.narrative.societalStability }}%</span
+            >Stability: {{ gameStore.narrative.societalStability }}%</span
           >
           <div class="stability-bar">
             <div
               class="stability-fill"
-              :style="{ width: gameManager.state.narrative.societalStability + '%' }"
+              :style="{ width: gameStore.narrative.societalStability + '%' }"
             ></div>
           </div>
         </div>
@@ -66,10 +66,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { GameManager } from '../game/Game'
+import { useGameStore } from '../stores/gameStore'
 import type { NarrativeEvent } from '../assets/narratives'
 
-const gameManager = GameManager.getInstance()
+const gameStore = useGameStore()
+
 
 // Component state
 const showModal = ref(false)
@@ -84,7 +85,7 @@ let currentCharIndex = 0
 
 // Archive state using reactive state
 const viewedEvents = computed(() => 
-  gameManager.state.narrative.currentStoryEvents.filter(event => event.isViewed)
+  gameStore.narrative.currentStoryEvents.filter(event => event.isViewed)
 )
 const hasViewedEvents = computed(() => viewedEvents.value.length > 0)
 
@@ -152,7 +153,7 @@ const reviewEvent = (event: NarrativeEvent) => {
 
 // Styling helpers
 const getStabilityClass = () => {
-  const stability = gameManager.state.narrative.societalStability
+  const stability = gameStore.narrative.societalStability
   if (stability >= 80) return 'stability-high'
   if (stability >= 50) return 'stability-medium'
   if (stability >= 25) return 'stability-low'
@@ -166,9 +167,31 @@ const getImpactClass = (impact: number) => {
   return 'impact-minor'
 }
 
+// Check for pending events periodically
+const checkForPendingEvents = () => {
+  if (gameStore.hasPendingEvents()) {
+    const event = gameStore.getNextPendingEvent()
+    if (event) {
+      handleNarrativeEvent(event)
+    }
+  }
+}
+
 // Lifecycle
 onMounted(() => {
-  gameManager.onNarrativeEvent(handleNarrativeEvent)
+  // Subscribe to narrative events
+  gameStore.onNarrativeEvent(handleNarrativeEvent)
+  
+  // Check for any pending events on mount
+  checkForPendingEvents()
+  
+  // Set up periodic check for pending events (as backup)
+  const pendingEventInterval = setInterval(checkForPendingEvents, 1000)
+  
+  // Clean up interval on unmount
+  onUnmounted(() => {
+    clearInterval(pendingEventInterval)
+  })
 })
 
 onUnmounted(() => {

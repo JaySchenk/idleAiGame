@@ -2,7 +2,7 @@
   <div class="prestige-container">
     <div class="prestige-header">
       <h3 class="prestige-title">Societal Collapse Reset</h3>
-      <div class="prestige-level">Level {{ prestigeInfo.level }}</div>
+      <div class="prestige-level">Level {{ gameStore.prestigeLevel }}</div>
     </div>
 
     <div class="prestige-description">
@@ -14,46 +14,46 @@
     <div class="prestige-stats">
       <div class="stat-item">
         <div class="stat-label">Current Multiplier:</div>
-        <div class="stat-value">{{ prestigeInfo.globalMultiplier.toFixed(2) }}x</div>
+        <div class="stat-value">{{ gameStore.globalMultiplier.toFixed(2) }}x</div>
       </div>
       <div class="stat-item">
         <div class="stat-label">Next Multiplier:</div>
-        <div class="stat-value">{{ prestigeInfo.nextMultiplier.toFixed(2) }}x</div>
+        <div class="stat-value">{{ gameStore.nextPrestigeMultiplier.toFixed(2) }}x</div>
       </div>
       <div class="stat-item">
         <div class="stat-label">Threshold:</div>
         <div class="stat-value">
-          <HCUDisplay :amount="prestigeInfo.threshold" />
+          <HCUDisplay :amount="gameStore.prestigeThreshold" />
         </div>
       </div>
     </div>
 
-    <div class="progress-section" v-if="!prestigeInfo.canPrestige">
+    <div class="progress-section" v-if="!gameStore.canPrestige">
       <div class="progress-label">Progress to Reboot</div>
       <div class="progress-bar">
         <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
       <div class="progress-text">
-        <HCUDisplay :amount="gameManager.state.contentUnits" :show-unit="false" /> /
-        <HCUDisplay :amount="prestigeInfo.threshold" :show-unit="false" /> HCU
+        <HCUDisplay :amount="gameStore.contentUnits" :show-unit="false" /> /
+        <HCUDisplay :amount="gameStore.prestigeThreshold" :show-unit="false" /> HCU
       </div>
     </div>
 
     <button
       class="prestige-button"
       :class="{
-        disabled: !prestigeInfo.canPrestige,
+        disabled: !gameStore.canPrestige,
         rebooting: isRebooting,
       }"
-      :disabled="!prestigeInfo.canPrestige || isRebooting"
+      :disabled="!gameStore.canPrestige || isRebooting"
       @click="performReboot"
     >
       <span v-if="isRebooting">Rebooting System...</span>
-      <span v-else-if="!prestigeInfo.canPrestige">Reboot Unavailable</span>
+      <span v-else-if="!gameStore.canPrestige">Reboot Unavailable</span>
       <span v-else>
         🔄 Reboot System
         <small class="multiplier-gain"
-          >+{{ ((prestigeInfo.nextMultiplier - prestigeInfo.globalMultiplier) * 100).toFixed(0) }}%
+          >+{{ ((gameStore.nextPrestigeMultiplier - gameStore.globalMultiplier) * 100).toFixed(0) }}%
           Production</small
         >
       </span>
@@ -63,43 +63,40 @@
     <div v-if="showRebootEffect" class="reboot-effect">
       <div class="effect-title">System Rebooted!</div>
       <div class="effect-multiplier">
-        {{ prestigeInfo.globalMultiplier.toFixed(2) }}x Production Multiplier
+        {{ gameStore.globalMultiplier.toFixed(2) }}x Production Multiplier
       </div>
-      <div class="effect-level">Prestige Level {{ prestigeInfo.level }}</div>
+      <div class="effect-level">Prestige Level {{ gameStore.prestigeLevel }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { GameManager } from '../game/Game'
+import { useGameStore } from '../stores/gameStore'
 import HCUDisplay from './HCUDisplay.vue'
 
-const gameManager = GameManager.getInstance()
+const gameStore = useGameStore()
 
 const isRebooting = ref(false)
 const showRebootEffect = ref(false)
 
-// Reactive computed properties directly from game state
-const prestigeInfo = computed(() => gameManager.state.prestige)
-
 // Calculate progress to prestige (based on current HCU)
 const progressPercent = computed(() => {
-  const currentHCU = gameManager.state.contentUnits
-  const progress = (currentHCU / prestigeInfo.value.threshold) * 100
+  const currentHCU = gameStore.contentUnits
+  const progress = (currentHCU / gameStore.prestigeThreshold) * 100
   return Math.min(100, progress)
 })
 
 // Perform prestige reboot
 const performReboot = async () => {
-  if (!prestigeInfo.value.canPrestige || isRebooting.value) return
+  if (!gameStore.canPrestige || isRebooting.value) return
 
   isRebooting.value = true
 
   // Add delay for dramatic effect
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  const success = gameManager.performPrestige()
+  const success = gameStore.performPrestige()
 
   if (success) {
     // Show reboot effect

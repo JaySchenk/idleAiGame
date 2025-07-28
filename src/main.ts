@@ -1,17 +1,17 @@
 import './assets/style.css'
 
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 import App from './App.vue'
 import router from './router'
 
 const app = createApp(App)
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
 
 app.use(router)
+app.use(pinia)
 
 app.mount('#app')
-
-// Make GameManager available globally for debugging
-import { GameManager } from './game/Game'
-;(window as Window & typeof globalThis & { GameManager: typeof GameManager }).GameManager =
-  GameManager

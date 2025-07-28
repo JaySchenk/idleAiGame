@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { GameManager } from '../game/Game'
+import { useGameStore } from '../stores/gameStore'
 import HCUDisplay from './HCUDisplay.vue'
 
 interface Props {
@@ -56,14 +56,15 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const gameManager = GameManager.getInstance()
+const gameStore = useGameStore()
 
 const isPurchasing = ref(false)
 const showPurchaseEffect = ref(false)
 
-// Reactive computed properties directly from game state
+
+// Reactive computed properties from Pinia store
 const upgrade = computed(() => {
-  const upgradeData = gameManager.state.upgrades.find((u) => u.id === props.upgradeId)
+  const upgradeData = gameStore.upgrades.find((u) => u.id === props.upgradeId)
   return (
     upgradeData || {
       id: '',
@@ -81,33 +82,28 @@ const upgrade = computed(() => {
 
 // Check requirements
 const requirementsMet = computed(() => {
-  if (!upgrade.value.requirements) return true
-
-  return upgrade.value.requirements.every((req) => {
-    const generator = gameManager.state.generators.find((g) => g.id === req.generatorId)
-    return generator && generator.owned >= req.minOwned
-  })
+  return gameStore.areUpgradeRequirementsMet(props.upgradeId)
 })
 
 // Check if can afford
 const canAfford = computed(() => {
-  return gameManager.state.contentUnits >= upgrade.value.cost
+  return gameStore.canAfford(upgrade.value.cost)
 })
 
 // Check if can purchase
 const canPurchase = computed(() => {
-  return !upgrade.value.isPurchased && requirementsMet.value && canAfford.value
+  return gameStore.canPurchaseUpgrade(props.upgradeId)
 })
 
 // Get generator name by ID
 const getGeneratorName = (generatorId: string): string => {
-  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
+  const generator = gameStore.generators.find((g) => g.id === generatorId)
   return generator ? generator.name : 'Unknown Generator'
 }
 
 // Get generator owned count
 const getGeneratorOwned = (generatorId: string): number => {
-  const generator = gameManager.state.generators.find((g) => g.id === generatorId)
+  const generator = gameStore.generators.find((g) => g.id === generatorId)
   return generator ? generator.owned : 0
 }
 
@@ -120,7 +116,7 @@ const purchaseUpgrade = async () => {
   // Add slight delay for visual feedback
   await new Promise((resolve) => setTimeout(resolve, 100))
 
-  const success = gameManager.purchaseUpgrade(props.upgradeId)
+  const success = gameStore.purchaseUpgrade(props.upgradeId)
 
   if (success) {
     // Show purchase effect

@@ -7,14 +7,13 @@ import ProgressBar from '../components/ProgressBar.vue'
 import UpgradeButton from '../components/UpgradeButton.vue'
 import PrestigeButton from '../components/PrestigeButton.vue'
 import NarrativeDisplay from '../components/NarrativeDisplay.vue'
-import { GameManager } from '../game/Game'
+import { useGameStore } from '../stores/gameStore'
 
-const gameManager = GameManager.getInstance()
+const gameStore = useGameStore()
 
 onMounted(() => {
-  // Game loop is now started in GameManager constructor
-  // Just ensure GameManager is initialized
-  GameManager.getInstance()
+  // Start the game loop
+  gameStore.startGameLoop()
 })
 </script>
 
@@ -32,7 +31,7 @@ onMounted(() => {
           <div class="section">
             <h2 class="section-title">Automation</h2>
             <GeneratorPurchaseButton 
-              v-for="generator in gameManager.state.generators" 
+              v-for="generator in gameStore.generators" 
               :key="generator.id"
               :generator-id="generator.id"
               :generator-name="generator.name"
@@ -42,7 +41,7 @@ onMounted(() => {
           <div class="section">
             <h2 class="section-title">Upgrades</h2>
             <UpgradeButton 
-              v-for="upgrade in gameManager.state.upgrades" 
+              v-for="upgrade in gameStore.upgrades" 
               :key="upgrade.id"
               :upgrade-id="upgrade.id" 
             />

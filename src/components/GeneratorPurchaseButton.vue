@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { GameManager } from '../game/Game'
+import { useGameStore } from '../stores/gameStore'
 import HCUDisplay from './HCUDisplay.vue'
 
 const props = defineProps<{
@@ -30,30 +30,25 @@ const props = defineProps<{
   generatorName: string
 }>()
 
-const gameManager = GameManager.getInstance()
-
+const gameStore = useGameStore()
 const isPurchasing = ref(false)
 
-// Reactive computed properties directly from game state
+// Component-specific computed values (these need computed because they depend on props)
 const ownedCount = computed(() => {
-  const generator = gameManager.state.generators.find((g) => g.id === props.generatorId)
+  const generator = gameStore.generators.find((g) => g.id === props.generatorId)
   return generator ? generator.owned : 0
 })
 
 const cost = computed(() => {
-  const generator = gameManager.state.generators.find((g) => g.id === props.generatorId)
-  if (!generator) return 0
-  return generator.baseCost * Math.pow(generator.growthRate, generator.owned)
+  return gameStore.getGeneratorCost(props.generatorId)
 })
 
 const canAfford = computed(() => {
-  return gameManager.state.contentUnits >= cost.value
+  return gameStore.canAfford(cost.value)
 })
 
 const actualProductionRate = computed(() => {
-  const generator = gameManager.state.generators.find((g) => g.id === props.generatorId)
-  if (!generator) return 0
-  return generator.baseProduction * generator.owned * gameManager.state.prestige.globalMultiplier
+  return gameStore.getGeneratorProductionRate(props.generatorId) * gameStore.globalMultiplier
 })
 
 // Handle purchase with visual feedback
@@ -64,7 +59,7 @@ const handlePurchase = async () => {
 
   // Visual feedback delay
   setTimeout(() => {
-    gameManager.purchaseGenerator(props.generatorId)
+    gameStore.purchaseGenerator(props.generatorId)
     isPurchasing.value = false
   }, 100)
 }

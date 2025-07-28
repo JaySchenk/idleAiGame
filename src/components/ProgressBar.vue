@@ -2,45 +2,43 @@
   <div class="progress-container">
     <div class="progress-header">
       <div class="progress-title">Humanity Degradation Timer</div>
-      <div class="progress-timer">{{ formatTime(timeRemaining) }}</div>
+      <div class="progress-timer">{{ formatTime(gameStore.taskProgress.timeRemaining) }}</div>
     </div>
 
     <div class="progress-bar-container">
       <div class="progress-bar-background">
-        <div class="progress-bar-fill" :style="{ width: progressPercent + '%' }"></div>
+        <div class="progress-bar-fill" :style="{ width: gameStore.taskProgress.progressPercent + '%' }"></div>
       </div>
-      <div class="progress-percentage">{{ Math.floor(progressPercent) }}%</div>
+      <div class="progress-percentage">{{ Math.floor(gameStore.taskProgress.progressPercent) }}%</div>
     </div>
 
     <div class="progress-reward">
       <span class="reward-text">Reward: </span>
       <span class="reward-amount"
-        >+<HCUDisplay :amount="rewardAmount" :show-unit="false" /> Hollow Content Units</span
+        >+<HCUDisplay :amount="gameStore.taskProgress.rewardAmount" :show-unit="false" /> Hollow Content Units</span
       >
     </div>
 
     <!-- Completion animation -->
     <div v-if="showCompletionEffect" class="completion-effect">
       <div class="completion-text">Task Complete!</div>
-      <div class="completion-reward">+<HCUDisplay :amount="rewardAmount" /></div>
+      <div class="completion-reward">+<HCUDisplay :amount="gameStore.taskProgress.rewardAmount" /></div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { GameManager } from '../game/Game'
+import { ref, watch, computed } from 'vue'
+import { useGameStore } from '../stores/gameStore'
 import HCUDisplay from './HCUDisplay.vue'
 
-const gameManager = GameManager.getInstance()
+const gameStore = useGameStore()
 const showCompletionEffect = ref(false)
 
 let lastProgressPercent = 0
 
-// Reactive computed properties directly from game state
-const timeRemaining = computed(() => gameManager.state.taskProgress.timeRemaining)
-const progressPercent = computed(() => gameManager.state.taskProgress.progressPercent)
-const rewardAmount = computed(() => gameManager.state.taskProgress.rewardAmount)
+
+// Access reactive store properties directly (maintaining reactivity)
 
 // Format time in seconds
 const formatTime = (milliseconds: number): string => {
@@ -50,7 +48,7 @@ const formatTime = (milliseconds: number): string => {
 
 // Handle completion animation trigger
 const checkForCompletion = () => {
-  const currentProgress = progressPercent.value
+  const currentProgress = gameStore.taskProgress.progressPercent
 
   // Task completed - trigger animation
   if (currentProgress === 0 && lastProgressPercent > 90) {
@@ -64,7 +62,7 @@ const checkForCompletion = () => {
 }
 
 // Watch for progress changes to trigger completion animation
-watch(progressPercent, checkForCompletion)
+watch(() => gameStore.taskProgress.progressPercent, checkForCompletion)
 </script>
 
 <style scoped>

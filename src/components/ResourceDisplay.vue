@@ -3,26 +3,21 @@
     <div class="resource-item primary">
       <div class="resource-label">Hollow Content Units</div>
       <div class="resource-value">
-        <HCUDisplay :amount="contentUnits" />
+        <HCUDisplay :amount="gameStore.contentUnits" />
       </div>
     </div>
     <div class="resource-item secondary">
       <div class="resource-label">Hollow Content per Second</div>
-      <div class="resource-value"><HCUDisplay :amount="productionRate" :show-unit="false" />/s</div>
+      <div class="resource-value"><HCUDisplay :amount="gameStore.productionRate" :show-unit="false" />/s</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { GameManager } from '../game/Game'
+import { useGameStore } from '../stores/gameStore'
 import HCUDisplay from './HCUDisplay.vue'
 
-const gameManager = GameManager.getInstance()
-
-// Reactive computed properties directly from game state
-const contentUnits = computed(() => gameManager.state.contentUnits)
-const productionRate = computed(() => gameManager.state.productionRate)
+const gameStore = useGameStore()
 </script>
 
 <style scoped>
