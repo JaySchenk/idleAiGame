@@ -28,32 +28,12 @@ npm run lint         # ESLint code quality checks
 npm run format       # Prettier code formatting
 ```
 
-## Project Structure
+## Key Directories
 
-```
-src/
-├── game/                    # Core game logic (TypeScript singletons)
-│   ├── Game.ts             # GameManager - central coordinator
-│   ├── Resources.ts        # ResourceManager - currency system
-│   ├── Generators.ts       # GeneratorManager - automation
-│   ├── Upgrades.ts         # UpgradeManager - progression
-│   ├── SaveManager.ts      # Save/load with localStorage
-│   ├── NarrativeManager.ts # Story progression system
-├── components/             # Vue 3 UI components
-│   ├── ResourceDisplay.vue
-│   ├── GeneratorPurchaseButton.vue
-│   ├── ManualClickerButton.vue
-│   ├── ProgressBar.vue
-│   ├── UpgradeButton.vue
-│   ├── PrestigeButton.vue
-│   ├── SaveGameButton.vue
-│   └── NarrativeDisplay.vue
-├── assets/
-│   ├── style.css          # Dark dystopian theme
-│   └── narratives.ts      # Story content
-├── App.vue                # Main layout
-└── progression-system.json # Complete progression system definition
-```
+- `src/game/` - Core game logic (TypeScript singletons)
+- `src/components/` - Vue 3 UI components  
+- `src/assets/` - Styles and static content
+- `config/` - Game configuration JSON files
 
 ## Code Conventions
 
