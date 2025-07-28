@@ -3,7 +3,7 @@
     <div class="clicker-info">
       <div class="clicker-title">Desperate Human Touch</div>
       <div class="clicker-description">
-        Click to generate +<HCUDisplay :amount="1" :show-unit="false" /> Hollow Content Unit
+        Click to generate +<HCUDisplay :amount="clickValue" :show-unit="false" /> Hollow Content Unit
       </div>
     </div>
     <button
@@ -16,7 +16,7 @@
     >
       <div class="click-icon">⚡</div>
       <div class="click-text">CLICK</div>
-      <div class="click-reward">+<HCUDisplay :amount="1" /></div>
+      <div class="click-reward">+<HCUDisplay :amount="clickValue" /></div>
     </button>
 
     <!-- Floating animation for click feedback -->
@@ -30,13 +30,13 @@
         animationDelay: animation.delay + 'ms',
       }"
     >
-      +1
+      +{{ clickValue }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, computed } from 'vue'
 import { GameManager } from '../game/Game'
 import HCUDisplay from './HCUDisplay.vue'
 
@@ -45,6 +45,9 @@ const isClicking = ref(false)
 const clickAnimations = ref<Array<{ id: number; x: number; y: number; delay: number }>>([])
 
 let animationId = 0
+
+// Computed property for click value
+const clickValue = computed(() => gameManager.getClickValue())
 
 // Handle click with visual feedback
 const handleClick = async (event: MouseEvent) => {

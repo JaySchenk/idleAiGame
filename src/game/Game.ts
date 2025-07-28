@@ -262,10 +262,15 @@ export class GameManager {
     this.state.prestige.nextMultiplier = prestigeInfo.nextMultiplier
   }
 
+  // Get current click value (includes prestige multiplier)
+  public getClickValue(): number {
+    return 1 * this.getGlobalMultiplier()
+  }
+
   // Manual content generation (clicker mechanic)
   public clickForContent(): void {
     // Apply global prestige multiplier to manual clicks
-    const clickValue = 1 * this.getGlobalMultiplier()
+    const clickValue = this.getClickValue()
     this.addContentUnits(clickValue)
 
     // Check narrative triggers for content units
