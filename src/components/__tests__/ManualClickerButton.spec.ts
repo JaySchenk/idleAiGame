@@ -4,7 +4,6 @@ import { createTestPinia } from '../../test-utils'
 import { ComponentTestHelpers } from '../../test-utils'
 import ManualClickerButton from '../ManualClickerButton.vue'
 import { useGameStore } from '../../stores/gameStore'
-import { resources } from '../../config/resources'
 
 // Mock the CurrencyDisplay component
 vi.mock('../CurrencyDisplay.vue', () => ({
@@ -41,7 +40,7 @@ describe('ManualClickerButton', () => {
       const gameStore = useGameStore()
 
       // Mock click value
-      gameStore.gameState.prestigeLevel = 1 // This should make click value 1.25
+      gameStore.gameState.prestige.level = 1 // This should make click value 1.25
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.clicker-description').text()).toContain('1.25')
@@ -58,11 +57,11 @@ describe('ManualClickerButton', () => {
   })
 
   describe('Click Interaction', () => {
-    it('should call gameStore.clickForContent when clicked', async () => {
+    it('should call gameStore.clickForResources when clicked', async () => {
       const wrapper = mount(ManualClickerButton)
       const gameStore = useGameStore()
 
-      const clickSpy = vi.spyOn(gameStore, 'clickForContent')
+      const clickSpy = vi.spyOn(gameStore, 'clickForResources')
 
       await wrapper.find('.clicker-button').trigger('click')
 
@@ -177,13 +176,13 @@ describe('ManualClickerButton', () => {
       const gameStore = useGameStore()
 
       // Set higher click value
-      gameStore.gameState.prestigeLevel = 2 // Should be 1.5625
+      gameStore.gameState.prestige.level = 2 // Should be 1.5625
       await wrapper.vm.$nextTick()
 
       await wrapper.find('.clicker-button').trigger('click')
 
       const animation = wrapper.find('.click-animation')
-      expect(animation.text()).toContain('1.5625')
+      expect(animation.text()).toContain('1.56') // 1.5625 rounded to 2 decimals
     })
   })
 
@@ -196,7 +195,7 @@ describe('ManualClickerButton', () => {
       expect(wrapper.find('.click-reward').text()).toContain('1')
 
       // Increase prestige level
-      gameStore.gameState.prestigeLevel = 1
+      gameStore.gameState.prestige.level = 1
       await wrapper.vm.$nextTick()
 
       // Should reflect new click value
@@ -205,7 +204,6 @@ describe('ManualClickerButton', () => {
 
     it('should work with basic click value', async () => {
       const wrapper = mount(ManualClickerButton)
-      const gameStore = useGameStore()
 
       // Basic click value should be 1
       expect(wrapper.find('.click-reward').text()).toContain('1')
@@ -222,7 +220,7 @@ describe('ManualClickerButton', () => {
       const gameStore = useGameStore()
 
       // Set prestige for higher click value
-      gameStore.gameState.prestigeLevel = 1 // 1.25x
+      gameStore.gameState.prestige.level = 1 // 1.25x
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.click-reward').text()).toContain('1.25')

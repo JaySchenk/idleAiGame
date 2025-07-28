@@ -1,12 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useGameStore } from '../gameStore'
 import { createTestPinia } from '../../test-utils'
-import {
-  mathTestCases,
-  testScenarios,
-  mockGenerators,
-  mockUpgrades,
-} from '../../test-utils/fixtures'
+import { mathTestCases, mockUpgrades } from '../../test-utils/fixtures'
 // Use string IDs directly instead of importing config objects
 
 // Mock the composables to control their behavior in tests
@@ -58,8 +53,8 @@ describe('GameStore', () => {
 
       expect(store.getResourceAmount('hcu')).toBe(0)
       expect(store.gameState.resources.hcu?.lifetime || 0).toBe(0)
-      expect(store.gameState.prestigeLevel).toBe(0)
-      expect(store.gameState.generators).toHaveLength(2)
+      expect(store.gameState.prestige.level).toBe(0)
+      expect(store.gameState.generators).toHaveLength(7)
       expect(store.gameState.upgrades).toHaveLength(2)
     })
 
@@ -111,11 +106,11 @@ describe('GameStore', () => {
         mathTestCases.generatorCosts.forEach(({ baseCost, growthRate, owned, expected }) => {
           // Set up generator with specific owned count
           const generator = store.gameState.generators.find(
-            (g) => g.baseCost === baseCost && g.growthRate === growthRate,
+            (g) => g.baseCost[0]?.amount === baseCost && g.costGrowthRate === growthRate,
           )
           if (generator) {
             generator.owned = owned
-            const cost = store.getGeneratorCost(generator.id)
+            const cost = store.getGeneratorHCUCost(generator.id)
             expect(cost).toBe(expected)
           }
         })
@@ -124,18 +119,10 @@ describe('GameStore', () => {
       it('should return 0 for non-existent generator', () => {
         const store = useGameStore()
 
-        // Test non-existent generator by creating a mock object
-        const mockGenerator = {
-          id: 'nonexistent',
-          name: 'Test',
-          baseCost: 0,
-          growthRate: 1,
-          baseProduction: 0,
-          owned: 0,
-        }
+        // Test non-existent generator
         const cost = store.getGeneratorCost('nonexistent')
 
-        expect(cost).toBe(0)
+        expect(cost).toEqual([])
       })
     })
 
@@ -186,7 +173,7 @@ describe('GameStore', () => {
         const store = useGameStore()
 
         store.gameState.generators[0].owned = 10
-        store.gameState.prestigeLevel = 1
+        store.gameState.prestige.level = 1
 
         const totalRate = store.productionRate
 
@@ -201,7 +188,7 @@ describe('GameStore', () => {
         const store = useGameStore()
 
         mathTestCases.prestigeCalculations.forEach(({ level, expectedMultiplier }) => {
-          store.gameState.prestigeLevel = level
+          store.gameState.prestige.level = level
           expect(store.globalMultiplier).toBeCloseTo(expectedMultiplier, 6)
         })
       })
@@ -210,7 +197,7 @@ describe('GameStore', () => {
         const store = useGameStore()
 
         mathTestCases.prestigeCalculations.forEach(({ level, expectedThreshold }) => {
-          store.gameState.prestigeLevel = level
+          store.gameState.prestige.level = level
           expect(store.prestigeThreshold).toBe(expectedThreshold)
         })
       })
@@ -231,10 +218,10 @@ describe('GameStore', () => {
       it('should calculate next prestige multiplier', () => {
         const store = useGameStore()
 
-        store.gameState.prestigeLevel = 0
+        store.gameState.prestige.level = 0
         expect(store.nextPrestigeMultiplier).toBe(1.25)
 
-        store.gameState.prestigeLevel = 1
+        store.gameState.prestige.level = 1
         expect(store.nextPrestigeMultiplier).toBe(1.5625)
       })
     })
@@ -245,10 +232,10 @@ describe('GameStore', () => {
 
         expect(store.clickValue).toBe(1)
 
-        store.gameState.prestigeLevel = 1
+        store.gameState.prestige.level = 1
         expect(store.clickValue).toBe(1.25)
 
-        store.gameState.prestigeLevel = 2
+        store.gameState.prestige.level = 2
         expect(store.clickValue).toBeCloseTo(1.5625, 6)
       })
     })
@@ -328,15 +315,15 @@ describe('GameStore', () => {
       const generator = store.getGenerator(generatorConfig)!
 
       // First purchase: cost should be 10
-      expect(store.getGeneratorCost(generatorConfig)).toBe(10)
+      expect(store.getGeneratorCost(generatorConfig)[0].amount).toBe(10)
 
       generator.owned = 1
       // Second purchase: cost should be 11 (10 * 1.15^1)
-      expect(store.getGeneratorCost(generatorConfig)).toBe(11)
+      expect(store.getGeneratorCost(generatorConfig)[0].amount).toBe(11)
 
       generator.owned = 5
       // Sixth purchase: cost should be 20 (10 * 1.15^5)
-      expect(store.getGeneratorCost(generatorConfig)).toBe(20)
+      expect(store.getGeneratorCost(generatorConfig)[0].amount).toBe(20)
     })
   })
 
@@ -423,7 +410,7 @@ describe('GameStore', () => {
     it('should handle manual clicks correctly', () => {
       const store = useGameStore()
 
-      store.clickForContent()
+      store.clickForResources()
 
       expect(store.getResourceAmount('hcu')).toBe(1)
       expect(store.gameState.resources.hcu?.lifetime || 0).toBe(1)
@@ -432,8 +419,8 @@ describe('GameStore', () => {
     it('should apply prestige multiplier to clicks', () => {
       const store = useGameStore()
 
-      store.gameState.prestigeLevel = 1
-      store.clickForContent()
+      store.gameState.prestige.level = 1
+      store.clickForResources()
 
       expect(store.getResourceAmount('hcu')).toBe(1.25)
       expect(store.gameState.resources.hcu?.lifetime || 0).toBe(1.25)
@@ -452,7 +439,7 @@ describe('GameStore', () => {
       const result = store.performPrestige()
 
       expect(result).toBe(true)
-      expect(store.gameState.prestigeLevel).toBe(1)
+      expect(store.gameState.prestige.level).toBe(1)
       expect(store.getResourceAmount('hcu')).toBe(0)
       expect(store.gameState.generators[0].owned).toBe(0)
       expect(store.gameState.upgrades[0].isPurchased).toBe(false)
@@ -467,7 +454,7 @@ describe('GameStore', () => {
       const result = store.performPrestige()
 
       expect(result).toBe(false)
-      expect(store.gameState.prestigeLevel).toBe(0)
+      expect(store.gameState.prestige.level).toBe(0)
       expect(store.getResourceAmount('hcu')).toBe(500)
     })
 
@@ -538,8 +525,8 @@ describe('GameStore', () => {
       const cost = store.getGeneratorCost(generator.id)
 
       // Cost should be finite and positive
-      expect(cost).toBeGreaterThan(0)
-      expect(Number.isFinite(cost)).toBe(true)
+      expect(cost[0].amount).toBeGreaterThan(0)
+      expect(Number.isFinite(cost[0].amount)).toBe(true)
     })
 
     it('should handle missing generator gracefully in multiplier calculation', () => {

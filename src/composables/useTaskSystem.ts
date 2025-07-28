@@ -7,7 +7,7 @@ import { GAME_CONSTANTS } from '../config/gameConstants'
 export function useTaskSystem(currentTime: () => number) {
   // Task system constants
   const taskDuration = GAME_CONSTANTS.TASK_DURATION
-  const taskReward = GAME_CONSTANTS.TASK_REWARD
+  const taskRewards = GAME_CONSTANTS.TASK_REWARDS
 
   // Task state
   const taskStartTime = ref(Date.now()) // Will be restored from persistence if available
@@ -27,24 +27,26 @@ export function useTaskSystem(currentTime: () => number) {
       timeRemaining,
       progressPercent,
       isComplete,
-      rewardAmount: taskReward,
+      rewards: taskRewards,
       duration: taskDuration,
     }
   })
 
   /**
    * Complete the current task and start a new one
-   * @param addContentUnits - Function to add content units as reward
+   * @param addResource - Function to add resources as reward
    * @returns true if task was completed, false if not ready
    */
-  function completeTask(addContentUnits: (amount: number) => void): boolean {
+  function completeTask(addResource: (resourceId: string, amount: number) => void): boolean {
     const progress = taskProgress.value
     if (!progress.isComplete) {
       return false
     }
 
-    // Grant reward
-    addContentUnits(taskReward)
+    // Grant all rewards
+    for (const reward of taskRewards) {
+      addResource(reward.resourceId, reward.amount)
+    }
 
     // Reset timer to start new task
     taskStartTime.value = currentTime()
@@ -55,7 +57,7 @@ export function useTaskSystem(currentTime: () => number) {
   return {
     // Constants
     taskDuration,
-    taskReward,
+    taskRewards,
 
     // State
     taskStartTime,

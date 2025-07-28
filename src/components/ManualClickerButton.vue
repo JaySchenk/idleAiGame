@@ -3,12 +3,18 @@
     <div class="clicker-info">
       <div class="clicker-title">Desperate Human Touch</div>
       <div class="clicker-description">
-        Click to generate +<CurrencyDisplay
-          resource-id="hcu"
-          :amount="gameStore.clickValue"
-          :show-unit="false"
-        />
-        Hollow Content Unit
+        <div
+          v-for="reward in gameStore.clickRewards"
+          :key="reward.resourceId"
+          class="click-reward-description"
+        >
+          Click to generate +<CurrencyDisplay
+            :resource-id="reward.resourceId"
+            :amount="reward.amount"
+            :show-unit="false"
+          />
+          {{ getResourceDisplayName(reward.resourceId) }}
+        </div>
       </div>
     </div>
     <button
@@ -22,7 +28,9 @@
       <div class="click-icon">⚡</div>
       <div class="click-text">CLICK</div>
       <div class="click-reward">
-        +<CurrencyDisplay resource-id="hcu" :amount="gameStore.clickValue" />
+        <div v-for="reward in gameStore.clickRewards" :key="reward.resourceId" class="reward-line">
+          +<CurrencyDisplay :resource-id="reward.resourceId" :amount="reward.amount" />
+        </div>
       </div>
     </button>
 
@@ -37,7 +45,13 @@
         animationDelay: animation.delay + 'ms',
       }"
     >
-      +{{ gameStore.clickValue }}
+      <div
+        v-for="reward in gameStore.clickRewards"
+        :key="reward.resourceId"
+        class="animation-reward"
+      >
+        +{{ reward.amount.toFixed(2) }}
+      </div>
     </div>
   </div>
 </template>
@@ -54,10 +68,16 @@ const clickAnimations = ref<Array<{ id: number; x: number; y: number; delay: num
 
 let animationId = 0
 
+// Get resource display name
+const getResourceDisplayName = (resourceId: string): string => {
+  const resource = gameStore.getResourceConfig(resourceId)
+  return resource ? resource.unit : resourceId.toUpperCase()
+}
+
 // Handle click with visual feedback
 const handleClick = async (event: MouseEvent) => {
-  // Trigger manual content generation
-  gameStore.clickForContent()
+  // Trigger manual resource generation
+  gameStore.clickForResources()
 
   // Add click animation
   const rect = (event.target as HTMLElement).getBoundingClientRect()
@@ -120,6 +140,10 @@ const handleMouseUp = () => {
   color: rgba(255, 255, 255, 0.7);
 }
 
+.click-reward-description {
+  margin-bottom: 0.25rem;
+}
+
 .clicker-button {
   position: relative;
   display: flex;
@@ -168,6 +192,10 @@ const handleMouseUp = () => {
   margin-top: 0.25rem;
 }
 
+.reward-line {
+  line-height: 1.2;
+}
+
 .click-animation {
   position: absolute;
   color: #00ff88;
@@ -176,6 +204,10 @@ const handleMouseUp = () => {
   pointer-events: none;
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
+}
+
+.animation-reward {
+  line-height: 1.2;
 }
 
 @keyframes pulse {

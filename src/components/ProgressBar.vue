@@ -22,7 +22,7 @@
       <span class="reward-amount"
         >+<CurrencyDisplay
           resource-id="hcu"
-          :amount="gameStore.taskProgress.rewardAmount"
+          :amount="gameStore.taskProgress.rewards[0]?.amount || 0"
           :show-unit="false"
         />
         Hollow Content Units</span
@@ -33,7 +33,10 @@
     <div v-if="showCompletionEffect" class="completion-effect">
       <div class="completion-text">Task Complete!</div>
       <div class="completion-reward">
-        +<CurrencyDisplay resource-id="hcu" :amount="gameStore.taskProgress.rewardAmount" />
+        +<CurrencyDisplay
+          resource-id="hcu"
+          :amount="gameStore.taskProgress.rewards[0]?.amount || 0"
+        />
       </div>
     </div>
   </div>

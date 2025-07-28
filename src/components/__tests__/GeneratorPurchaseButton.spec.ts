@@ -35,7 +35,7 @@ describe('GeneratorPurchaseButton', () => {
 
       expect(wrapper.find('.generator-name').text()).toBe('Basic Ad-Bot Farm')
       expect(wrapper.find('.owned-count').text()).toContain('Owned: 0')
-      expect(wrapper.find('.production-rate').text()).toContain('/sec')
+      expect(wrapper.find('.production-info').text()).toContain('/sec')
       expect(wrapper.find('.purchase-button').exists()).toBe(true)
     })
 
@@ -63,7 +63,7 @@ describe('GeneratorPurchaseButton', () => {
       })
 
       // Should show base cost initially
-      expect(wrapper.find('.purchase-button').text()).toContain('10')
+      expect(wrapper.find('.cost-display').text()).toContain('10')
     })
 
     it('should display production rate with global multiplier', async () => {
@@ -76,12 +76,12 @@ describe('GeneratorPurchaseButton', () => {
       // Purchase generator and set prestige for global multiplier
       gameStore.addResource('hcu', 100)
       gameStore.purchaseGenerator('basicAdBotFarm')
-      gameStore.gameState.prestigeLevel = 1 // 1.25x multiplier
+      gameStore.gameState.prestige.level = 1 // 1.25x multiplier
 
       await wrapper.vm.$nextTick()
 
       // Should show production rate with global multiplier applied
-      expect(wrapper.find('.production-rate').text()).toContain('1.25')
+      expect(wrapper.find('.production-info').text()).toContain('1.25')
     })
   })
 
@@ -228,7 +228,7 @@ describe('GeneratorPurchaseButton', () => {
       const gameStore = useGameStore()
 
       // Initial cost
-      expect(wrapper.find('.purchase-button').text()).toContain('10')
+      expect(wrapper.find('.cost-display').text()).toContain('10')
 
       // Purchase one to increase cost
       gameStore.addResource('hcu', 100)
@@ -236,7 +236,7 @@ describe('GeneratorPurchaseButton', () => {
       await wrapper.vm.$nextTick()
 
       // Cost should have increased (10 * 1.15^1 = 11)
-      expect(wrapper.find('.purchase-button').text()).toContain('11')
+      expect(wrapper.find('.cost-display').text()).toContain('11')
     })
 
     it('should update affordability when player money changes', async () => {
@@ -280,14 +280,14 @@ describe('GeneratorPurchaseButton', () => {
 
       // Initial production rate (5 * 1 = 5)
       await wrapper.vm.$nextTick()
-      expect(wrapper.find('.production-rate').text()).toContain('5')
+      expect(wrapper.find('.production-info').text()).toContain('5')
 
       // Purchase upgrade that affects this generator
       gameStore.purchaseUpgrade('automatedContentScript')
       await wrapper.vm.$nextTick()
 
       // Production rate should increase (5 * 1.25 = 6.25)
-      expect(wrapper.find('.production-rate').text()).toContain('6.25')
+      expect(wrapper.find('.production-info').text()).toContain('6.25')
     })
 
     it('should update production rate when prestige level changes', async () => {
@@ -303,28 +303,36 @@ describe('GeneratorPurchaseButton', () => {
       await wrapper.vm.$nextTick()
 
       // Initial production rate (1 * 1 = 1)
-      expect(wrapper.find('.production-rate').text()).toContain('1')
+      expect(wrapper.find('.production-info').text()).toContain('1')
 
       // Increase prestige level
-      gameStore.gameState.prestigeLevel = 1 // 1.25x multiplier
+      gameStore.gameState.prestige.level = 1 // 1.25x multiplier
       await wrapper.vm.$nextTick()
 
       // Production rate should include global multiplier (1 * 1.25 = 1.25)
-      expect(wrapper.find('.production-rate').text()).toContain('1.25')
+      expect(wrapper.find('.production-info').text()).toContain('1.25')
     })
   })
 
   describe('Different Generator Types', () => {
-    it('should work with different generator configurations', () => {
+    it('should work with different generator configurations', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
         props: {
           generatorId: 'clickbaitEngine',
         },
       })
+      const gameStore = useGameStore()
+
+      // Unlock clickbaitEngine by purchasing required basicAdBotFarm generators
+      gameStore.addResource('hcu', 1000)
+      for (let i = 0; i < 5; i++) {
+        gameStore.purchaseGenerator('basicAdBotFarm')
+      }
+      await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.generator-name').text()).toBe('Clickbait Engine')
       // Should show cost for clickbaitEngine (100)
-      expect(wrapper.find('.purchase-button').text()).toContain('100')
+      expect(wrapper.find('.cost-display').text()).toContain('100')
     })
   })
 
@@ -344,7 +352,7 @@ describe('GeneratorPurchaseButton', () => {
       await wrapper.vm.$nextTick()
 
       // Should display the high cost without breaking
-      const costText = wrapper.find('.purchase-button').text()
+      const costText = wrapper.find('.cost-display').text()
       expect(costText).toMatch(/\d+/)
       expect(costText.length).toBeGreaterThan(2) // Should be a large number
     })
@@ -357,7 +365,7 @@ describe('GeneratorPurchaseButton', () => {
       })
 
       // Generator with 0 owned should show 0 production
-      expect(wrapper.find('.production-rate').text()).toContain('0')
+      expect(wrapper.find('.production-info').text()).toContain('0')
       expect(wrapper.find('.owned-count').text()).toContain('Owned: 0')
     })
 
@@ -387,13 +395,22 @@ describe('GeneratorPurchaseButton', () => {
         },
       })
 
+      const gameStore = useGameStore()
+
+      // Unlock clickbaitEngine first
+      gameStore.addResource('hcu', 1000)
+      for (let i = 0; i < 5; i++) {
+        gameStore.purchaseGenerator('basicAdBotFarm')
+      }
+
       // Change props rapidly
       await wrapper.setProps({
         generatorId: 'clickbaitEngine',
       })
+      await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.generator-name').text()).toBe('Clickbait Engine')
-      expect(wrapper.find('.purchase-button').text()).toContain('100')
+      expect(wrapper.find('.cost-display').text()).toContain('100')
 
       // Should not throw during rapid changes
       await wrapper.setProps({
@@ -401,7 +418,9 @@ describe('GeneratorPurchaseButton', () => {
       })
 
       expect(wrapper.find('.generator-name').text()).toBe('Basic Ad-Bot Farm')
-      expect(wrapper.find('.purchase-button').text()).toContain('10')
+      // Cost will be higher than 10 because we already purchased 5 generators
+      const currentCost = gameStore.getGeneratorCost('basicAdBotFarm')[0].amount
+      expect(wrapper.find('.cost-display').text()).toContain(currentCost.toString())
     })
   })
 

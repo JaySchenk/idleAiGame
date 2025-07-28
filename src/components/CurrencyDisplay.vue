@@ -1,7 +1,5 @@
 <template>
-  <span class="resource-display" :style="{ color: displayColor }">{{
-    formattedAmount
-  }}</span>
+  <span class="resource-display" :style="{ color: displayColor }">{{ formattedAmount }}</span>
 </template>
 
 <script setup lang="ts">
@@ -33,7 +31,7 @@ const displayColor = computed(() => {
   // For resources with maxValue, use percentage-based health indicators
   if (config.maxValue !== undefined) {
     const percentage = (props.amount / config.maxValue) * 100
-    
+
     if (config.healthyWhenHigh) {
       // For resources where high values are healthy (most resources)
       if (percentage <= 25) return config.visualIndicators.critical

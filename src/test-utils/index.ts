@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { createApp } from 'vue'
-import type { App } from 'vue'
 import { vi } from 'vitest'
+import type { VueWrapper } from '@vue/test-utils'
 
 /**
  * Test utilities for Hollow Content Empire idle game
@@ -38,7 +38,7 @@ export function advanceTime(ms: number) {
 export interface MockGameState {
   contentUnits: number
   lifetimeContentUnits: number
-  prestigeLevel: number
+  prestige: { level: number }
   generators: Array<{
     id: string
     owned: number
@@ -62,7 +62,7 @@ export function createMockGameState(overrides: Partial<MockGameState> = {}): Moc
   return {
     contentUnits: 100,
     lifetimeContentUnits: 100,
-    prestigeLevel: 0,
+    prestige: { level: 0 },
     generators: [
       {
         id: 'mindless-ad-bot-farm',
@@ -206,7 +206,7 @@ export class ComponentTestHelpers {
   /**
    * Helper to simulate user clicks
    */
-  static async simulateClick(wrapper: any, selector?: string) {
+  static async simulateClick(wrapper: VueWrapper<unknown>, selector?: string) {
     const element = selector ? wrapper.find(selector) : wrapper
     await element.trigger('click')
     await nextTick()
@@ -215,7 +215,7 @@ export class ComponentTestHelpers {
   /**
    * Helper to check if element is disabled
    */
-  static isDisabled(wrapper: any, selector?: string): boolean {
+  static isDisabled(wrapper: VueWrapper<unknown>, selector?: string): boolean {
     const element = selector ? wrapper.find(selector) : wrapper
     return element.element.disabled || element.classes().includes('disabled')
   }
@@ -223,7 +223,7 @@ export class ComponentTestHelpers {
   /**
    * Helper to get text content
    */
-  static getText(wrapper: any, selector?: string): string {
+  static getText(wrapper: VueWrapper<unknown>, selector?: string): string {
     const element = selector ? wrapper.find(selector) : wrapper
     return element.text()
   }

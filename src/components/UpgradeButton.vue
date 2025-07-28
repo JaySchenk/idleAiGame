@@ -2,8 +2,10 @@
   <div class="upgrade-container">
     <div class="upgrade-header">
       <h3 class="upgrade-title">{{ upgrade.name }}</h3>
-      <div class="upgrade-cost">
-        <CurrencyDisplay resource-id="hcu" :amount="upgrade.cost" />
+      <div class="upgrade-costs">
+        <div v-for="cost in upgrade.costs" :key="cost.resourceId" class="upgrade-cost">
+          <CurrencyDisplay :resource-id="cost.resourceId" :amount="cost.amount" />
+        </div>
       </div>
     </div>
 
@@ -34,7 +36,7 @@
       <span v-if="upgrade.isPurchased">✓ Purchased</span>
       <span v-else-if="isPurchasing">Purchasing...</span>
       <span v-else-if="!requirementsMet">Requirements Not Met</span>
-      <span v-else-if="!canAfford">Not Enough HCU</span>
+      <span v-else-if="!canAfford">Insufficient Resources</span>
       <span v-else>Purchase Upgrade</span>
     </button>
 
@@ -72,9 +74,11 @@ const requirementsMet = computed(() => {
   return gameStore.areUpgradeRequirementsMet(props.upgrade.id)
 })
 
-// Check if can afford
+// Check if can afford all costs
 const canAfford = computed(() => {
-  return gameStore.canAffordResource('hcu', upgrade.value.cost)
+  return upgrade.value.costs.every((cost) =>
+    gameStore.canAffordResource(cost.resourceId, cost.amount),
+  )
 })
 
 // Check if can purchase
@@ -124,6 +128,12 @@ const purchaseUpgrade = async () => {
   font-weight: bold;
   color: #ffffff;
   margin: 0;
+}
+
+.upgrade-costs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .upgrade-cost {

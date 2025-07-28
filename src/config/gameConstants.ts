@@ -8,7 +8,16 @@ export const GAME_CONSTANTS = {
 
   // Task System
   TASK_DURATION: 30000, // 30 seconds
-  TASK_REWARD: 10,
+  TASK_REWARDS: [{ resourceId: 'hcu', amount: 10 }] as Array<{
+    resourceId: string
+    amount: number
+  }>,
+
+  // Click System
+  CLICK_REWARDS: [{ resourceId: 'hcu', amount: 1 }] as Array<{
+    resourceId: string
+    amount: number
+  }>,
 
   // Prestige System
   PRESTIGE_BASE_MULTIPLIER: 1.25,

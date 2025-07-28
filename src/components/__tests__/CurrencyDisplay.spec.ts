@@ -543,7 +543,7 @@ describe('CurrencyDisplay', () => {
         { amount: 1e15, stage: 'high prestige' },
       ]
 
-      gameValues.forEach(({ amount, stage }) => {
+      gameValues.forEach(({ amount }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
             resourceId: 'hcu',

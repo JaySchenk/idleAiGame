@@ -77,11 +77,11 @@ describe('Game Integration Tests', () => {
       // Start: Player has 0 HCU
       expect(gameStore.getResourceAmount('hcu')).toBe(0)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBe(0)
-      expect(gameStore.gameState.prestigeLevel).toBe(0)
+      expect(gameStore.gameState.prestige.level).toBe(0)
 
       // Phase 1: Manual clicking to get initial resources
       for (let i = 0; i < 10; i++) {
-        gameStore.clickForContent()
+        gameStore.clickForResources()
       }
       expect(gameStore.getResourceAmount('hcu')).toBe(10)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBe(10)
@@ -113,13 +113,13 @@ describe('Game Integration Tests', () => {
       // After prestige: current units and generators reset, but lifetime and prestige level persist
       expect(gameStore.getResourceAmount('hcu')).toBe(0)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBe(prePrestigeLifetime) // Lifetime persists
-      expect(gameStore.gameState.prestigeLevel).toBe(1)
+      expect(gameStore.gameState.prestige.level).toBe(1)
       expect(gameStore.globalMultiplier).toBe(1.25) // 1.25x multiplier
       expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(0)
 
       // Test that post-prestige progression is faster due to multiplier
       for (let i = 0; i < 10; i++) {
-        gameStore.clickForContent()
+        gameStore.clickForResources()
       }
 
       // Should get more than 10 HCU due to prestige multiplier
@@ -138,7 +138,7 @@ describe('Game Integration Tests', () => {
         () => gameStore.purchaseGenerator('basicAdBotFarm'),
         () =>
           ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-            gameStore.getGeneratorCost('basicAdBotFarm'),
+            gameStore.getGeneratorHCUCost('basicAdBotFarm'),
           ),
         10,
       )
@@ -162,7 +162,7 @@ describe('Game Integration Tests', () => {
               // Keep buying generators during progression
               if (
                 ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-                  gameStore.getGeneratorCost('basicAdBotFarm'),
+                  gameStore.getGeneratorHCUCost('basicAdBotFarm'),
                 )
               ) {
                 gameStore.purchaseGenerator('basicAdBotFarm')
@@ -210,7 +210,7 @@ describe('Game Integration Tests', () => {
             () => gameStore.purchaseGenerator(generatorId),
             () =>
               ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-                gameStore.getGeneratorCost(generatorId),
+                gameStore.getGeneratorHCUCost(generatorId),
               ),
             5,
           )
@@ -251,7 +251,7 @@ describe('Game Integration Tests', () => {
               // Keep buying generators when affordable during progression
               if (
                 ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-                  gameStore.getGeneratorCost('basicAdBotFarm'),
+                  gameStore.getGeneratorHCUCost('basicAdBotFarm'),
                 )
               ) {
                 gameStore.purchaseGenerator('basicAdBotFarm')
@@ -323,14 +323,14 @@ describe('Game Integration Tests', () => {
 
       // System should handle these operations gracefully
       expect(() => {
-        gameStore.clickForContent()
+        gameStore.clickForResources()
         vi.advanceTimersByTime(1000)
       }).not.toThrow()
 
       // Values should remain valid
       expect(gameStore.getResourceAmount('hcu')).toBeGreaterThanOrEqual(0)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBeGreaterThanOrEqual(0)
-      expect(gameStore.gameState.prestigeLevel).toBeGreaterThanOrEqual(0)
+      expect(gameStore.gameState.prestige.level).toBeGreaterThanOrEqual(0)
     })
 
     it('should handle extreme values without breaking', async () => {
@@ -345,7 +345,7 @@ describe('Game Integration Tests', () => {
       // Test with very small numbers
       gameStore.spendResource('hcu', gameStore.getResourceAmount('hcu') - 0.01)
       expect(() => {
-        gameStore.clickForContent()
+        gameStore.clickForResources()
         vi.advanceTimersByTime(1000)
       }).not.toThrow()
     })
@@ -361,12 +361,12 @@ describe('Game Integration Tests', () => {
 
       // Simulate intensive gameplay
       for (let i = 0; i < 100; i++) {
-        gameStore.clickForContent()
+        gameStore.clickForResources()
 
         if (i % 10 === 0) {
           if (
             ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-              gameStore.getGeneratorCost('basicAdBotFarm'),
+              gameStore.getGeneratorHCUCost('basicAdBotFarm'),
             )
           ) {
             gameStore.purchaseGenerator('basicAdBotFarm')

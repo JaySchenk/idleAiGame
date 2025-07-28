@@ -23,16 +23,24 @@ export const mockGenerators: GeneratorConfig[] = [
   {
     id: 'basicAdBotFarm',
     name: 'Basic Ad-Bot Farm',
-    baseCost: 10,
-    growthRate: 1.15,
+    category: 'basic',
+    inputs: [],
+    outputs: [{ resourceId: 'hcu', amount: 1 }],
+    unlockConditions: [],
+    baseCost: [{ resourceId: 'hcu', amount: 10 }],
+    costGrowthRate: 1.15,
     baseProduction: 1,
     owned: 0,
   },
   {
     id: 'clickbaitEngine',
     name: 'Clickbait Engine',
-    baseCost: 100,
-    growthRate: 1.2,
+    category: 'basic',
+    inputs: [],
+    outputs: [{ resourceId: 'hcu', amount: 10 }],
+    unlockConditions: [{ type: 'generator', generatorId: 'basicAdBotFarm', minOwned: 5 }],
+    baseCost: [{ resourceId: 'hcu', amount: 100 }],
+    costGrowthRate: 1.2,
     baseProduction: 10,
     owned: 0,
   },
@@ -131,7 +139,7 @@ export const testScenarios = {
   freshStart: {
     contentUnits: 0,
     lifetimeContentUnits: 0,
-    prestigeLevel: 0,
+    prestige: { level: 0 },
     generators: mockGenerators.map((g) => ({ ...g, owned: 0 })),
     upgrades: mockUpgrades.map((u) => ({ ...u, isPurchased: false })),
   },
@@ -142,7 +150,7 @@ export const testScenarios = {
   earlyGame: {
     contentUnits: 25,
     lifetimeContentUnits: 25,
-    prestigeLevel: 0,
+    prestige: { level: 0 },
     generators: [
       { ...mockGenerators[0], owned: 1 },
       { ...mockGenerators[1], owned: 0 },
@@ -156,7 +164,7 @@ export const testScenarios = {
   midGame: {
     contentUnits: 200,
     lifetimeContentUnits: 500,
-    prestigeLevel: 0,
+    prestige: { level: 0 },
     generators: [
       { ...mockGenerators[0], owned: 8 },
       { ...mockGenerators[1], owned: 1 },
@@ -173,7 +181,7 @@ export const testScenarios = {
   lateGame: {
     contentUnits: 1500,
     lifetimeContentUnits: 3000,
-    prestigeLevel: 0,
+    prestige: { level: 0 },
     generators: [
       { ...mockGenerators[0], owned: 20 },
       { ...mockGenerators[1], owned: 5 },
@@ -187,7 +195,7 @@ export const testScenarios = {
   postPrestige: {
     contentUnits: 0,
     lifetimeContentUnits: 3000,
-    prestigeLevel: 1,
+    prestige: { level: 1 },
     generators: mockGenerators.map((g) => ({ ...g, owned: 0 })),
     upgrades: mockUpgrades.map((u) => ({ ...u, isPurchased: false })),
   },
@@ -198,7 +206,7 @@ export const testScenarios = {
   highPrestige: {
     contentUnits: 500,
     lifetimeContentUnits: 50000,
-    prestigeLevel: 3,
+    prestige: { level: 3 },
     generators: [
       { ...mockGenerators[0], owned: 10 },
       { ...mockGenerators[1], owned: 2 },
@@ -220,7 +228,7 @@ export const edgeCases = {
   largeNumbers: {
     contentUnits: 1e15, // 1 quadrillion
     lifetimeContentUnits: 1e18, // 1 quintillion
-    prestigeLevel: 10,
+    prestige: { level: 10 },
   },
 
   /**
@@ -229,7 +237,7 @@ export const edgeCases = {
   maxValues: {
     contentUnits: Number.MAX_SAFE_INTEGER,
     lifetimeContentUnits: Number.MAX_SAFE_INTEGER,
-    prestigeLevel: 100,
+    prestige: { level: 100 },
     generators: mockGenerators.map((g) => ({ ...g, owned: 1000 })),
   },
 
@@ -239,15 +247,15 @@ export const edgeCases = {
   boundaries: {
     justUnderPrestigeThreshold: {
       contentUnits: 999,
-      prestigeLevel: 0,
+      prestige: { level: 0 },
     },
     exactlyAtPrestigeThreshold: {
       contentUnits: 1000,
-      prestigeLevel: 0,
+      prestige: { level: 0 },
     },
     justOverPrestigeThreshold: {
       contentUnits: 1001,
-      prestigeLevel: 0,
+      prestige: { level: 0 },
     },
   },
 }

@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { generators as generatorConfigs, type GeneratorConfig } from '../config/generators'
+import {
+  generators as generatorConfigs,
+  type GeneratorConfig,
+  type UnlockCondition,
+  type ResourceCost,
+  type ResourceProduction,
+} from '../config/generators'
 import { upgrades as upgradeConfigs, type UpgradeConfig } from '../config/upgrades'
 import { resources, type ResourceConfig } from '../config/resources'
 import { narratives, type NarrativeEvent } from '../config/narratives'
@@ -10,8 +16,21 @@ import { useTaskSystem } from '../composables/useTaskSystem'
 import { formatResource } from '../utils/formatters'
 import { GAME_CONSTANTS } from '../config/gameConstants'
 import { executeGameTick } from '../utils/gameLogic'
+import {
+  calculateResourceProduction,
+  applyGlobalMultipliers,
+  getHCUProductionRate,
+} from '../game/Generators'
 
-export type { GeneratorConfig, UpgradeConfig, NarrativeEvent, ResourceConfig }
+export type {
+  GeneratorConfig,
+  UpgradeConfig,
+  NarrativeEvent,
+  ResourceConfig,
+  UnlockCondition,
+  ResourceCost,
+  ResourceProduction,
+}
 
 // Unified game state interface
 interface ResourceState {
@@ -19,11 +38,11 @@ interface ResourceState {
   lifetime: number
 }
 
-interface GameState {
+export interface GameState {
   resources: Record<string, ResourceState>
   generators: GeneratorConfig[]
   upgrades: UpgradeConfig[]
-  prestigeLevel: number
+  prestige: { level: number }
 }
 
 export const useGameStore = defineStore(
@@ -43,11 +62,11 @@ export const useGameStore = defineStore(
 
     const gameState = ref<GameState>({
       resources: Object.fromEntries(
-        resources.map((r) => [r.id, { current: r.initialValue, lifetime: r.initialValue }])
+        resources.map((r) => [r.id, { current: r.initialValue, lifetime: r.initialValue }]),
       ),
       generators: generatorConfigs.map((g) => ({ ...g, owned: 0 })),
       upgrades: upgradeConfigs.map((u) => ({ ...u, isPurchased: false })),
-      prestigeLevel: 0,
+      prestige: { level: 0 },
     })
 
     // ===== COMPUTED PROPERTIES (Auto-cached & Reactive) =====
@@ -56,7 +75,7 @@ export const useGameStore = defineStore(
      * Global multiplier from prestige system
      */
     const globalMultiplier = computed(() => {
-      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, gameState.value.prestigeLevel)
+      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, gameState.value.prestige.level)
     })
 
     /**
@@ -65,7 +84,7 @@ export const useGameStore = defineStore(
     const prestigeThreshold = computed(() => {
       return (
         GAME_CONSTANTS.PRESTIGE_THRESHOLD_BASE *
-        Math.pow(GAME_CONSTANTS.PRESTIGE_THRESHOLD_GROWTH, gameState.value.prestigeLevel)
+        Math.pow(GAME_CONSTANTS.PRESTIGE_THRESHOLD_GROWTH, gameState.value.prestige.level)
       )
     })
 
@@ -80,7 +99,7 @@ export const useGameStore = defineStore(
      * Next prestige multiplier preview
      */
     const nextPrestigeMultiplier = computed(() => {
-      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, gameState.value.prestigeLevel + 1)
+      return Math.pow(GAME_CONSTANTS.PRESTIGE_BASE_MULTIPLIER, gameState.value.prestige.level + 1)
     })
 
     /**
@@ -101,40 +120,66 @@ export const useGameStore = defineStore(
     }
 
     /**
-     * Total production rate from all generators (includes all multipliers)
+     * Primary resource production rate (HCU) for display purposes
      */
     const productionRate = computed(() => {
-      let totalRate = 0
-
-      for (const generator of gameState.value.generators) {
-        let generatorRate = generator.baseProduction * generator.owned
-
-        // Apply generator-specific upgrade multipliers
-        generatorRate *= getGeneratorMultiplier(generator.id)
-
-        totalRate += generatorRate
-      }
-
-      // Apply global upgrade multiplier
-      let upgradeMultiplier = 1
-      for (const upgrade of gameState.value.upgrades) {
-        if (upgrade.isPurchased && upgrade.effectType === 'global_multiplier') {
-          upgradeMultiplier *= upgrade.effectValue
-        }
-      }
-      totalRate *= upgradeMultiplier
-
-      // Apply prestige multiplier
-      totalRate *= globalMultiplier.value
-
-      return totalRate
+      return getHCUProductionRate(gameState.value, getGeneratorMultiplier)
     })
 
     /**
-     * Click value for manual clicks
+     * Get production rate for a specific resource (includes production, consumption, and decay)
+     */
+    function getResourceProductionRate(resourceId: string): number {
+      // Get base generator production/consumption
+      const baseProduction = calculateResourceProduction(gameState.value, getGeneratorMultiplier)
+      const finalProduction = applyGlobalMultipliers(baseProduction, gameState.value)
+      let netRate = finalProduction.get(resourceId) || 0
+
+      // Add natural decay for depletable resources
+      const resourceConfig = getResourceConfig(resourceId)
+      if (resourceConfig && resourceConfig.isDepletable && resourceConfig.decayRate) {
+        const currentAmount = getResourceAmount(resourceId)
+        const decayRate = currentAmount * resourceConfig.decayRate
+        netRate -= decayRate
+      }
+
+      return netRate
+    }
+
+    /**
+     * Apply resource production from all generators for one tick
+     */
+    function applyResourceProduction(): void {
+      const baseProduction = calculateResourceProduction(gameState.value, getGeneratorMultiplier)
+      const finalProduction = applyGlobalMultipliers(baseProduction, gameState.value)
+
+      // Apply the production changes (scaled for tick rate)
+      const tickMultiplier = GAME_CONSTANTS.TICK_RATE / 1000
+
+      for (const [resourceId, change] of finalProduction) {
+        const changeThisTick = change * tickMultiplier
+        if (changeThisTick !== 0) {
+          addResource(resourceId, changeThisTick)
+        }
+      }
+    }
+
+    /**
+     * Click rewards for manual clicks - returns array of resource rewards
+     */
+    const clickRewards = computed(() => {
+      return GAME_CONSTANTS.CLICK_REWARDS.map((reward) => ({
+        resourceId: reward.resourceId,
+        amount: reward.amount * globalMultiplier.value,
+      }))
+    })
+
+    /**
+     * Click value (primary reward amount for display purposes)
      */
     const clickValue = computed(() => {
-      return 1 * globalMultiplier.value
+      const primaryReward = clickRewards.value[0]
+      return primaryReward ? primaryReward.amount : 0
     })
 
     // ===== HELPER FUNCTIONS =====
@@ -170,18 +215,23 @@ export const useGameStore = defineStore(
       if (!gameState.value.resources[resourceId]) {
         gameState.value.resources[resourceId] = { current: 0, lifetime: 0 }
       }
-      
+
       const resourceConfig = getResourceConfig(resourceId)
       const currentAmount = gameState.value.resources[resourceId].current
       let newAmount = currentAmount + amount
-      
+
       // Apply maxValue bounds if defined
       if (resourceConfig?.maxValue !== undefined) {
         newAmount = Math.min(newAmount, resourceConfig.maxValue)
       }
-      
+
+      // Ensure non-negative values for non-depletable resources
+      if (resourceConfig && !resourceConfig.isDepletable && newAmount < 0) {
+        newAmount = 0
+      }
+
       gameState.value.resources[resourceId].current = newAmount
-      gameState.value.resources[resourceId].lifetime += amount
+      gameState.value.resources[resourceId].lifetime += Math.max(0, amount)
     }
 
     /**
@@ -212,7 +262,10 @@ export const useGameStore = defineStore(
           const currentAmount = getResourceAmount(resourceConfig.id)
           if (currentAmount > 0) {
             const decayAmount = currentAmount * resourceConfig.decayRate
-            gameState.value.resources[resourceConfig.id].current = Math.max(0, currentAmount - decayAmount)
+            gameState.value.resources[resourceConfig.id].current = Math.max(
+              0,
+              currentAmount - decayAmount,
+            )
           }
         }
       }
@@ -228,22 +281,87 @@ export const useGameStore = defineStore(
     }
 
     /**
-     * Calculate generator cost based on owned count
+     * Calculate generator cost based on owned count - returns array of resource costs
      */
-    function getGeneratorCost(generatorId: string): number {
+    function getGeneratorCost(generatorId: string): ResourceCost[] {
       const generator = gameState.value.generators.find((g) => g.id === generatorId)
-      if (!generator) return 0
+      if (!generator) return []
 
       // cost_next = cost_base × (rate_growth)^owned
-      return Math.floor(generator.baseCost * Math.pow(generator.growthRate, generator.owned))
+      return generator.baseCost.map((cost) => ({
+        resourceId: cost.resourceId,
+        amount: Math.floor(cost.amount * Math.pow(generator.costGrowthRate, generator.owned)),
+      }))
+    }
+
+    /**
+     * Calculate primary resource cost (HCU) for display purposes
+     */
+    function getGeneratorHCUCost(generatorId: string): number {
+      const costs = getGeneratorCost(generatorId)
+      const hcuCost = costs.find((cost) => cost.resourceId === 'hcu')
+      return hcuCost ? hcuCost.amount : 0
     }
 
     /**
      * Check if player can purchase generator
      */
     function canPurchaseGenerator(generatorId: string): boolean {
-      const cost = getGeneratorCost(generatorId)
-      return canAffordResource('hcu', cost)
+      const costs = getGeneratorCost(generatorId)
+
+      // Check if player can afford all resource costs
+      for (const cost of costs) {
+        if (!canAffordResource(cost.resourceId, cost.amount)) {
+          return false
+        }
+      }
+
+      // Check unlock conditions
+      return checkUnlockConditions(generatorId)
+    }
+
+    /**
+     * Check if generator unlock conditions are met
+     */
+    function checkUnlockConditions(generatorId: string): boolean {
+      const generator = gameState.value.generators.find((g) => g.id === generatorId)
+      if (!generator || !generator.unlockConditions) return true
+
+      for (const condition of generator.unlockConditions) {
+        switch (condition.type) {
+          case 'resource':
+            if (condition.resourceId && condition.minAmount) {
+              const resourceValue = getResourceAmount(condition.resourceId)
+              if (resourceValue < condition.minAmount) {
+                return false
+              }
+            }
+            break
+          case 'generator':
+            if (condition.generatorId && condition.minOwned) {
+              const targetGenerator = gameState.value.generators.find(
+                (g) => g.id === condition.generatorId,
+              )
+              if (!targetGenerator || targetGenerator.owned < condition.minOwned) {
+                return false
+              }
+            }
+            break
+          case 'upgrade':
+            if (condition.upgradeId) {
+              const upgrade = gameState.value.upgrades.find((u) => u.id === condition.upgradeId)
+              if (!upgrade || !upgrade.isPurchased) {
+                return false
+              }
+            }
+            break
+          case 'narrative':
+            // Add narrative condition check if needed
+            break
+        }
+      }
+
+      return true
     }
 
     /**
@@ -253,20 +371,30 @@ export const useGameStore = defineStore(
       const generator = gameState.value.generators.find((g) => g.id === generatorId)
       if (!generator) return false
 
-      const cost = getGeneratorCost(generatorId)
+      // Check if we can afford all costs and meet unlock conditions
+      if (!canPurchaseGenerator(generatorId)) {
+        return false
+      }
 
-      if (canAffordResource('hcu', cost)) {
-        if (spendResource('hcu', cost)) {
-          generator.owned++
+      const costs = getGeneratorCost(generatorId)
 
-          // Trigger narrative events for generator purchase
-          narrativeSystem.triggerNarrative('generatorPurchase', undefined, generatorId)
-
-          return true
+      // Spend all required resources
+      for (const cost of costs) {
+        if (!spendResource(cost.resourceId, cost.amount)) {
+          // This shouldn't happen if canPurchaseGenerator worked correctly
+          console.error(
+            `Failed to spend ${cost.amount} ${cost.resourceId} for generator ${generatorId}`,
+          )
+          return false
         }
       }
 
-      return false
+      generator.owned++
+
+      // Trigger narrative events for generator purchase
+      narrativeSystem.triggerNarrative('generatorPurchase', undefined, generatorId)
+
+      return true
     }
 
     /**
@@ -315,11 +443,16 @@ export const useGameStore = defineStore(
       const upgrade = gameState.value.upgrades.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
-      return (
-        !upgrade.isPurchased &&
-        canAffordResource('hcu', upgrade.cost) &&
-        areUpgradeRequirementsMet(upgradeId)
-      )
+      if (upgrade.isPurchased) return false
+
+      // Check if player can afford all resource costs
+      for (const cost of upgrade.costs) {
+        if (!canAffordResource(cost.resourceId, cost.amount)) {
+          return false
+        }
+      }
+
+      return areUpgradeRequirementsMet(upgradeId)
     }
 
     /**
@@ -333,28 +466,41 @@ export const useGameStore = defineStore(
         return false
       }
 
-      if (spendResource('hcu', upgrade.cost)) {
-        upgrade.isPurchased = true
-
-        // Trigger narrative events for upgrade purchase
-        narrativeSystem.triggerNarrative('upgrade', undefined, upgradeId)
-
-        return true
+      // Spend all required resources
+      for (const cost of upgrade.costs) {
+        if (!spendResource(cost.resourceId, cost.amount)) {
+          // This shouldn't happen if canPurchaseUpgrade worked correctly
+          console.error(
+            `Failed to spend ${cost.amount} ${cost.resourceId} for upgrade ${upgradeId}`,
+          )
+          return false
+        }
       }
 
-      return false
+      upgrade.isPurchased = true
+
+      // Trigger narrative events for upgrade purchase
+      narrativeSystem.triggerNarrative('upgrade', undefined, upgradeId)
+
+      return true
     }
 
     // ===== PLAYER ACTIONS =====
 
     /**
-     * Manual content generation (clicker mechanic)
+     * Manual resource generation (clicker mechanic)
      */
-    function clickForContent(): void {
-      addResource('hcu', clickValue.value)
+    function clickForResources(): void {
+      // Apply all configured click rewards
+      for (const reward of clickRewards.value) {
+        addResource(reward.resourceId, reward.amount)
+      }
 
-      // Check narrative triggers for content units
-      narrativeSystem.triggerNarrative('contentUnits', getResourceAmount('hcu'))
+      // Check narrative triggers for all resources that were rewarded
+      for (const reward of clickRewards.value) {
+        const resourceAmount = getResourceAmount(reward.resourceId)
+        narrativeSystem.triggerNarrative('resourceAmount', resourceAmount, reward.resourceId)
+      }
     }
 
     // ===== PRESTIGE SYSTEM =====
@@ -368,13 +514,18 @@ export const useGameStore = defineStore(
       }
 
       // Trigger narrative events for prestige
-      narrativeSystem.triggerNarrative('prestige', gameState.value.prestigeLevel)
+      narrativeSystem.triggerNarrative('prestige', gameState.value.prestige.level)
 
       // Increase prestige level
-      gameState.value.prestigeLevel++
+      gameState.value.prestige.level++
 
-      // Reset game state (but keep lifetime resources)
-      gameState.value.resources['hcu'].current = 0
+      // Reset all resources to initial values (but keep lifetime totals)
+      for (const resource of resources) {
+        if (gameState.value.resources[resource.id]) {
+          gameState.value.resources[resource.id].current = resource.initialValue
+        }
+      }
+
       resetGenerators()
       resetUpgrades()
 
@@ -409,12 +560,11 @@ export const useGameStore = defineStore(
      */
     function startGameLoop(): void {
       gameLoop.startGameLoop({
-        addContentUnits: (amount: number) => addResource('hcu', amount),
-        completeTask: () => taskSystem.completeTask((amount: number) => addResource('hcu', amount)),
+        addResource: addResource,
+        completeTask: () => taskSystem.completeTask(addResource),
         triggerNarrative: narrativeSystem.triggerNarrative,
-        getProductionRate: () => productionRate.value,
         getTaskProgress: () => taskSystem.taskProgress.value,
-        getContentUnits: () => getResourceAmount('hcu'),
+        getResourceAmount: getResourceAmount,
         getLastContentUnitsCheck: narrativeSystem.getLastContentUnitsCheck,
         setLastContentUnitsCheck: narrativeSystem.setLastContentUnitsCheck,
         getGameStartTime: narrativeSystem.getGameStartTime,
@@ -422,6 +572,7 @@ export const useGameStore = defineStore(
         hasTriggeredGameStart: narrativeSystem.getHasTriggeredGameStart,
         setHasTriggeredGameStart: narrativeSystem.setHasTriggeredGameStart,
         applyResourceDecay: applyResourceDecay,
+        applyResourceProduction: applyResourceProduction,
       })
     }
 
@@ -443,17 +594,16 @@ export const useGameStore = defineStore(
 
         // Execute shared game tick logic
         executeGameTick({
-          addContentUnits: (amount: number) => addResource('hcu', amount),
-          completeTask: () =>
-            taskSystem.completeTask((amount: number) => addResource('hcu', amount)),
+          addResource: addResource,
+          completeTask: () => taskSystem.completeTask(addResource),
           triggerNarrative: narrativeSystem.triggerNarrative,
-          getProductionRate: () => productionRate.value,
           getTaskProgress: () => taskSystem.taskProgress.value,
-          getContentUnits: () => getResourceAmount('hcu'),
+          getResourceAmount: getResourceAmount,
           getLastContentUnitsCheck: narrativeSystem.getLastContentUnitsCheck,
           setLastContentUnitsCheck: narrativeSystem.setLastContentUnitsCheck,
           getGameStartTime: narrativeSystem.getGameStartTime,
           getCurrentTime: () => gameLoop.currentTime.value,
+          applyResourceProduction: applyResourceProduction,
         })
 
         // Apply currency decay for depletable resources
@@ -475,6 +625,7 @@ export const useGameStore = defineStore(
       nextPrestigeMultiplier,
       productionRate,
       clickValue,
+      clickRewards,
       taskProgress: taskSystem.taskProgress,
 
       // ===== HELPER FUNCTIONS =====
@@ -484,6 +635,7 @@ export const useGameStore = defineStore(
       // ===== RESOURCE ACTIONS =====
       getResourceConfig,
       getResourceAmount,
+      getResourceProductionRate,
       addResource,
       spendResource,
       canAffordResource,
@@ -491,9 +643,11 @@ export const useGameStore = defineStore(
       // ===== GENERATOR ACTIONS =====
       getGenerator,
       getGeneratorCost,
+      getGeneratorHCUCost,
       canPurchaseGenerator,
       purchaseGenerator,
       getGeneratorProductionRate,
+      checkUnlockConditions,
 
       // ===== UPGRADE ACTIONS =====
       getUpgrade,
@@ -502,7 +656,7 @@ export const useGameStore = defineStore(
       purchaseUpgrade,
 
       // ===== PLAYER ACTIONS =====
-      clickForContent,
+      clickForResources,
 
       // ===== PRESTIGE ACTIONS =====
       performPrestige,

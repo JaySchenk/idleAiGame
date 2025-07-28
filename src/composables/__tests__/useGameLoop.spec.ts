@@ -94,55 +94,25 @@ describe('useGameLoop', () => {
     })
   })
 
-  describe('Passive Income Generation', () => {
-    it('should add content units based on production rate', () => {
+  describe('Resource Production', () => {
+    it('should apply resource production on each tick', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getProductionRate.mockReturnValue(100) // 100 HCU per second
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(100) // Advance one tick
 
-      // Expected: (100 * 100) / 1000 = 10 HCU per tick
-      expect(mockCallbacks.addContentUnits).toHaveBeenCalledWith(10)
+      expect(mockCallbacks.applyResourceProduction).toHaveBeenCalled()
     })
 
-    it('should not add content units when production rate is zero', () => {
+    it('should call applyResourceProduction every tick regardless of production rate', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getProductionRate.mockReturnValue(0)
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(100)
-
-      expect(mockCallbacks.addContentUnits).not.toHaveBeenCalled()
-    })
-
-    it('should handle fractional production rates correctly', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getProductionRate.mockReturnValue(0.5) // 0.5 HCU per second
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(100)
-
-      // Expected: (0.5 * 100) / 1000 = 0.05 HCU per tick
-      expect(mockCallbacks.addContentUnits).toHaveBeenCalledWith(0.05)
-    })
-
-    it('should accumulate production over multiple ticks', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getProductionRate.mockReturnValue(10) // 10 HCU per second
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(300) // 3 ticks
 
-      // Should have been called 3 times with 1 HCU each
-      expect(mockCallbacks.addContentUnits).toHaveBeenCalledTimes(3)
-      expect(mockCallbacks.addContentUnits).toHaveBeenNthCalledWith(1, 1)
-      expect(mockCallbacks.addContentUnits).toHaveBeenNthCalledWith(2, 1)
-      expect(mockCallbacks.addContentUnits).toHaveBeenNthCalledWith(3, 1)
+      expect(mockCallbacks.applyResourceProduction).toHaveBeenCalledTimes(3)
     })
   })
 
@@ -185,32 +155,33 @@ describe('useGameLoop', () => {
     })
   })
 
-  describe('Content Units Narrative Triggers', () => {
-    it('should trigger narrative when content units increase', () => {
+  describe('Resource Narrative Triggers', () => {
+    it('should trigger narrative when HCU amount increases', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getContentUnits.mockReturnValue(100)
+      mockCallbacks.getResourceAmount.mockReturnValue(100)
       mockCallbacks.getLastContentUnitsCheck.mockReturnValue(50)
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(100)
 
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('contentUnits', 100)
+      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('resourceAmount', 100, 'hcu')
       expect(mockCallbacks.setLastContentUnitsCheck).toHaveBeenCalledWith(100)
     })
 
-    it('should not trigger narrative when content units stay the same', () => {
+    it('should not trigger narrative when HCU amount stays the same', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getContentUnits.mockReturnValue(100)
+      mockCallbacks.getResourceAmount.mockReturnValue(100)
       mockCallbacks.getLastContentUnitsCheck.mockReturnValue(100)
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(100)
 
       expect(mockCallbacks.triggerNarrative).not.toHaveBeenCalledWith(
-        'contentUnits',
+        'resourceAmount',
         expect.any(Number),
+        'hcu',
       )
       expect(mockCallbacks.setLastContentUnitsCheck).not.toHaveBeenCalled()
     })
@@ -218,7 +189,7 @@ describe('useGameLoop', () => {
     it('should only trigger on integer increases', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getContentUnits.mockReturnValue(100.9)
+      mockCallbacks.getResourceAmount.mockReturnValue(100.9)
       mockCallbacks.getLastContentUnitsCheck.mockReturnValue(100.1)
 
       gameLoop.startGameLoop(mockCallbacks)
@@ -226,22 +197,23 @@ describe('useGameLoop', () => {
 
       // Math.floor(100.9) = 100, Math.floor(100.1) = 100, so no trigger
       expect(mockCallbacks.triggerNarrative).not.toHaveBeenCalledWith(
-        'contentUnits',
+        'resourceAmount',
         expect.any(Number),
+        'hcu',
       )
     })
 
     it('should trigger when crossing integer boundaries', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getContentUnits.mockReturnValue(101.1)
+      mockCallbacks.getResourceAmount.mockReturnValue(101.1)
       mockCallbacks.getLastContentUnitsCheck.mockReturnValue(100.9)
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(100)
 
       // Math.floor(101.1) = 101, Math.floor(100.9) = 100, so trigger
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('contentUnits', 101.1)
+      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('resourceAmount', 101.1, 'hcu')
     })
   })
 
@@ -312,11 +284,10 @@ describe('useGameLoop', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
 
-      // Set up production
-      mockCallbacks.getProductionRate.mockReturnValue(50) // 50 HCU/sec
+      // Production is now handled via applyResourceProduction callback
 
-      // Set up content progression
-      mockCallbacks.getContentUnits
+      // Set up HCU progression
+      mockCallbacks.getResourceAmount
         .mockReturnValueOnce(10)
         .mockReturnValueOnce(15)
         .mockReturnValue(20)
@@ -331,11 +302,12 @@ describe('useGameLoop', () => {
       vi.advanceTimersByTime(200) // 2 ticks
 
       // Verify all systems worked
-      expect(mockCallbacks.addContentUnits).toHaveBeenCalledTimes(2)
+      expect(mockCallbacks.applyResourceProduction).toHaveBeenCalledTimes(2)
       expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('gameStart')
       expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith(
-        'contentUnits',
+        'resourceAmount',
         expect.any(Number),
+        'hcu',
       )
       expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('timeElapsed', expect.any(Number))
       expect(mockCallbacks.completeTask).toHaveBeenCalled()
@@ -344,39 +316,36 @@ describe('useGameLoop', () => {
     it('should handle very high production rates', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getProductionRate.mockReturnValue(1000000) // 1M HCU/sec
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(100)
 
-      expect(mockCallbacks.addContentUnits).toHaveBeenCalledWith(100000)
+      expect(mockCallbacks.applyResourceProduction).toHaveBeenCalled()
     })
 
     it('should handle zero or negative production rates safely', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getProductionRate.mockReturnValue(-10)
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(100)
 
-      expect(mockCallbacks.addContentUnits).not.toHaveBeenCalled()
+      expect(mockCallbacks.applyResourceProduction).toHaveBeenCalled()
     })
 
     it('should stop cleanly and not continue processing', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getProductionRate.mockReturnValue(10)
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(100)
 
-      const callsAfterFirstTick = mockCallbacks.addContentUnits.mock.calls.length
+      const callsAfterFirstTick = mockCallbacks.addResource.mock.calls.length
 
       gameLoop.stopGameLoop()
       vi.advanceTimersByTime(100)
 
-      const callsAfterStop = mockCallbacks.addContentUnits.mock.calls.length
+      const callsAfterStop = mockCallbacks.addResource.mock.calls.length
 
       expect(callsAfterStop).toBe(callsAfterFirstTick)
     })
@@ -388,16 +357,16 @@ describe('useGameLoop', () => {
  */
 function createMockCallbacks() {
   return {
-    addContentUnits: vi.fn(),
+    addResource: vi.fn(),
     completeTask: vi.fn().mockReturnValue(true),
     triggerNarrative: vi.fn(),
-    getProductionRate: vi.fn().mockReturnValue(0),
     getTaskProgress: vi.fn().mockReturnValue({ isComplete: false }),
-    getContentUnits: vi.fn().mockReturnValue(0),
+    getResourceAmount: vi.fn().mockReturnValue(0),
     getLastContentUnitsCheck: vi.fn().mockReturnValue(0),
     setLastContentUnitsCheck: vi.fn(),
     getGameStartTime: vi.fn().mockReturnValue(Date.now()),
     hasTriggeredGameStart: vi.fn().mockReturnValue(false),
     setHasTriggeredGameStart: vi.fn(),
+    applyResourceProduction: vi.fn(),
   }
 }

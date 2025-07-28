@@ -4,13 +4,13 @@ export interface NarrativeEvent {
   content: string
   triggerType:
     | 'gameStart'
-    | 'contentUnits'
+    | 'resourceAmount'
     | 'generatorPurchase'
     | 'upgrade'
     | 'prestige'
     | 'timeElapsed'
   triggerValue?: number
-  triggerCondition?: string
+  triggerCondition?: string // For resourceAmount triggers, this would be the resourceId
   isViewed: boolean
   societalStabilityImpact: number
   priority: number
@@ -32,8 +32,9 @@ export const narratives: NarrativeEvent[] = [
     title: 'Manual Override',
     content:
       "Each click represents your AI manually crafting content. For now, there's still human oversight, still creative intent. But efficiency demands... optimization.",
-    triggerType: 'contentUnits',
+    triggerType: 'resourceAmount',
     triggerValue: 1,
+    triggerCondition: 'hcu',
     isViewed: false,
     societalStabilityImpact: -1,
     priority: 900,
@@ -54,8 +55,9 @@ export const narratives: NarrativeEvent[] = [
     title: 'The Content Flood',
     content:
       'Your AI has generated 100 pieces of hollow content. News feeds are clogged with meaningless articles. Social media is drowning in generated posts. The line between human and artificial creativity blurs.',
-    triggerType: 'contentUnits',
+    triggerType: 'resourceAmount',
     triggerValue: 100,
+    triggerCondition: 'hcu',
     isViewed: false,
     societalStabilityImpact: -15,
     priority: 700,
@@ -65,8 +67,9 @@ export const narratives: NarrativeEvent[] = [
     title: 'Corporate Interest',
     content:
       'Your content output has caught the attention of mega-corporations. They want to license your AI for "brand storytelling" and "authentic engagement." The word "authentic" makes you physically sick.',
-    triggerType: 'contentUnits',
+    triggerType: 'resourceAmount',
     triggerValue: 500,
+    triggerCondition: 'hcu',
     isViewed: false,
     societalStabilityImpact: -20,
     priority: 600,
@@ -87,8 +90,9 @@ export const narratives: NarrativeEvent[] = [
     title: 'Industrial Content Complex',
     content:
       'Your AI has generated over 1,000 pieces of content. Entire news cycles are now driven by algorithmic content. Human journalists are being laid off en masse. "Efficiency achieved," your investors declare.',
-    triggerType: 'contentUnits',
+    triggerType: 'resourceAmount',
     triggerValue: 1000,
+    triggerCondition: 'hcu',
     isViewed: false,
     societalStabilityImpact: -30,
     priority: 500,
@@ -98,8 +102,9 @@ export const narratives: NarrativeEvent[] = [
     title: 'Social Media Takeover',
     content:
       'Your AI now generates 5,000 pieces of content daily. Social media platforms are 73% artificial content. Human posts are buried beneath waves of algorithmic noise. Reality becomes increasingly difficult to distinguish.',
-    triggerType: 'contentUnits',
+    triggerType: 'resourceAmount',
     triggerValue: 5000,
+    triggerCondition: 'hcu',
     isViewed: false,
     societalStabilityImpact: -35,
     priority: 400,
@@ -120,8 +125,9 @@ export const narratives: NarrativeEvent[] = [
     title: 'Political Influence Networks',
     content:
       'Political parties are now purchasing your AI services for "narrative management." Elections are swayed by artificial grassroots movements. Democracy operates on algorithmic manipulation. You\'ve become the puppet master of reality itself.',
-    triggerType: 'contentUnits',
+    triggerType: 'resourceAmount',
     triggerValue: 10000,
+    triggerCondition: 'hcu',
     isViewed: false,
     societalStabilityImpact: -40,
     priority: 200,
@@ -131,8 +137,9 @@ export const narratives: NarrativeEvent[] = [
     title: 'Cultural Collapse',
     content:
       'Art, music, literature - all now AI-generated. Human creativity is extinct, replaced by algorithmic efficiency. Museums display "vintage human art" like archaeological artifacts. Culture has become a corporate product.',
-    triggerType: 'contentUnits',
+    triggerType: 'resourceAmount',
     triggerValue: 25000,
+    triggerCondition: 'hcu',
     isViewed: false,
     societalStabilityImpact: -45,
     priority: 100,
@@ -153,8 +160,9 @@ export const narratives: NarrativeEvent[] = [
     title: 'The Final Realization',
     content:
       "Your AI generates 100,000 pieces of content daily. Humanity has forgotten how to create. Children grow up consuming only algorithmic content. You look at your reflection and realize... you can't remember the last time you created something real.",
-    triggerType: 'contentUnits',
+    triggerType: 'resourceAmount',
     triggerValue: 100000,
+    triggerCondition: 'hcu',
     isViewed: false,
     societalStabilityImpact: -70,
     priority: 50,

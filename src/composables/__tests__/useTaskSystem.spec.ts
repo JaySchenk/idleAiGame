@@ -15,7 +15,7 @@ describe('useTaskSystem', () => {
       const taskSystem = useTaskSystem(mockCurrentTime)
 
       expect(taskSystem.taskDuration).toBe(30000) // 30 seconds
-      expect(taskSystem.taskReward).toBe(10)
+      expect(taskSystem.taskRewards).toEqual([{ resourceId: 'hcu', amount: 10 }])
     })
 
     it('should initialize with a task start time', () => {
@@ -46,7 +46,7 @@ describe('useTaskSystem', () => {
       expect(progress.timeRemaining).toBe(30000)
       expect(progress.progressPercent).toBe(0)
       expect(progress.isComplete).toBe(false)
-      expect(progress.rewardAmount).toBe(10)
+      expect(progress.rewards).toEqual([{ resourceId: 'hcu', amount: 10 }])
       expect(progress.duration).toBe(30000)
     })
 
@@ -127,7 +127,7 @@ describe('useTaskSystem', () => {
       const result = taskSystem.completeTask(addContentUnits)
 
       expect(result).toBe(true)
-      expect(addContentUnits).toHaveBeenCalledWith(10)
+      expect(addContentUnits).toHaveBeenCalledWith('hcu', 10)
     })
 
     it('should not complete task when not ready', () => {
@@ -183,7 +183,7 @@ describe('useTaskSystem', () => {
       const result = taskSystem.completeTask(addContentUnits)
 
       expect(result).toBe(true)
-      expect(addContentUnits).toHaveBeenCalledWith(10)
+      expect(addContentUnits).toHaveBeenCalledWith('hcu', 10)
     })
   })
 
@@ -320,9 +320,9 @@ describe('useTaskSystem', () => {
       const taskSystem = useTaskSystem(mockCurrentTime)
 
       expect(taskSystem.taskDuration).toBe(30000)
-      expect(taskSystem.taskReward).toBe(10)
+      expect(taskSystem.taskRewards).toEqual([{ resourceId: 'hcu', amount: 10 }])
       expect(typeof taskSystem.taskDuration).toBe('number')
-      expect(typeof taskSystem.taskReward).toBe('number')
+      expect(Array.isArray(taskSystem.taskRewards)).toBe(true)
     })
   })
 })

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useNarrative } from '../useNarrative'
-import { mockNarratives } from '../../test-utils/fixtures'
 import type { NarrativeEvent } from '../../config/narratives'
 
 describe('useNarrative', () => {

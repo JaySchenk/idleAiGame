@@ -2,7 +2,7 @@
   <div class="prestige-container">
     <div class="prestige-header">
       <h3 class="prestige-title">Societal Collapse Reset</h3>
-      <div class="prestige-level">Level {{ gameStore.gameState.prestigeLevel }}</div>
+      <div class="prestige-level">Level {{ gameStore.gameState.prestige.level }}</div>
     </div>
 
     <div class="prestige-description">
@@ -76,7 +76,7 @@
       <div class="effect-multiplier">
         {{ gameStore.globalMultiplier.toFixed(2) }}x Production Multiplier
       </div>
-      <div class="effect-level">Prestige Level {{ gameStore.gameState.prestigeLevel }}</div>
+      <div class="effect-level">Prestige Level {{ gameStore.gameState.prestige.level }}</div>
     </div>
   </div>
 </template>

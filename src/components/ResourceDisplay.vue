@@ -10,9 +10,12 @@
         <div class="resource-label">{{ resource.displayName }}</div>
         <div class="resource-rates">
           <div class="current-amount">
-            <CurrencyDisplay :resource-id="resource.id" :amount="gameStore.getResourceAmount(resource.id)" />
+            <CurrencyDisplay
+              :resource-id="resource.id"
+              :amount="gameStore.getResourceAmount(resource.id)"
+            />
           </div>
-          <div class="production-rate">
+          <div class="production-rate" :class="getRateClass(resource.id)">
             <CurrencyDisplay
               :resource-id="resource.id"
               :amount="getProductionRate(resource.id)"
@@ -33,26 +36,29 @@ import CurrencyDisplay from './CurrencyDisplay.vue'
 const gameStore = useGameStore()
 
 // Get production rate for a specific resource
-// For now, only HCU has production, others return 0
 function getProductionRate(resourceId: string): number {
-  if (resourceId === 'hcu') {
-    return gameStore.productionRate
-  }
-  // TODO: Add production rates for other resources when implemented
-  return 0
+  return gameStore.getResourceProductionRate(resourceId)
+}
+
+// Get CSS class for production rate based on positive/negative value
+function getRateClass(resourceId: string): string {
+  const rate = getProductionRate(resourceId)
+  if (rate > 0) return 'rate-positive'
+  if (rate < 0) return 'rate-negative'
+  return 'rate-neutral'
 }
 
 // Get border color based on resource health status
 function getBorderColor(resourceId: string): string {
   const config = gameStore.getResourceConfig(resourceId)
   const amount = gameStore.getResourceAmount(resourceId)
-  
+
   if (!config) return '#ffffff'
 
   // For resources with maxValue, use percentage-based health indicators
   if (config.maxValue !== undefined) {
     const percentage = (amount / config.maxValue) * 100
-    
+
     if (config.healthyWhenHigh) {
       // For resources where high values are healthy (most resources)
       if (percentage <= 25) return config.visualIndicators.critical
@@ -127,8 +133,19 @@ function getBorderColor(resourceId: string): string {
 .production-rate {
   font-size: 1rem;
   font-weight: bold;
-  color: #0088ff;
   font-family: 'Courier New', monospace;
   white-space: nowrap;
+}
+
+.rate-positive {
+  color: #22c55e; /* Green for positive rates */
+}
+
+.rate-negative {
+  color: #ef4444; /* Red for negative rates */
+}
+
+.rate-neutral {
+  color: #64748b; /* Gray for zero rates */
 }
 </style>

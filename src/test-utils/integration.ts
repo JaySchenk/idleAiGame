@@ -1,6 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { createApp } from 'vue'
 import { vi } from 'vitest'
+import type { ReturnType } from 'pinia'
+import type { useGameStore } from '../stores/gameStore'
 
 /**
  * Integration test utilities that use real composables with programmatic control
@@ -23,7 +25,7 @@ export function createIntegrationTestPinia() {
  * @param gameStore - Game store instance
  * @param ticks - Number of game loop ticks to execute
  */
-export function runGameLoopTicks(gameStore: any, ticks: number) {
+export function runGameLoopTicks(gameStore: ReturnType<typeof useGameStore>, ticks: number) {
   gameStore.advanceGameLoop(ticks)
   vi.advanceTimersByTime(gameStore.tickRate * ticks)
 }
@@ -35,7 +37,7 @@ export function runGameLoopTicks(gameStore: any, ticks: number) {
  * @param maxTicks - Maximum number of ticks to prevent infinite loops
  */
 export function runGameLoopUntil(
-  gameStore: any,
+  gameStore: ReturnType<typeof useGameStore>,
   condition: () => boolean,
   maxTicks: number = 10000,
 ): number {
@@ -61,8 +63,16 @@ export function runGameLoopUntil(
  * @param targetHCU - Target content units to reach
  * @param maxTicks - Maximum ticks to prevent infinite loops
  */
-export function progressToHCU(gameStore: any, targetHCU: number, maxTicks: number = 10000): number {
-  return runGameLoopUntil(gameStore, () => gameStore.getResourceAmount('hcu') >= targetHCU, maxTicks)
+export function progressToHCU(
+  gameStore: ReturnType<typeof useGameStore>,
+  targetHCU: number,
+  maxTicks: number = 10000,
+): number {
+  return runGameLoopUntil(
+    gameStore,
+    () => gameStore.getResourceAmount('hcu') >= targetHCU,
+    maxTicks,
+  )
 }
 
 /**
@@ -70,7 +80,10 @@ export function progressToHCU(gameStore: any, targetHCU: number, maxTicks: numbe
  * @param gameStore - Game store instance
  * @param maxTicks - Maximum ticks to prevent infinite loops
  */
-export function progressToPrestige(gameStore: any, maxTicks: number = 50000): number {
+export function progressToPrestige(
+  gameStore: ReturnType<typeof useGameStore>,
+  maxTicks: number = 50000,
+): number {
   return runGameLoopUntil(gameStore, () => gameStore.canPrestige, maxTicks)
 }
 
@@ -82,7 +95,7 @@ export function progressToPrestige(gameStore: any, maxTicks: number = 50000): nu
  * @param maxPurchases - Maximum purchases to prevent infinite loops
  */
 export function purchaseUntilUnaffordable(
-  gameStore: any,
+  gameStore: ReturnType<typeof useGameStore>,
   purchaseAction: () => void,
   canAffordCheck: () => boolean,
   maxPurchases: number = 1000,
@@ -104,7 +117,7 @@ export function purchaseUntilUnaffordable(
  * @param initialLifetime - Starting lifetime content units
  */
 export function setupGameWithResources(
-  gameStore: any,
+  gameStore: ReturnType<typeof useGameStore>,
   initialHCU: number = 0,
   initialLifetime: number = 0,
 ) {
