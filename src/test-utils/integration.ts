@@ -20,25 +20,12 @@ export function createIntegrationTestPinia() {
 
 /**
  * Programmatically runs the game loop for a specified number of ticks
- * This replaces waiting and provides deterministic test execution
- * @param gameStore - Game store instance with game loop access
+ * @param gameStore - Game store instance
  * @param ticks - Number of game loop ticks to execute
  */
 export function runGameLoopTicks(gameStore: any, ticks: number) {
-  // Run the game loop logic for the specified number of ticks
-  for (let i = 0; i < ticks; i++) {
-    const tickRate = 100 // 100ms tick rate
-    
-    // Calculate passive income from generators (production rate is auto-computed)
-    const productionRate = gameStore.productionRate
-    if (productionRate > 0) {
-      const productionThisTick = (productionRate * tickRate) / 1000
-      gameStore.addContentUnits(productionThisTick)
-    }
-    
-    // Simulate time passage for fake timers
-    vi.advanceTimersByTime(tickRate)
-  }
+  gameStore.advanceGameLoop(ticks)
+  vi.advanceTimersByTime(gameStore.tickRate * ticks)
 }
 
 /**

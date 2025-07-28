@@ -399,6 +399,43 @@ export const useGameStore = defineStore('game', () => {
     gameLoop.stopGameLoop()
   }
   
+  /**
+   * Advance the game loop programmatically for testing or UI features
+   */
+  function advanceGameLoop(ticks: number): void {
+    for (let i = 0; i < ticks; i++) {
+      // Update time (simulate time passage)
+      const tickRate = gameLoop.tickRate
+      gameLoop.currentTime.value += tickRate
+      
+      // Calculate passive income from generators
+      const currentProductionRate = productionRate.value
+      if (currentProductionRate > 0) {
+        const productionThisTick = (currentProductionRate * tickRate) / 1000
+        addContentUnits(productionThisTick)
+      }
+      
+      // Check for task completion and auto-complete
+      const taskProgress = taskSystem.taskProgress.value
+      if (taskProgress.isComplete) {
+        taskSystem.completeTask(addContentUnits)
+      }
+      
+      // Check narrative triggers based on content units
+      const currentContentUnits = contentUnits.value
+      const lastContentUnitsCheck = narrativeSystem.getLastContentUnitsCheck()
+      if (Math.floor(currentContentUnits) > Math.floor(lastContentUnitsCheck)) {
+        narrativeSystem.triggerNarrative('contentUnits', currentContentUnits)
+        narrativeSystem.setLastContentUnitsCheck(currentContentUnits)
+      }
+      
+      // Check time elapsed triggers
+      const gameStartTime = narrativeSystem.getGameStartTime()
+      const timeElapsed = gameLoop.currentTime.value - gameStartTime
+      narrativeSystem.triggerNarrative('timeElapsed', timeElapsed)
+    }
+  }
+  
   return {
     // ===== STATE =====
     isRunning: gameLoop.isRunning,
@@ -452,6 +489,8 @@ export const useGameStore = defineStore('game', () => {
     // ===== GAME LOOP =====
     startGameLoop,
     stopGameLoop,
+    advanceGameLoop,
+    tickRate: gameLoop.tickRate,
     
     // ===== NARRATIVE SYSTEM =====
     onNarrativeEvent: narrativeSystem.onNarrativeEvent,
