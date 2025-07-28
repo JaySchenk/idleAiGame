@@ -1,15 +1,15 @@
 <template>
-  <span class="currency-display" :style="{ color: currencyConfig.color }">{{
+  <span class="currency-display" :style="{ color: currencyConfig?.color }">{{
     formattedAmount
   }}</span>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { CurrencyConfig } from '../config/currencies'
+import { useGameStore } from '../stores/gameStore'
 
 interface Props {
-  currencyConfig: CurrencyConfig
+  currencyId: string
   amount: number
   showUnit?: boolean
 }
@@ -18,9 +18,15 @@ const props = withDefaults(defineProps<Props>(), {
   showUnit: true,
 })
 
+const gameStore = useGameStore()
+const currencyConfig = computed(() => gameStore.getCurrencyConfig(props.currencyId))
+
 const formattedAmount = computed(() => {
-  const { amount, showUnit, currencyConfig } = props
-  const unit = showUnit ? ` ${currencyConfig.symbol}` : ''
+  const { amount, showUnit } = props
+  const config = currencyConfig.value
+  if (!config) return amount.toString()
+  
+  const unit = showUnit ? ` ${config.symbol}` : ''
 
   // Handle scientific notation for very large numbers
   if (amount >= 1e18) {

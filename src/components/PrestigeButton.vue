@@ -23,7 +23,7 @@
       <div class="stat-item">
         <div class="stat-label">Threshold:</div>
         <div class="stat-value">
-          <CurrencyDisplay :currency-config="HCU" :amount="gameStore.prestigeThreshold" />
+          <CurrencyDisplay currency-id="hcu" :amount="gameStore.prestigeThreshold" />
         </div>
       </div>
     </div>
@@ -35,13 +35,13 @@
       </div>
       <div class="progress-text">
         <CurrencyDisplay
-          :currency-config="HCU"
-          :amount="gameStore.getCurrencyAmount(HCU)"
+          currency-id="hcu"
+          :amount="gameStore.getCurrencyAmount('hcu')"
           :show-unit="false"
         />
         /
         <CurrencyDisplay
-          :currency-config="HCU"
+          currency-id="hcu"
           :amount="gameStore.prestigeThreshold"
           :show-unit="false"
         />
@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import { HCU } from '../config/currencies'
+// Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
@@ -94,7 +94,7 @@ const showRebootEffect = ref(false)
 
 // Calculate progress to prestige (based on current HCU)
 const progressPercent = computed(() => {
-  const currentHCU = gameStore.getCurrencyAmount(HCU)
+  const currentHCU = gameStore.getCurrencyAmount('hcu')
   const progress = (currentHCU / gameStore.prestigeThreshold) * 100
   return Math.min(100, progress)
 })

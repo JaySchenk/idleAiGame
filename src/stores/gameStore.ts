@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { generators as generatorConfigs, type GeneratorConfig } from '../config/generators'
 import { upgrades as upgradeConfigs, type UpgradeConfig } from '../config/upgrades'
-import { currencies, HCU, type CurrencyConfig } from '../config/currencies'
+import { currencies, type CurrencyConfig } from '../config/currencies'
 import { narratives, type NarrativeEvent } from '../config/narratives'
 import { useGameLoop } from '../composables/useGameLoop'
 import { useNarrative } from '../composables/useNarrative'
@@ -62,7 +62,7 @@ export const useGameStore = defineStore(
      * Check if player can prestige
      */
     const canPrestige = computed(() => {
-      return getCurrencyAmount(HCU) >= prestigeThreshold.value
+      return getCurrencyAmount('hcu') >= prestigeThreshold.value
     })
 
     /**
@@ -131,7 +131,10 @@ export const useGameStore = defineStore(
     /**
      * Format currency for display
      */
-    function formatCurrency(currency: CurrencyConfig, amount: number): string {
+    function formatCurrency(currencyId: string, amount: number): string {
+      const currency = getCurrencyConfig(currencyId)
+      if (!currency) return amount.toString()
+      
       const unit = ` ${currency.symbol}`
 
       // Handle scientific notation for very large numbers
@@ -171,28 +174,35 @@ export const useGameStore = defineStore(
     // ===== CORE GAME ACTIONS =====
 
     /**
-     * Get currency amount by config
+     * Get currency config by ID
      */
-    function getCurrencyAmount(currency: CurrencyConfig): number {
-      return currencyAmounts.value[currency.id] || 0
+    function getCurrencyConfig(currencyId: string): CurrencyConfig | undefined {
+      return currencies.find((c) => c.id === currencyId)
+    }
+
+    /**
+     * Get currency amount by ID
+     */
+    function getCurrencyAmount(currencyId: string): number {
+      return currencyAmounts.value[currencyId] || 0
     }
 
     /**
      * Add currency and track lifetime total
      */
-    function addCurrency(currency: CurrencyConfig, amount: number): void {
-      currencyAmounts.value[currency.id] = (currencyAmounts.value[currency.id] || 0) + amount
-      lifetimeCurrencyAmounts.value[currency.id] =
-        (lifetimeCurrencyAmounts.value[currency.id] || 0) + amount
+    function addCurrency(currencyId: string, amount: number): void {
+      currencyAmounts.value[currencyId] = (currencyAmounts.value[currencyId] || 0) + amount
+      lifetimeCurrencyAmounts.value[currencyId] =
+        (lifetimeCurrencyAmounts.value[currencyId] || 0) + amount
     }
 
     /**
      * Spend currency if available
      */
-    function spendCurrency(currency: CurrencyConfig, amount: number): boolean {
-      const currentAmount = getCurrencyAmount(currency)
+    function spendCurrency(currencyId: string, amount: number): boolean {
+      const currentAmount = getCurrencyAmount(currencyId)
       if (currentAmount >= amount) {
-        currencyAmounts.value[currency.id] = currentAmount - amount
+        currencyAmounts.value[currencyId] = currentAmount - amount
         return true
       }
       return false
@@ -201,8 +211,8 @@ export const useGameStore = defineStore(
     /**
      * Check if player can afford a currency cost
      */
-    function canAffordCurrency(currency: CurrencyConfig, amount: number): boolean {
-      return getCurrencyAmount(currency) >= amount
+    function canAffordCurrency(currencyId: string, amount: number): boolean {
+      return getCurrencyAmount(currencyId) >= amount
     }
 
     // ===== GENERATOR MANAGEMENT =====
@@ -217,8 +227,8 @@ export const useGameStore = defineStore(
     /**
      * Calculate generator cost based on owned count
      */
-    function getGeneratorCost(generatorConfig: GeneratorConfig): number {
-      const generator = generators.value.find((g) => g.id === generatorConfig.id)
+    function getGeneratorCost(generatorId: string): number {
+      const generator = generators.value.find((g) => g.id === generatorId)
       if (!generator) return 0
 
       // cost_next = cost_base × (rate_growth)^owned
@@ -228,26 +238,26 @@ export const useGameStore = defineStore(
     /**
      * Check if player can purchase generator
      */
-    function canPurchaseGenerator(generatorConfig: GeneratorConfig): boolean {
-      const cost = getGeneratorCost(generatorConfig)
-      return canAffordCurrency(HCU, cost)
+    function canPurchaseGenerator(generatorId: string): boolean {
+      const cost = getGeneratorCost(generatorId)
+      return canAffordCurrency('hcu', cost)
     }
 
     /**
      * Purchase a generator
      */
-    function purchaseGenerator(generatorConfig: GeneratorConfig): boolean {
-      const generator = generators.value.find((g) => g.id === generatorConfig.id)
+    function purchaseGenerator(generatorId: string): boolean {
+      const generator = generators.value.find((g) => g.id === generatorId)
       if (!generator) return false
 
-      const cost = getGeneratorCost(generatorConfig)
+      const cost = getGeneratorCost(generatorId)
 
-      if (canAffordCurrency(HCU, cost)) {
-        if (spendCurrency(HCU, cost)) {
+      if (canAffordCurrency('hcu', cost)) {
+        if (spendCurrency('hcu', cost)) {
           generator.owned++
 
           // Trigger narrative events for generator purchase
-          narrativeSystem.triggerNarrative('generatorPurchase', undefined, generatorConfig.id)
+          narrativeSystem.triggerNarrative('generatorPurchase', undefined, generatorId)
 
           return true
         }
@@ -259,8 +269,8 @@ export const useGameStore = defineStore(
     /**
      * Get generator production rate
      */
-    function getGeneratorProductionRate(generatorConfig: GeneratorConfig): number {
-      const generator = generators.value.find((g) => g.id === generatorConfig.id)
+    function getGeneratorProductionRate(generatorId: string): number {
+      const generator = generators.value.find((g) => g.id === generatorId)
       if (!generator) return 0
 
       let rate = generator.baseProduction * generator.owned
@@ -281,8 +291,8 @@ export const useGameStore = defineStore(
     /**
      * Check if upgrade requirements are met
      */
-    function areUpgradeRequirementsMet(upgradeConfig: UpgradeConfig): boolean {
-      const upgrade = upgrades.value.find((u) => u.id === upgradeConfig.id)
+    function areUpgradeRequirementsMet(upgradeId: string): boolean {
+      const upgrade = upgrades.value.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
       for (const requirement of upgrade.requirements) {
@@ -298,33 +308,33 @@ export const useGameStore = defineStore(
     /**
      * Check if player can purchase upgrade
      */
-    function canPurchaseUpgrade(upgradeConfig: UpgradeConfig): boolean {
-      const upgrade = upgrades.value.find((u) => u.id === upgradeConfig.id)
+    function canPurchaseUpgrade(upgradeId: string): boolean {
+      const upgrade = upgrades.value.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
       return (
         !upgrade.isPurchased &&
-        canAffordCurrency(HCU, upgrade.cost) &&
-        areUpgradeRequirementsMet(upgradeConfig)
+        canAffordCurrency('hcu', upgrade.cost) &&
+        areUpgradeRequirementsMet(upgradeId)
       )
     }
 
     /**
      * Purchase an upgrade
      */
-    function purchaseUpgrade(upgradeConfig: UpgradeConfig): boolean {
-      const upgrade = upgrades.value.find((u) => u.id === upgradeConfig.id)
+    function purchaseUpgrade(upgradeId: string): boolean {
+      const upgrade = upgrades.value.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
-      if (!canPurchaseUpgrade(upgradeConfig)) {
+      if (!canPurchaseUpgrade(upgradeId)) {
         return false
       }
 
-      if (spendCurrency(HCU, upgrade.cost)) {
+      if (spendCurrency('hcu', upgrade.cost)) {
         upgrade.isPurchased = true
 
         // Trigger narrative events for upgrade purchase
-        narrativeSystem.triggerNarrative('upgrade', undefined, upgradeConfig.id)
+        narrativeSystem.triggerNarrative('upgrade', undefined, upgradeId)
 
         return true
       }
@@ -338,10 +348,10 @@ export const useGameStore = defineStore(
      * Manual content generation (clicker mechanic)
      */
     function clickForContent(): void {
-      addCurrency(HCU, clickValue.value)
+      addCurrency('hcu', clickValue.value)
 
       // Check narrative triggers for content units
-      narrativeSystem.triggerNarrative('contentUnits', getCurrencyAmount(HCU))
+      narrativeSystem.triggerNarrative('contentUnits', getCurrencyAmount('hcu'))
     }
 
     // ===== PRESTIGE SYSTEM =====
@@ -361,7 +371,7 @@ export const useGameStore = defineStore(
       prestigeLevel.value++
 
       // Reset game state (but keep lifetime currencies)
-      currencyAmounts.value[HCU.id] = HCU.initialValue
+      currencyAmounts.value['hcu'] = 0
       resetGenerators()
       resetUpgrades()
 
@@ -396,12 +406,12 @@ export const useGameStore = defineStore(
      */
     function startGameLoop(): void {
       gameLoop.startGameLoop({
-        addContentUnits: (amount: number) => addCurrency(HCU, amount),
-        completeTask: () => taskSystem.completeTask((amount: number) => addCurrency(HCU, amount)),
+        addContentUnits: (amount: number) => addCurrency('hcu', amount),
+        completeTask: () => taskSystem.completeTask((amount: number) => addCurrency('hcu', amount)),
         triggerNarrative: narrativeSystem.triggerNarrative,
         getProductionRate: () => productionRate.value,
         getTaskProgress: () => taskSystem.taskProgress.value,
-        getContentUnits: () => getCurrencyAmount(HCU),
+        getContentUnits: () => getCurrencyAmount('hcu'),
         getLastContentUnitsCheck: narrativeSystem.getLastContentUnitsCheck,
         setLastContentUnitsCheck: narrativeSystem.setLastContentUnitsCheck,
         getGameStartTime: narrativeSystem.getGameStartTime,
@@ -430,17 +440,17 @@ export const useGameStore = defineStore(
         const currentProductionRate = productionRate.value
         if (currentProductionRate > 0) {
           const productionThisTick = (currentProductionRate * tickRate) / 1000
-          addCurrency(HCU, productionThisTick)
+          addCurrency('hcu', productionThisTick)
         }
 
         // Check for task completion and auto-complete
         const taskProgress = taskSystem.taskProgress.value
         if (taskProgress.isComplete) {
-          taskSystem.completeTask((amount: number) => addCurrency(HCU, amount))
+          taskSystem.completeTask((amount: number) => addCurrency('hcu', amount))
         }
 
         // Check narrative triggers based on content units
-        const currentContentUnits = getCurrencyAmount(HCU)
+        const currentContentUnits = getCurrencyAmount('hcu')
         const lastContentUnitsCheck = narrativeSystem.getLastContentUnitsCheck()
         if (Math.floor(currentContentUnits) > Math.floor(lastContentUnitsCheck)) {
           narrativeSystem.triggerNarrative('contentUnits', currentContentUnits)
@@ -479,6 +489,7 @@ export const useGameStore = defineStore(
       getGeneratorMultiplier,
 
       // ===== CURRENCY ACTIONS =====
+      getCurrencyConfig,
       getCurrencyAmount,
       addCurrency,
       spendCurrency,

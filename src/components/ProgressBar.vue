@@ -21,7 +21,7 @@
       <span class="reward-text">Reward: </span>
       <span class="reward-amount"
         >+<CurrencyDisplay
-          :currency-config="HCU"
+          currency-id="hcu"
           :amount="gameStore.taskProgress.rewardAmount"
           :show-unit="false"
         />
@@ -33,7 +33,7 @@
     <div v-if="showCompletionEffect" class="completion-effect">
       <div class="completion-text">Task Complete!</div>
       <div class="completion-reward">
-        +<CurrencyDisplay :currency-config="HCU" :amount="gameStore.taskProgress.rewardAmount" />
+        +<CurrencyDisplay currency-id="hcu" :amount="gameStore.taskProgress.rewardAmount" />
       </div>
     </div>
   </div>
@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import { HCU } from '../config/currencies'
+// Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()

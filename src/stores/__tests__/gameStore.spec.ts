@@ -58,7 +58,7 @@ describe('GameStore', () => {
     it('should initialize with default state', () => {
       const store = useGameStore()
 
-      expect(store.getCurrencyAmount(HCU)).toBe(0)
+      expect(store.getCurrencyAmount('hcu')).toBe(0)
       expect(store.lifetimeCurrencyAmounts[HCU.id]).toBe(0)
       expect(store.prestigeLevel).toBe(0)
       expect(store.generators).toHaveLength(2)
@@ -68,40 +68,40 @@ describe('GameStore', () => {
     it('should add content units correctly', () => {
       const store = useGameStore()
 
-      store.addCurrency(HCU, 100)
+      store.addCurrency('hcu', 100)
 
-      expect(store.getCurrencyAmount(HCU)).toBe(100)
+      expect(store.getCurrencyAmount('hcu')).toBe(100)
       expect(store.lifetimeCurrencyAmounts[HCU.id]).toBe(100)
     })
 
     it('should spend content units when available', () => {
       const store = useGameStore()
-      store.addCurrency(HCU, 100)
+      store.addCurrency('hcu', 100)
 
-      const result = ((amount: number) => store.spendCurrency(HCU, amount))(50)
+      const result = ((amount: number) => store.spendCurrency('hcu', amount))(50)
 
       expect(result).toBe(true)
-      expect(store.getCurrencyAmount(HCU)).toBe(50)
+      expect(store.getCurrencyAmount('hcu')).toBe(50)
       expect(store.lifetimeContentUnits).toBe(100) // Lifetime should not decrease
     })
 
     it('should not spend content units when insufficient', () => {
       const store = useGameStore()
-      store.addCurrency(HCU, 30)
+      store.addCurrency('hcu', 30)
 
-      const result = ((amount: number) => store.spendCurrency(HCU, amount))(50)
+      const result = ((amount: number) => store.spendCurrency('hcu', amount))(50)
 
       expect(result).toBe(false)
-      expect(store.getCurrencyAmount(HCU)).toBe(30)
+      expect(store.getCurrencyAmount('hcu')).toBe(30)
     })
 
     it('should check affordability correctly', () => {
       const store = useGameStore()
-      store.addCurrency(HCU, 100)
+      store.addCurrency('hcu', 100)
 
-      expect(((amount: number) => store.canAffordCurrency(HCU, amount))(50)).toBe(true)
-      expect(((amount: number) => store.canAffordCurrency(HCU, amount))(100)).toBe(true)
-      expect(((amount: number) => store.canAffordCurrency(HCU, amount))(150)).toBe(false)
+      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(50)).toBe(true)
+      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(100)).toBe(true)
+      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(150)).toBe(false)
     })
   })
 
@@ -289,10 +289,10 @@ describe('GameStore', () => {
       const store = useGameStore()
       const generator = BASIC_AD_BOT_FARM
 
-      store.addCurrency(HCU, 5)
+      store.addCurrency('hcu', 5)
       expect(store.canPurchaseGenerator(generator)).toBe(false)
 
-      store.addCurrency(HCU, 5)
+      store.addCurrency('hcu', 5)
       expect(store.canPurchaseGenerator(generator)).toBe(true)
     })
 
@@ -300,28 +300,28 @@ describe('GameStore', () => {
       const store = useGameStore()
       const generator = BASIC_AD_BOT_FARM
 
-      store.addCurrency(HCU, 20)
+      store.addCurrency('hcu', 20)
 
-      const result = store.purchaseGenerator(generator)
+      const result = store.purchaseGenerator(generator.id)
       const storeGenerator = store.getGenerator(generator.id)
 
       expect(result).toBe(true)
       expect(storeGenerator?.owned).toBe(1)
-      expect(store.getCurrencyAmount(HCU)).toBe(10) // 20 - 10 cost
+      expect(store.getCurrencyAmount('hcu')).toBe(10) // 20 - 10 cost
     })
 
     it('should not purchase generator when insufficient funds', () => {
       const store = useGameStore()
       const generator = BASIC_AD_BOT_FARM
 
-      store.addCurrency(HCU, 5)
+      store.addCurrency('hcu', 5)
 
-      const result = store.purchaseGenerator(generator)
+      const result = store.purchaseGenerator(generator.id)
       const storeGenerator = store.getGenerator(generator.id)
 
       expect(result).toBe(false)
       expect(storeGenerator?.owned).toBe(0)
-      expect(store.getCurrencyAmount(HCU)).toBe(5)
+      expect(store.getCurrencyAmount('hcu')).toBe(5)
     })
 
     it('should calculate increasing costs for multiple purchases', () => {
@@ -374,7 +374,7 @@ describe('GameStore', () => {
 
       // Not enough generators
       generator.owned = 3
-      store.addCurrency(HCU, 100)
+      store.addCurrency('hcu', 100)
       expect(store.canPurchaseUpgrade(upgrade)).toBe(false)
 
       // Enough generators, not enough money
@@ -394,14 +394,14 @@ describe('GameStore', () => {
       const generator = store.getGenerator('basicAdBotFarm')!
 
       generator.owned = 5
-      store.addCurrency(HCU, 100)
+      store.addCurrency('hcu', 100)
 
-      const result = store.purchaseUpgrade(upgrade)
+      const result = store.purchaseUpgrade(upgrade.id)
       const storeUpgrade = store.getUpgrade(upgrade.id)!
 
       expect(result).toBe(true)
       expect(storeUpgrade.isPurchased).toBe(true)
-      expect(store.getCurrencyAmount(HCU)).toBe(50) // 100 - 50 cost
+      expect(store.getCurrencyAmount('hcu')).toBe(50) // 100 - 50 cost
     })
 
     it('should not purchase already purchased upgrade', () => {
@@ -412,12 +412,12 @@ describe('GameStore', () => {
 
       generator.owned = 5
       upgrade.isPurchased = true
-      store.addCurrency(HCU, 100)
+      store.addCurrency('hcu', 100)
 
-      const result = store.purchaseUpgrade(upgradeConfig)
+      const result = store.purchaseUpgrade(upgradeConfig.id)
 
       expect(result).toBe(false)
-      expect(store.getCurrencyAmount(HCU)).toBe(100) // No money spent
+      expect(store.getCurrencyAmount('hcu')).toBe(100) // No money spent
     })
   })
 
@@ -427,7 +427,7 @@ describe('GameStore', () => {
 
       store.clickForContent()
 
-      expect(store.getCurrencyAmount(HCU)).toBe(1)
+      expect(store.getCurrencyAmount('hcu')).toBe(1)
       expect(store.lifetimeContentUnits).toBe(1)
     })
 
@@ -437,7 +437,7 @@ describe('GameStore', () => {
       store.prestigeLevel = 1
       store.clickForContent()
 
-      expect(store.getCurrencyAmount(HCU)).toBe(1.25)
+      expect(store.getCurrencyAmount('hcu')).toBe(1.25)
       expect(store.lifetimeContentUnits).toBe(1.25)
     })
   })
@@ -455,7 +455,7 @@ describe('GameStore', () => {
 
       expect(result).toBe(true)
       expect(store.prestigeLevel).toBe(1)
-      expect(store.getCurrencyAmount(HCU)).toBe(0)
+      expect(store.getCurrencyAmount('hcu')).toBe(0)
       expect(store.generators[0].owned).toBe(0)
       expect(store.upgrades[0].isPurchased).toBe(false)
       expect(store.lifetimeContentUnits).toBe(1000) // Should not reset
@@ -470,7 +470,7 @@ describe('GameStore', () => {
 
       expect(result).toBe(false)
       expect(store.prestigeLevel).toBe(0)
-      expect(store.getCurrencyAmount(HCU)).toBe(500)
+      expect(store.getCurrencyAmount('hcu')).toBe(500)
     })
 
     it('should reset generators correctly', () => {
@@ -505,7 +505,7 @@ describe('GameStore', () => {
       const largeNumber = 1e15
       store.addContentUnits(largeNumber)
 
-      expect(store.getCurrencyAmount(HCU)).toBe(largeNumber)
+      expect(store.getCurrencyAmount('hcu')).toBe(largeNumber)
       expect(store.lifetimeContentUnits).toBe(largeNumber)
 
       const formatted = ((amount: number) => store.formatCurrency(HCU, amount))(largeNumber)
@@ -515,9 +515,9 @@ describe('GameStore', () => {
     it('should handle zero and negative numbers safely', () => {
       const store = useGameStore()
 
-      expect(((amount: number) => store.canAffordCurrency(HCU, amount))(0)).toBe(true)
-      expect(((amount: number) => store.canAffordCurrency(HCU, amount))(-1)).toBe(true) // Edge case
-      expect(((amount: number) => store.spendCurrency(HCU, amount))(0)).toBe(true)
+      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(0)).toBe(true)
+      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(-1)).toBe(true) // Edge case
+      expect(((amount: number) => store.spendCurrency('hcu', amount))(0)).toBe(true)
     })
 
     it('should handle decimal precision correctly', () => {
@@ -527,7 +527,7 @@ describe('GameStore', () => {
       store.addContentUnits(0.2)
 
       // Should handle floating point precision issues
-      expect(store.getCurrencyAmount(HCU)).toBeCloseTo(0.3, 10)
+      expect(store.getCurrencyAmount('hcu')).toBeCloseTo(0.3, 10)
     })
 
     it('should handle generator cost overflow gracefully', () => {
@@ -573,18 +573,18 @@ describe('GameStore', () => {
       const maxSafeInt = Number.MAX_SAFE_INTEGER
       store.addContentUnits(maxSafeInt)
 
-      expect(store.getCurrencyAmount(HCU)).toBe(maxSafeInt)
-      expect(((amount: number) => store.canAffordCurrency(HCU, amount))(maxSafeInt)).toBe(true)
-      expect(((amount: number) => store.canAffordCurrency(HCU, amount))(maxSafeInt + 1)).toBe(false)
+      expect(store.getCurrencyAmount('hcu')).toBe(maxSafeInt)
+      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(maxSafeInt)).toBe(true)
+      expect(((amount: number) => store.canAffordCurrency('hcu', amount))(maxSafeInt + 1)).toBe(false)
     })
 
     it('should maintain consistent lifetime content units', () => {
       const store = useGameStore()
 
-      store.addCurrency(HCU, 100)((amount: number) => store.spendCurrency(HCU, amount))(50)
+      store.addCurrency('hcu', 100)((amount: number) => store.spendCurrency('hcu', amount))(50)
       store.addContentUnits(25)
 
-      expect(store.getCurrencyAmount(HCU)).toBe(75)
+      expect(store.getCurrencyAmount('hcu')).toBe(75)
       expect(store.lifetimeContentUnits).toBe(125) // Only additions count
     })
   })

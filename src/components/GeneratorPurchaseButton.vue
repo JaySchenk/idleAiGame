@@ -6,7 +6,7 @@
         <span class="owned-count">Owned: {{ ownedCount }}</span>
         <span class="production-rate"
           >+<CurrencyDisplay
-            :currency-config="HCU"
+            currency-id="hcu"
             :amount="actualProductionRate"
             :show-unit="false"
           />/sec</span
@@ -19,7 +19,7 @@
       :disabled="!canAfford || isPurchasing"
       @click="handlePurchase"
     >
-      <CurrencyDisplay :currency-config="HCU" :amount="cost" />
+      <CurrencyDisplay currency-id="hcu" :amount="cost" />
     </button>
   </div>
 </template>
@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useGameStore, type GeneratorConfig } from '../stores/gameStore'
-import { HCU } from '../config/currencies'
+// Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const props = defineProps<{
@@ -45,15 +45,15 @@ const ownedCount = computed(() => {
 })
 
 const cost = computed(() => {
-  return gameStore.getGeneratorCost(props.generator)
+  return gameStore.getGeneratorCost(props.generator.id)
 })
 
 const canAfford = computed(() => {
-  return gameStore.canAffordCurrency(HCU, cost.value)
+  return gameStore.canAffordCurrency('hcu', cost.value)
 })
 
 const actualProductionRate = computed(() => {
-  return gameStore.getGeneratorProductionRate(props.generator) * gameStore.globalMultiplier
+  return gameStore.getGeneratorProductionRate(props.generator.id) * gameStore.globalMultiplier
 })
 
 // Handle purchase with visual feedback
@@ -64,7 +64,7 @@ const handlePurchase = async () => {
 
   // Visual feedback delay
   setTimeout(() => {
-    gameStore.purchaseGenerator(props.generator)
+    gameStore.purchaseGenerator(props.generator.id)
     isPurchasing.value = false
   }, 100)
 }

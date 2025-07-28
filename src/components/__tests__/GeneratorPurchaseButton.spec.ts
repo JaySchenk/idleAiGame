@@ -49,7 +49,7 @@ describe('GeneratorPurchaseButton', () => {
       })
       const gameStore = useGameStore()(
         // Purchase a generator to test owned count display
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(100)
       gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
 
@@ -77,7 +77,7 @@ describe('GeneratorPurchaseButton', () => {
       })
       const gameStore = useGameStore()(
         // Purchase generator and set prestige for global multiplier
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(100)
       gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
       gameStore.prestigeLevel = 1 // 1.25x multiplier
@@ -98,7 +98,7 @@ describe('GeneratorPurchaseButton', () => {
       })
       const gameStore = useGameStore()(
         // Give player enough money
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(50)
       await wrapper.vm.$nextTick()
 
@@ -116,7 +116,7 @@ describe('GeneratorPurchaseButton', () => {
       const gameStore = useGameStore()
 
       // Player has no money
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(0)
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(0)
       await wrapper.vm.$nextTick()
 
       const button = wrapper.find('.purchase-button')
@@ -132,10 +132,10 @@ describe('GeneratorPurchaseButton', () => {
       })
       const gameStore = useGameStore()(
         // Give player money
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(50)
       await wrapper.vm.$nextTick() // Make sure reactivity updates
-      const initialUnits = gameStore.getCurrencyAmount(HCU)
+      const initialUnits = gameStore.getCurrencyAmount('hcu')
 
       await wrapper.find('.purchase-button').trigger('click')
 
@@ -143,7 +143,7 @@ describe('GeneratorPurchaseButton', () => {
       vi.advanceTimersByTime(150)
       await wrapper.vm.$nextTick() // Allow reactivity updates
 
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(initialUnits - 10) // Cost of basicAdBotFarm
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(initialUnits - 10) // Cost of basicAdBotFarm
 
       const generator = gameStore.getGenerator('basicAdBotFarm')
       expect(generator?.owned).toBe(1)
@@ -157,12 +157,12 @@ describe('GeneratorPurchaseButton', () => {
       })
       const gameStore = useGameStore()
 
-      const initialUnits = gameStore.getCurrencyAmount(HCU) // Should be 0
+      const initialUnits = gameStore.getCurrencyAmount('hcu') // Should be 0
 
       await wrapper.find('.purchase-button').trigger('click')
       vi.advanceTimersByTime(150)
 
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(initialUnits)
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(initialUnits)
 
       const generator = gameStore.getGenerator('basicAdBotFarm')
       expect(generator?.owned).toBe(0)
@@ -174,7 +174,7 @@ describe('GeneratorPurchaseButton', () => {
           generator: BASIC_AD_BOT_FARM,
         },
       })
-      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency(HCU, amount))(50)
+      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency('hcu', amount))(50)
       await wrapper.vm.$nextTick()
 
       const button = wrapper.find('.purchase-button')
@@ -202,7 +202,7 @@ describe('GeneratorPurchaseButton', () => {
           generator: BASIC_AD_BOT_FARM,
         },
       })
-      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency(HCU, amount))(100) // Enough for multiple purchases
+      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency('hcu', amount))(100) // Enough for multiple purchases
 
       // Click rapidly multiple times
       await wrapper.find('.purchase-button').trigger('click')
@@ -229,7 +229,7 @@ describe('GeneratorPurchaseButton', () => {
       // Initial cost
       expect(wrapper.find('.purchase-button').text()).toContain('10')(
         // Purchase one to increase cost
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(100)
       gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
       await wrapper.vm.$nextTick()
@@ -249,7 +249,7 @@ describe('GeneratorPurchaseButton', () => {
       // Initially cannot afford
       expect(wrapper.find('.purchase-button').classes()).toContain('disabled')(
         // Give money
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(50)
       await wrapper.vm.$nextTick()
 
@@ -272,7 +272,7 @@ describe('GeneratorPurchaseButton', () => {
       })
       const gameStore = useGameStore()(
         // Purchase generators to enable upgrade
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(200)
       for (let i = 0; i < 5; i++) {
         gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
@@ -298,7 +298,7 @@ describe('GeneratorPurchaseButton', () => {
       })
       const gameStore = useGameStore()(
         // Purchase a generator
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(50)
       gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
       await wrapper.vm.$nextTick()
@@ -338,7 +338,7 @@ describe('GeneratorPurchaseButton', () => {
       })
       const gameStore = useGameStore()(
         // Purchase many generators to get very high cost
-        (amount: number) => gameStore.addCurrency(HCU, amount),
+        (amount: number) => gameStore.addCurrency('hcu', amount),
       )(1000000)
       const generator = gameStore.getGenerator('basicAdBotFarm')!
       generator.owned = 50 // This should create a very high cost
@@ -369,7 +369,7 @@ describe('GeneratorPurchaseButton', () => {
           generator: BASIC_AD_BOT_FARM,
         },
       })
-      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency(HCU, amount))(50)
+      const gameStore = useGameStore()((amount: number) => gameStore.addCurrency('hcu', amount))(50)
 
       // Start purchase
       await wrapper.find('.purchase-button').trigger('click')

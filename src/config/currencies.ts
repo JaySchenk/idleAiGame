@@ -34,7 +34,7 @@ export const currencies: CurrencyConfig[] = [
   },
 ]
 
-// Export individual currency configs for easy access
-export const HCU = currencies[0]
-export const RAW_DATA = currencies[1]
-export const HUMAN_ATTENTION = currencies[2]
+// Use string IDs for all currency operations:
+// 'hcu' - Hollow Content Units
+// 'rd' - Raw Data
+// 'ha' - Human Attention

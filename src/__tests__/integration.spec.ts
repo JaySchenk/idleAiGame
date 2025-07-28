@@ -77,7 +77,7 @@ describe('Game Integration Tests', () => {
       const gameStore = useGameStore()
 
       // Start: Player has 0 HCU
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(0)
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(0)
       expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBe(0)
       expect(gameStore.prestigeLevel).toBe(0)
 
@@ -85,20 +85,20 @@ describe('Game Integration Tests', () => {
       for (let i = 0; i < 10; i++) {
         gameStore.clickForContent()
       }
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(10)
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(10)
       expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBe(10)
 
       // Phase 2: Purchase first generator
-      expect(((amount: number) => gameStore.canAffordCurrency(HCU, amount))(10)).toBe(true)
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+      expect(((amount: number) => gameStore.canAffordCurrency('hcu', amount))(10)).toBe(true)
+      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
 
       const generator = gameStore.getGenerator(BASIC_AD_BOT_FARM.id)!
       expect(generator.owned).toBe(1)
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(0) // Spent all on generator
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(0) // Spent all on generator
 
       // Phase 3: Generate passive income programmatically
       runGameLoopTicks(gameStore, 50) // 50 ticks = 5 seconds
-      expect(gameStore.getCurrencyAmount(HCU)).toBeGreaterThan(0) // Should have earned passive income
+      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThan(0) // Should have earned passive income
 
       // For integration test purposes, simulate rapid progression
       // Give the player enough resources to test the prestige mechanics
@@ -113,7 +113,7 @@ describe('Game Integration Tests', () => {
       gameStore.performPrestige()
 
       // After prestige: current units and generators reset, but lifetime and prestige level persist
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(0)
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(0)
       expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBe(prePrestigeLifetime) // Lifetime persists
       expect(gameStore.prestigeLevel).toBe(1)
       expect(gameStore.globalMultiplier).toBe(1.25) // 1.25x multiplier
@@ -125,7 +125,7 @@ describe('Game Integration Tests', () => {
       }
 
       // Should get more than 10 HCU due to prestige multiplier
-      expect(gameStore.getCurrencyAmount(HCU)).toBeGreaterThan(10)
+      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThan(10)
     })
 
     it('should handle rapid progression with automation', async () => {
@@ -137,9 +137,9 @@ describe('Game Integration Tests', () => {
       // Buy multiple generators quickly
       purchaseUntilUnaffordable(
         gameStore,
-        () => gameStore.purchaseGenerator(BASIC_AD_BOT_FARM),
+        () => gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id),
         () =>
-          ((amount: number) => gameStore.canAffordCurrency(HCU, amount))(
+          ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
             gameStore.getGeneratorCost(BASIC_AD_BOT_FARM.id),
           ),
         10,
@@ -150,7 +150,7 @@ describe('Game Integration Tests', () => {
 
       const productionRate = gameStore.productionRate
       expect(productionRate).toBeGreaterThan(0)
-      expect(gameStore.getCurrencyAmount(HCU)).toBeGreaterThan(1000) // Should have earned more
+      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThan(1000) // Should have earned more
 
       // Purchase upgrades when available
       const availableUpgrades = [AUTOMATED_CONTENT_SCRIPT]
@@ -163,11 +163,11 @@ describe('Game Integration Tests', () => {
             () => {
               // Keep buying generators during progression
               if (
-                ((amount: number) => gameStore.canAffordCurrency(HCU, amount))(
+                ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
                   gameStore.getGeneratorCost(BASIC_AD_BOT_FARM.id),
                 )
               ) {
-                gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+                gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
               }
               return (
                 gameStore.canPurchaseUpgrade(upgrade.id) ||
@@ -178,7 +178,7 @@ describe('Game Integration Tests', () => {
           )
 
           if (gameStore.canPurchaseUpgrade(upgrade.id)) {
-            gameStore.purchaseUpgrade(upgrade)
+            gameStore.purchaseUpgrade(upgrade.id)
             expect(gameStore.getUpgrade(upgrade.id)!.isPurchased).toBe(true)
           }
         } catch (error) {
@@ -188,7 +188,7 @@ describe('Game Integration Tests', () => {
       }
 
       // Verify system is stable after rapid changes
-      expect(gameStore.getCurrencyAmount(HCU)).toBeGreaterThan(0)
+      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThan(0)
       expect(gameStore.productionRate).toBeGreaterThan(0)
     })
   })
@@ -209,9 +209,9 @@ describe('Game Integration Tests', () => {
           // Purchase several of each type
           purchaseUntilUnaffordable(
             gameStore,
-            () => gameStore.purchaseGenerator(generatorConfig),
+            () => gameStore.purchaseGenerator(generatorConfig.id),
             () =>
-              ((amount: number) => gameStore.canAffordCurrency(HCU, amount))(
+              ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
                 gameStore.getGeneratorCost(generatorConfig.id),
               ),
             5,
@@ -228,7 +228,7 @@ describe('Game Integration Tests', () => {
       // Test scaling over time programmatically
       runGameLoopTicks(gameStore, 100) // 10 seconds
 
-      expect(gameStore.getCurrencyAmount(HCU)).toBeGreaterThan(50000) // Lowered expectation
+      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThan(50000) // Lowered expectation
     })
   })
 
@@ -241,8 +241,8 @@ describe('Game Integration Tests', () => {
 
       for (const milestone of milestones) {
         // First buy some generators to enable progression
-        if (gameStore.getCurrencyAmount(HCU) >= 10) {
-          gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+        if (gameStore.getCurrencyAmount('hcu') >= 10) {
+          gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
         }
 
         // Progress to each milestone using game loop with production
@@ -252,13 +252,13 @@ describe('Game Integration Tests', () => {
             () => {
               // Keep buying generators when affordable during progression
               if (
-                ((amount: number) => gameStore.canAffordCurrency(HCU, amount))(
+                ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
                   gameStore.getGeneratorCost(BASIC_AD_BOT_FARM.id),
                 )
               ) {
-                gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+                gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
               }
-              return gameStore.getCurrencyAmount(HCU) >= milestone
+              return gameStore.getCurrencyAmount('hcu') >= milestone
             },
             5000, // Reasonable limit
           )
@@ -282,20 +282,19 @@ describe('Game Integration Tests', () => {
   describe('Save/Load Integration', () => {
     it('should maintain game state through save/load cycles', async () => {
       createIntegrationTestPinia()
-      const gameStore = useGameStore()(
-        // Set up complex game state
-        (amount: number) => gameStore.addCurrency(HCU, amount),
-      )(50000)
+      const gameStore = useGameStore()
+      // Set up complex game state
+      gameStore.addCurrency('hcu', 50000)
       gameStore.lifetimeCurrencyAmounts[HCU.id] = 75000
       gameStore.prestigeLevel = 2
 
       // Purchase generators and upgrades
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
-      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
-      gameStore.purchaseUpgrade(AUTOMATED_CONTENT_SCRIPT)
+      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
+      gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
+      gameStore.purchaseUpgrade(AUTOMATED_CONTENT_SCRIPT.id)
 
       const beforeSave = {
-        contentUnits: gameStore.getCurrencyAmount(HCU),
+        contentUnits: gameStore.getCurrencyAmount('hcu'),
         lifetimeContentUnits: gameStore.lifetimeCurrencyAmounts[HCU.id],
         prestigeLevel: gameStore.prestigeLevel,
         generatorOwned: gameStore.getGenerator('basicAdBotFarm')!.owned,
@@ -306,7 +305,7 @@ describe('Game Integration Tests', () => {
       // since the store uses Pinia persistence which handles save/load automatically
 
       // Verify state is consistent after operations
-      expect(gameStore.getCurrencyAmount(HCU)).toBe(beforeSave.contentUnits)
+      expect(gameStore.getCurrencyAmount('hcu')).toBe(beforeSave.contentUnits)
       expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBe(beforeSave.lifetimeContentUnits)
       expect(gameStore.prestigeLevel).toBe(beforeSave.prestigeLevel)
       expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(beforeSave.generatorOwned)
@@ -319,13 +318,10 @@ describe('Game Integration Tests', () => {
   describe('Error Recovery', () => {
     it('should handle corrupted game state gracefully', async () => {
       createIntegrationTestPinia()
-      const gameStore = useGameStore()(
-        // Test system resilience with edge values
-        (amount: number) => gameStore.addCurrency(HCU, amount),
-      )(0)(
-        // Should handle zero adds
-        (amount: number) => gameStore.spendCurrency(HCU, amount),
-      )(0) // Should handle zero spends
+      const gameStore = useGameStore()
+      // Test system resilience with edge values
+      gameStore.addCurrency('hcu', 0) // Should handle zero adds
+      gameStore.spendCurrency('hcu', 0) // Should handle zero spends
 
       // System should handle these operations gracefully
       expect(() => {
@@ -334,24 +330,23 @@ describe('Game Integration Tests', () => {
       }).not.toThrow()
 
       // Values should remain valid
-      expect(gameStore.getCurrencyAmount(HCU)).toBeGreaterThanOrEqual(0)
+      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThanOrEqual(0)
       expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBeGreaterThanOrEqual(0)
       expect(gameStore.prestigeLevel).toBeGreaterThanOrEqual(0)
     })
 
     it('should handle extreme values without breaking', async () => {
       createIntegrationTestPinia()
-      const gameStore = useGameStore()(
-        // Test with very large numbers
-        (amount: number) => gameStore.addCurrency(HCU, amount),
-      )(Number.MAX_SAFE_INTEGER)
+      const gameStore = useGameStore()
+      // Test with very large numbers
+      gameStore.addCurrency('hcu', Number.MAX_SAFE_INTEGER)
       expect(() => {
-        gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+        gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
         vi.advanceTimersByTime(1000)
-      }).not.toThrow()(
-        // Test with very small numbers
-        (amount: number) => gameStore.spendCurrency(HCU, amount),
-      )(gameStore.getCurrencyAmount(HCU) - 0.01)
+      }).not.toThrow()
+      // Test with very small numbers
+      gameStore.spendCurrency('hcu',
+      )(gameStore.getCurrencyAmount('hcu') - 0.01)
       expect(() => {
         gameStore.clickForContent()
         vi.advanceTimersByTime(1000)
@@ -373,11 +368,11 @@ describe('Game Integration Tests', () => {
 
         if (i % 10 === 0) {
           if (
-            ((amount: number) => gameStore.canAffordCurrency(HCU, amount))(
+            ((amount: number) => gameStore.canAffordCurrency('hcu', amount))(
               gameStore.getGeneratorCost(BASIC_AD_BOT_FARM.id),
             )
           ) {
-            gameStore.purchaseGenerator(BASIC_AD_BOT_FARM)
+            gameStore.purchaseGenerator(BASIC_AD_BOT_FARM.id)
           }
         }
 
@@ -394,7 +389,7 @@ describe('Game Integration Tests', () => {
       expect(duration).toBeLessThan(1000)
 
       // Game state should remain consistent
-      expect(gameStore.getCurrencyAmount(HCU)).toBeGreaterThanOrEqual(0)
+      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThanOrEqual(0)
       expect(gameStore.lifetimeCurrencyAmounts[HCU.id]).toBeGreaterThan(0)
     })
   })

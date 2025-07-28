@@ -3,7 +3,7 @@
     <div class="upgrade-header">
       <h3 class="upgrade-title">{{ upgrade.name }}</h3>
       <div class="upgrade-cost">
-        <CurrencyDisplay :currency-config="HCU" :amount="upgrade.cost" />
+        <CurrencyDisplay currency-id="hcu" :amount="upgrade.cost" />
       </div>
     </div>
 
@@ -49,7 +49,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useGameStore, type UpgradeConfig } from '../stores/gameStore'
-import { HCU } from '../config/currencies'
+// Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 interface Props {
@@ -69,17 +69,17 @@ const upgrade = computed(() => {
 
 // Check requirements
 const requirementsMet = computed(() => {
-  return gameStore.areUpgradeRequirementsMet(props.upgrade)
+  return gameStore.areUpgradeRequirementsMet(props.upgrade.id)
 })
 
 // Check if can afford
 const canAfford = computed(() => {
-  return gameStore.canAffordCurrency(HCU, upgrade.value.cost)
+  return gameStore.canAffordCurrency('hcu', upgrade.value.cost)
 })
 
 // Check if can purchase
 const canPurchase = computed(() => {
-  return gameStore.canPurchaseUpgrade(props.upgrade)
+  return gameStore.canPurchaseUpgrade(props.upgrade.id)
 })
 
 // Get generator name by ID
@@ -103,7 +103,7 @@ const purchaseUpgrade = async () => {
   // Add slight delay for visual feedback
   await new Promise((resolve) => setTimeout(resolve, 100))
 
-  const success = gameStore.purchaseUpgrade(props.upgrade)
+  const success = gameStore.purchaseUpgrade(props.upgrade.id)
 
   if (success) {
     // Show purchase effect

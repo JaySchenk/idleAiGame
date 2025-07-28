@@ -4,7 +4,7 @@
       <div class="clicker-title">Desperate Human Touch</div>
       <div class="clicker-description">
         Click to generate +<CurrencyDisplay
-          :currency-config="HCU"
+          currency-id="hcu"
           :amount="gameStore.clickValue"
           :show-unit="false"
         />
@@ -22,7 +22,7 @@
       <div class="click-icon">⚡</div>
       <div class="click-text">CLICK</div>
       <div class="click-reward">
-        +<CurrencyDisplay :currency-config="HCU" :amount="gameStore.clickValue" />
+        +<CurrencyDisplay currency-id="hcu" :amount="gameStore.clickValue" />
       </div>
     </button>
 
@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import { HCU } from '../config/currencies'
+// Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()

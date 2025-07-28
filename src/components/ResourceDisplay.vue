@@ -1,16 +1,16 @@
 <template>
   <div class="resource-display">
     <div class="resource-item primary">
-      <div class="resource-label">{{ HCU.displayName }}</div>
+      <div class="resource-label">Hollow Content Units</div>
       <div class="resource-value">
-        <CurrencyDisplay :currency-config="HCU" :amount="gameStore.getCurrencyAmount(HCU)" />
+        <CurrencyDisplay currency-id="hcu" :amount="gameStore.getCurrencyAmount('hcu')" />
       </div>
     </div>
     <div class="resource-item secondary">
       <div class="resource-label">Hollow Content per Second</div>
       <div class="resource-value">
         <CurrencyDisplay
-          :currency-config="HCU"
+          currency-id="hcu"
           :amount="gameStore.productionRate"
           :show-unit="false"
         />/s
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { useGameStore } from '../stores/gameStore'
-import { HCU } from '../config/currencies'
+// Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
