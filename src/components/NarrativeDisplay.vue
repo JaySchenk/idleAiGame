@@ -42,11 +42,11 @@
       </div>
 
       <div class="narrative-archive">
-        <button v-if="hasViewedEvents" class="archive-button" @click="toggleArchive">
-          {{ showArchive ? 'Hide' : 'Show' }} Story Archive
-        </button>
+        <div v-if="hasViewedEvents" class="archive-header">
+          <h5 class="archive-title">Story Chronicle</h5>
+        </div>
 
-        <div v-if="showArchive" class="archive-list">
+        <div v-if="hasViewedEvents" class="archive-list">
           <div
             v-for="event in viewedEvents"
             :key="event.id"
@@ -76,7 +76,6 @@ const showModal = ref(false)
 const currentEvent = ref<NarrativeEvent | null>(null)
 const displayText = ref('')
 const isTyping = ref(false)
-const showArchive = ref(false)
 
 // Typewriter effect state
 let typewriterInterval: number | null = null
@@ -139,9 +138,6 @@ const closeModal = () => {
   displayText.value = ''
 }
 
-const toggleArchive = () => {
-  showArchive.value = !showArchive.value
-}
 
 const reviewEvent = (event: NarrativeEvent) => {
   currentEvent.value = event
@@ -396,25 +392,19 @@ onUnmounted(() => {
   background: #ff0000;
 }
 
-.archive-button {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
+.archive-header {
+  margin-bottom: 0.5rem;
 }
 
-.archive-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+.archive-title {
+  margin: 0;
+  color: #00ff88;
+  font-size: 1rem;
+  font-weight: bold;
 }
 
 .archive-list {
   margin-top: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
