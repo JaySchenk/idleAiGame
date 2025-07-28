@@ -1,21 +1,21 @@
 <template>
   <div class="resource-display">
     <div
-      v-for="currency in currencies"
-      :key="currency.id"
+      v-for="resource in resources"
+      :key="resource.id"
       class="resource-item"
-      :style="{ borderLeftColor: getBorderColor(currency.id) }"
+      :style="{ borderLeftColor: getBorderColor(resource.id) }"
     >
       <div class="resource-info">
-        <div class="resource-label">{{ currency.displayName }}</div>
+        <div class="resource-label">{{ resource.displayName }}</div>
         <div class="resource-rates">
           <div class="current-amount">
-            <CurrencyDisplay :currency-id="currency.id" :amount="gameStore.getCurrencyAmount(currency.id)" />
+            <CurrencyDisplay :resource-id="resource.id" :amount="gameStore.getResourceAmount(resource.id)" />
           </div>
           <div class="production-rate">
             <CurrencyDisplay
-              :currency-id="currency.id"
-              :amount="getProductionRate(currency.id)"
+              :resource-id="resource.id"
+              :amount="getProductionRate(resource.id)"
               :show-unit="false"
             />/s
           </div>
@@ -27,29 +27,29 @@
 
 <script setup lang="ts">
 import { useGameStore } from '../stores/gameStore'
-import { currencies } from '../config/currencies'
+import { resources } from '../config/resources'
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
 
-// Get production rate for a specific currency
+// Get production rate for a specific resource
 // For now, only HCU has production, others return 0
-function getProductionRate(currencyId: string): number {
-  if (currencyId === 'hcu') {
+function getProductionRate(resourceId: string): number {
+  if (resourceId === 'hcu') {
     return gameStore.productionRate
   }
-  // TODO: Add production rates for other currencies when implemented
+  // TODO: Add production rates for other resources when implemented
   return 0
 }
 
-// Get border color based on currency health status
-function getBorderColor(currencyId: string): string {
-  const config = gameStore.getCurrencyConfig(currencyId)
-  const amount = gameStore.getCurrencyAmount(currencyId)
+// Get border color based on resource health status
+function getBorderColor(resourceId: string): string {
+  const config = gameStore.getResourceConfig(resourceId)
+  const amount = gameStore.getResourceAmount(resourceId)
   
   if (!config) return '#ffffff'
 
-  // For currencies with maxValue, use percentage-based health indicators
+  // For resources with maxValue, use percentage-based health indicators
   if (config.maxValue !== undefined) {
     const percentage = (amount / config.maxValue) * 100
     
@@ -66,7 +66,7 @@ function getBorderColor(currencyId: string): string {
     }
   }
 
-  // For currencies without maxValue, use healthy color as default
+  // For resources without maxValue, use healthy color as default
   return config.visualIndicators.healthy
 }
 </script>

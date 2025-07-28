@@ -3,7 +3,7 @@
     <div class="upgrade-header">
       <h3 class="upgrade-title">{{ upgrade.name }}</h3>
       <div class="upgrade-cost">
-        <CurrencyDisplay currency-id="hcu" :amount="upgrade.cost" />
+        <CurrencyDisplay resource-id="hcu" :amount="upgrade.cost" />
       </div>
     </div>
 
@@ -74,7 +74,7 @@ const requirementsMet = computed(() => {
 
 // Check if can afford
 const canAfford = computed(() => {
-  return gameStore.canAffordCurrency('hcu', upgrade.value.cost)
+  return gameStore.canAffordResource('hcu', upgrade.value.cost)
 })
 
 // Check if can purchase

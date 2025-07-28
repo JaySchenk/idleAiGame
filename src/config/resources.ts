@@ -1,4 +1,4 @@
-export interface CurrencyConfig {
+export interface ResourceConfig {
   id: string
   name: string
   displayName: string
@@ -15,7 +15,7 @@ export interface CurrencyConfig {
   }
 }
 
-export const currencies: CurrencyConfig[] = [
+export const resources: ResourceConfig[] = [
   {
     id: 'hcu',
     name: 'contentUnits',
@@ -123,7 +123,7 @@ export const currencies: CurrencyConfig[] = [
   },
 ]
 
-// Use string IDs for all currency operations:
+// Use string IDs for all resource operations:
 // 'hcu' - Hollow Content Units
 // 'rd' - Raw Data
 // 'ha' - Human Attention

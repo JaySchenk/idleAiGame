@@ -13,19 +13,19 @@ describe('CurrencyDisplay', () => {
     it('should render amount with default unit', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
 
       expect(wrapper.text()).toBe('100.00 HCU')
-      expect(wrapper.find('.currency-display').exists()).toBe(true)
+      expect(wrapper.find('.resource-display').exists()).toBe(true)
     })
 
     it('should render amount without unit when showUnit is false', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
           showUnit: false,
         },
@@ -38,24 +38,24 @@ describe('CurrencyDisplay', () => {
     it('should have proper CSS class applied', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
 
-      expect(wrapper.find('.currency-display').exists()).toBe(true)
+      expect(wrapper.find('.resource-display').exists()).toBe(true)
       expect(wrapper.element.tagName).toBe('SPAN')
     })
 
     it('should apply currency color styling', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
 
-      const element = wrapper.find('.currency-display')
+      const element = wrapper.find('.resource-display')
       expect(element.attributes('style')).toMatch(/color:\s*(#ffffff|rgb\(255,\s*255,\s*255\))/)
     })
   })
@@ -64,14 +64,14 @@ describe('CurrencyDisplay', () => {
     it('should display different currency symbols', () => {
       const hcuWrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
 
       const rdWrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'rd',
+          resourceId: 'rd',
           amount: 100,
         },
       })
@@ -83,22 +83,22 @@ describe('CurrencyDisplay', () => {
     it('should apply different currency colors', () => {
       const hcuWrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
 
       const rdWrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'rd',
+          resourceId: 'rd',
           amount: 100,
         },
       })
 
-      expect(hcuWrapper.find('.currency-display').attributes('style')).toMatch(
+      expect(hcuWrapper.find('.resource-display').attributes('style')).toMatch(
         /color:\s*(#ffffff|rgb\(255,\s*255,\s*255\))/,
       )
-      expect(rdWrapper.find('.currency-display').attributes('style')).toMatch(
+      expect(rdWrapper.find('.resource-display').attributes('style')).toMatch(
         /color:\s*(#ff6b35|rgb\(255,\s*107,\s*53\))/,
       )
     })
@@ -106,10 +106,10 @@ describe('CurrencyDisplay', () => {
 
   describe('Number Formatting', () => {
     it('should format all currency ranges correctly', () => {
-      mathTestCases.currencyFormatting.forEach(({ input, expected }) => {
+      mathTestCases.resourceFormatting.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount: input,
           },
         })
@@ -121,7 +121,7 @@ describe('CurrencyDisplay', () => {
     it('should handle zero correctly', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 0,
         },
       })
@@ -132,7 +132,7 @@ describe('CurrencyDisplay', () => {
     it('should handle negative numbers', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: -50,
         },
       })
@@ -152,7 +152,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount: input,
           },
         })
@@ -173,7 +173,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount: input,
           },
         })
@@ -192,7 +192,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount: input,
           },
         })
@@ -211,7 +211,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount: input,
           },
         })
@@ -230,7 +230,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount: input,
           },
         })
@@ -249,7 +249,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount: input,
           },
         })
@@ -268,7 +268,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach(({ input, expected }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount: input,
           },
         })
@@ -282,7 +282,7 @@ describe('CurrencyDisplay', () => {
     it('should show unit by default', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 1000,
         },
       })
@@ -304,7 +304,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach((amount) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount,
             showUnit: false,
           },
@@ -318,7 +318,7 @@ describe('CurrencyDisplay', () => {
     it('should show unit when showUnit is explicitly true', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 1000,
           showUnit: true,
         },
@@ -332,7 +332,7 @@ describe('CurrencyDisplay', () => {
     it('should update when amount prop changes', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
@@ -347,7 +347,7 @@ describe('CurrencyDisplay', () => {
     it('should update when showUnit prop changes', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
           showUnit: true,
         },
@@ -363,14 +363,14 @@ describe('CurrencyDisplay', () => {
     it('should update when currencyConfig changes', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
 
       expect(wrapper.text()).toBe('100.00 HCU')
 
-      await wrapper.setProps({ currencyId: 'rd' })
+      await wrapper.setProps({ resourceId: 'rd' })
 
       expect(wrapper.text()).toBe('100.00 RD')
     })
@@ -378,7 +378,7 @@ describe('CurrencyDisplay', () => {
     it('should handle rapid prop changes', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
@@ -399,7 +399,7 @@ describe('CurrencyDisplay', () => {
     it('should handle Infinity', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: Infinity,
         },
       })
@@ -410,7 +410,7 @@ describe('CurrencyDisplay', () => {
     it('should handle NaN', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: NaN,
         },
       })
@@ -421,7 +421,7 @@ describe('CurrencyDisplay', () => {
     it('should handle very small positive numbers', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 0.001,
         },
       })
@@ -432,7 +432,7 @@ describe('CurrencyDisplay', () => {
     it('should handle very small negative numbers', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: -0.001,
         },
       })
@@ -443,7 +443,7 @@ describe('CurrencyDisplay', () => {
     it('should handle maximum safe integer', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: Number.MAX_SAFE_INTEGER,
         },
       })
@@ -455,7 +455,7 @@ describe('CurrencyDisplay', () => {
     it('should handle minimum safe integer', () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: Number.MIN_SAFE_INTEGER,
         },
       })
@@ -475,7 +475,7 @@ describe('CurrencyDisplay', () => {
       testCases.forEach((amount) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount,
           },
         })
@@ -498,7 +498,7 @@ describe('CurrencyDisplay', () => {
       const wrappers = testCases.map(({ amount }) =>
         mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount,
           },
         }),
@@ -515,7 +515,7 @@ describe('CurrencyDisplay', () => {
     it('should not cause memory leaks with computed properties', async () => {
       const wrapper = mount(CurrencyDisplay, {
         props: {
-          currencyId: 'hcu',
+          resourceId: 'hcu',
           amount: 100,
         },
       })
@@ -546,7 +546,7 @@ describe('CurrencyDisplay', () => {
       gameValues.forEach(({ amount, stage }) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount,
           },
         })
@@ -570,7 +570,7 @@ describe('CurrencyDisplay', () => {
       fractionalValues.forEach((amount) => {
         const wrapper = mount(CurrencyDisplay, {
           props: {
-            currencyId: 'hcu',
+            resourceId: 'hcu',
             amount,
           },
         })

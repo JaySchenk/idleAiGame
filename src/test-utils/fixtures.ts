@@ -288,9 +288,9 @@ export const mathTestCases = {
   ],
 
   /**
-   * Currency formatting test cases
+   * Resource formatting test cases
    */
-  currencyFormatting: [
+  resourceFormatting: [
     { input: 0, expected: '0.00 HCU' },
     { input: 1, expected: '1.00 HCU' },
     { input: 999.99, expected: '999.99 HCU' },

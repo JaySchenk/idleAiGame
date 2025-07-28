@@ -1,20 +1,20 @@
-import type { CurrencyConfig } from '../config/currencies'
+import type { ResourceConfig } from '../config/resources'
 
 /**
- * Format currency amounts with appropriate unit scaling and symbols
- * @param currencyConfig - The currency configuration object
+ * Format resource amounts with appropriate unit scaling and symbols
+ * @param resourceConfig - The resource configuration object
  * @param amount - The amount to format
- * @param showUnit - Whether to show the currency symbol (default: true)
- * @returns Formatted currency string
+ * @param showUnit - Whether to show the resource symbol (default: true)
+ * @returns Formatted resource string
  */
-export function formatCurrency(
-  currencyConfig: CurrencyConfig | undefined,
+export function formatResource(
+  resourceConfig: ResourceConfig | undefined,
   amount: number,
   showUnit: boolean = true,
 ): string {
-  if (!currencyConfig) return amount.toString()
+  if (!resourceConfig) return amount.toString()
 
-  const unit = showUnit ? ` ${currencyConfig.symbol}` : ''
+  const unit = showUnit ? ` ${resourceConfig.symbol}` : ''
 
   // Handle scientific notation for very large numbers
   if (amount >= 1e18) {

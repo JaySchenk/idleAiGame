@@ -23,7 +23,7 @@
       <div class="stat-item">
         <div class="stat-label">Threshold:</div>
         <div class="stat-value">
-          <CurrencyDisplay currency-id="hcu" :amount="gameStore.prestigeThreshold" />
+          <CurrencyDisplay resource-id="hcu" :amount="gameStore.prestigeThreshold" />
         </div>
       </div>
     </div>
@@ -35,13 +35,13 @@
       </div>
       <div class="progress-text">
         <CurrencyDisplay
-          currency-id="hcu"
-          :amount="gameStore.getCurrencyAmount('hcu')"
+          resource-id="hcu"
+          :amount="gameStore.getResourceAmount('hcu')"
           :show-unit="false"
         />
         /
         <CurrencyDisplay
-          currency-id="hcu"
+          resource-id="hcu"
           :amount="gameStore.prestigeThreshold"
           :show-unit="false"
         />
@@ -94,7 +94,7 @@ const showRebootEffect = ref(false)
 
 // Calculate progress to prestige (based on current HCU)
 const progressPercent = computed(() => {
-  const currentHCU = gameStore.getCurrencyAmount('hcu')
+  const currentHCU = gameStore.getResourceAmount('hcu')
   const progress = (currentHCU / gameStore.prestigeThreshold) * 100
   return Math.min(100, progress)
 })

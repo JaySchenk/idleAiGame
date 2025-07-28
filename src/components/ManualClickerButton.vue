@@ -4,7 +4,7 @@
       <div class="clicker-title">Desperate Human Touch</div>
       <div class="clicker-description">
         Click to generate +<CurrencyDisplay
-          currency-id="hcu"
+          resource-id="hcu"
           :amount="gameStore.clickValue"
           :show-unit="false"
         />
@@ -22,7 +22,7 @@
       <div class="click-icon">⚡</div>
       <div class="click-text">CLICK</div>
       <div class="click-reward">
-        +<CurrencyDisplay currency-id="hcu" :amount="gameStore.clickValue" />
+        +<CurrencyDisplay resource-id="hcu" :amount="gameStore.clickValue" />
       </div>
     </button>
 

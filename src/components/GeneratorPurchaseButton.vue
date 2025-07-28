@@ -6,7 +6,7 @@
         <span class="owned-count">Owned: {{ ownedCount }}</span>
         <span class="production-rate"
           >+<CurrencyDisplay
-            currency-id="hcu"
+            resource-id="hcu"
             :amount="actualProductionRate"
             :show-unit="false"
           />/sec</span
@@ -19,7 +19,7 @@
       :disabled="!canAfford || isPurchasing"
       @click="handlePurchase"
     >
-      <CurrencyDisplay currency-id="hcu" :amount="cost" />
+      <CurrencyDisplay resource-id="hcu" :amount="cost" />
     </button>
   </div>
 </template>
@@ -51,7 +51,7 @@ const cost = computed(() => {
 })
 
 const canAfford = computed(() => {
-  return gameStore.canAffordCurrency('hcu', cost.value)
+  return gameStore.canAffordResource('hcu', cost.value)
 })
 
 const actualProductionRate = computed(() => {

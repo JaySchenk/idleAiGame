@@ -21,7 +21,7 @@
       <span class="reward-text">Reward: </span>
       <span class="reward-amount"
         >+<CurrencyDisplay
-          currency-id="hcu"
+          resource-id="hcu"
           :amount="gameStore.taskProgress.rewardAmount"
           :show-unit="false"
         />
@@ -33,7 +33,7 @@
     <div v-if="showCompletionEffect" class="completion-effect">
       <div class="completion-text">Task Complete!</div>
       <div class="completion-reward">
-        +<CurrencyDisplay currency-id="hcu" :amount="gameStore.taskProgress.rewardAmount" />
+        +<CurrencyDisplay resource-id="hcu" :amount="gameStore.taskProgress.rewardAmount" />
       </div>
     </div>
   </div>

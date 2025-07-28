@@ -4,13 +4,13 @@ import { createTestPinia } from '../../test-utils'
 import { ComponentTestHelpers } from '../../test-utils'
 import ManualClickerButton from '../ManualClickerButton.vue'
 import { useGameStore } from '../../stores/gameStore'
-import { HCU } from '../../config/currencies'
+import { resources } from '../../config/resources'
 
 // Mock the CurrencyDisplay component
 vi.mock('../CurrencyDisplay.vue', () => ({
   default: {
     name: 'CurrencyDisplay',
-    props: ['currencyId', 'amount', 'showUnit'],
+    props: ['resourceId', 'amount', 'showUnit'],
     template: '<span>{{ amount }} {{ showUnit !== false ? "HCU" : "" }}</span>',
   },
 }))
@@ -73,11 +73,11 @@ describe('ManualClickerButton', () => {
       const wrapper = mount(ManualClickerButton)
       const gameStore = useGameStore()
 
-      const initialUnits = gameStore.getCurrencyAmount('hcu')
+      const initialUnits = gameStore.getResourceAmount('hcu')
 
       await wrapper.find('.clicker-button').trigger('click')
 
-      expect(gameStore.getCurrencyAmount('hcu')).toBeGreaterThan(initialUnits)
+      expect(gameStore.getResourceAmount('hcu')).toBeGreaterThan(initialUnits)
     })
 
     it('should show visual feedback during click', async () => {
@@ -280,7 +280,7 @@ describe('ManualClickerButton', () => {
       const wrapper = mount(ManualClickerButton)
       const gameStore = useGameStore()
 
-      const initialUnits = gameStore.getCurrencyAmount('hcu')
+      const initialUnits = gameStore.getResourceAmount('hcu')
 
       // Rapid clicks
       for (let i = 0; i < 5; i++) {
@@ -288,7 +288,7 @@ describe('ManualClickerButton', () => {
       }
 
       // Should have processed all clicks
-      expect(gameStore.getCurrencyAmount('hcu')).toBe(initialUnits + 5)
+      expect(gameStore.getResourceAmount('hcu')).toBe(initialUnits + 5)
 
       // Should have all animations (before cleanup)
       expect(wrapper.findAll('.click-animation')).toHaveLength(5)

@@ -1,5 +1,5 @@
 <template>
-  <span class="currency-display" :style="{ color: displayColor }">{{
+  <span class="resource-display" :style="{ color: displayColor }">{{
     formattedAmount
   }}</span>
 </template>
@@ -7,10 +7,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import { formatCurrency } from '../utils/formatters'
+import { formatResource } from '../utils/formatters'
 
 interface Props {
-  currencyId: string
+  resourceId: string
   amount: number
   showUnit?: boolean
 }
@@ -20,17 +20,17 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const gameStore = useGameStore()
-const currencyConfig = computed(() => gameStore.getCurrencyConfig(props.currencyId))
+const resourceConfig = computed(() => gameStore.getResourceConfig(props.resourceId))
 
 const formattedAmount = computed(() => {
-  return formatCurrency(currencyConfig.value, props.amount, props.showUnit)
+  return formatResource(resourceConfig.value, props.amount, props.showUnit)
 })
 
 const displayColor = computed(() => {
-  const config = currencyConfig.value
+  const config = resourceConfig.value
   if (!config) return '#ffffff'
 
-  // For currencies with maxValue, use percentage-based health indicators
+  // For resources with maxValue, use percentage-based health indicators
   if (config.maxValue !== undefined) {
     const percentage = (props.amount / config.maxValue) * 100
     
@@ -47,13 +47,13 @@ const displayColor = computed(() => {
     }
   }
 
-  // For currencies without maxValue, use healthy color as default
+  // For resources without maxValue, use healthy color as default
   return config.visualIndicators.healthy
 })
 </script>
 
 <style scoped>
-.currency-display {
+.resource-display {
   font-family: 'Courier New', monospace;
   font-weight: bold;
 }
