@@ -48,11 +48,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useGameStore } from '../stores/gameStore'
+import { useGameStore, type UpgradeConfig } from '../stores/gameStore'
 import HCUDisplay from './HCUDisplay.vue'
 
 interface Props {
-  upgradeId: string
+  upgrade: UpgradeConfig
 }
 
 const props = defineProps<Props>()
@@ -64,25 +64,12 @@ const showPurchaseEffect = ref(false)
 
 // Reactive computed properties from Pinia store
 const upgrade = computed(() => {
-  const upgradeData = gameStore.upgrades.find((u) => u.id === props.upgradeId)
-  return (
-    upgradeData || {
-      id: '',
-      name: 'Unknown',
-      description: '',
-      cost: 0,
-      targetGenerator: '',
-      effectType: 'production_multiplier' as const,
-      effectValue: 1,
-      requirements: [],
-      isPurchased: false,
-    }
-  )
+  return props.upgrade
 })
 
 // Check requirements
 const requirementsMet = computed(() => {
-  return gameStore.areUpgradeRequirementsMet(props.upgradeId)
+  return gameStore.areUpgradeRequirementsMet(props.upgrade)
 })
 
 // Check if can afford
@@ -92,7 +79,7 @@ const canAfford = computed(() => {
 
 // Check if can purchase
 const canPurchase = computed(() => {
-  return gameStore.canPurchaseUpgrade(props.upgradeId)
+  return gameStore.canPurchaseUpgrade(props.upgrade)
 })
 
 // Get generator name by ID
@@ -116,7 +103,7 @@ const purchaseUpgrade = async () => {
   // Add slight delay for visual feedback
   await new Promise((resolve) => setTimeout(resolve, 100))
 
-  const success = gameStore.purchaseUpgrade(props.upgradeId)
+  const success = gameStore.purchaseUpgrade(props.upgrade)
 
   if (success) {
     // Show purchase effect

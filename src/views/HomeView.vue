@@ -33,8 +33,7 @@ onMounted(() => {
             <GeneratorPurchaseButton 
               v-for="generator in gameStore.generators" 
               :key="generator.id"
-              :generator-id="generator.id"
-              :generator-name="generator.name"
+              :generator="generator"
             />
           </div>
 
@@ -43,7 +42,7 @@ onMounted(() => {
             <UpgradeButton 
               v-for="upgrade in gameStore.upgrades" 
               :key="upgrade.id"
-              :upgrade-id="upgrade.id" 
+              :upgrade="upgrade" 
             />
           </div>
         </div>

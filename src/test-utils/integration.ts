@@ -1,0 +1,136 @@
+import { createPinia, setActivePinia } from 'pinia'
+import { createApp } from 'vue'
+import { vi } from 'vitest'
+
+/**
+ * Integration test utilities that use real composables with programmatic control
+ * This allows integration tests to precisely control game loop execution
+ */
+
+/**
+ * Creates a Pinia instance for integration tests without mocking composables
+ */
+export function createIntegrationTestPinia() {
+  const app = createApp({})
+  const pinia = createPinia()
+  app.use(pinia)
+  setActivePinia(pinia)
+  return pinia
+}
+
+/**
+ * Programmatically runs the game loop for a specified number of ticks
+ * This replaces waiting and provides deterministic test execution
+ * @param gameStore - Game store instance with game loop access
+ * @param ticks - Number of game loop ticks to execute
+ */
+export function runGameLoopTicks(gameStore: any, ticks: number) {
+  // Run the game loop logic for the specified number of ticks
+  for (let i = 0; i < ticks; i++) {
+    const tickRate = 100 // 100ms tick rate
+    
+    // Calculate passive income from generators (production rate is auto-computed)
+    const productionRate = gameStore.productionRate
+    if (productionRate > 0) {
+      const productionThisTick = (productionRate * tickRate) / 1000
+      gameStore.addContentUnits(productionThisTick)
+    }
+    
+    // Simulate time passage for fake timers
+    vi.advanceTimersByTime(tickRate)
+  }
+}
+
+/**
+ * Runs the game loop until a condition is met or max ticks reached
+ * @param gameStore - Game store instance
+ * @param condition - Function that returns true when the condition is met
+ * @param maxTicks - Maximum number of ticks to prevent infinite loops
+ */
+export function runGameLoopUntil(
+  gameStore: any, 
+  condition: () => boolean, 
+  maxTicks: number = 10000
+): number {
+  let ticks = 0
+  
+  while (!condition() && ticks < maxTicks) {
+    runGameLoopTicks(gameStore, 1)
+    ticks++
+  }
+  
+  if (ticks >= maxTicks) {
+    throw new Error(`runGameLoopUntil exceeded maximum ticks (${maxTicks}). Last state: HCU=${gameStore.contentUnits}, Lifetime=${gameStore.lifetimeContentUnits}`)
+  }
+  
+  return ticks
+}
+
+/**
+ * Helper to quickly advance the game to accumulate resources
+ * @param gameStore - Game store instance
+ * @param targetHCU - Target content units to reach
+ * @param maxTicks - Maximum ticks to prevent infinite loops
+ */
+export function progressToHCU(gameStore: any, targetHCU: number, maxTicks: number = 10000): number {
+  return runGameLoopUntil(
+    gameStore,
+    () => gameStore.contentUnits >= targetHCU,
+    maxTicks
+  )
+}
+
+/**
+ * Helper to progress until prestige is available
+ * @param gameStore - Game store instance
+ * @param maxTicks - Maximum ticks to prevent infinite loops
+ */
+export function progressToPrestige(gameStore: any, maxTicks: number = 50000): number {
+  return runGameLoopUntil(
+    gameStore,
+    () => gameStore.canPrestige,
+    maxTicks
+  )
+}
+
+/**
+ * Helper to purchase items repeatedly until no longer affordable
+ * @param gameStore - Game store instance
+ * @param purchaseAction - Function to execute the purchase
+ * @param canAffordCheck - Function to check if purchase is affordable
+ * @param maxPurchases - Maximum purchases to prevent infinite loops
+ */
+export function purchaseUntilUnaffordable(
+  gameStore: any,
+  purchaseAction: () => void,
+  canAffordCheck: () => boolean,
+  maxPurchases: number = 1000
+): number {
+  let purchases = 0
+  
+  while (canAffordCheck() && purchases < maxPurchases) {
+    purchaseAction()
+    purchases++
+  }
+  
+  return purchases
+}
+
+/**
+ * Helper to set up a game store with initial resources for testing
+ * @param gameStore - Game store instance
+ * @param initialHCU - Starting content units
+ * @param initialLifetime - Starting lifetime content units
+ */
+export function setupGameWithResources(
+  gameStore: any,
+  initialHCU: number = 0,
+  initialLifetime: number = 0
+) {
+  if (initialHCU > 0) {
+    gameStore.addContentUnits(initialHCU)
+  }
+  if (initialLifetime > 0) {
+    gameStore.lifetimeContentUnits = Math.max(initialLifetime, gameStore.lifetimeContentUnits)
+  }
+}

@@ -1,7 +1,7 @@
 <template>
   <div class="generator-purchase">
     <div class="generator-info">
-      <div class="generator-name">{{ props.generatorName }}</div>
+      <div class="generator-name">{{ props.generator.name }}</div>
       <div class="generator-stats">
         <span class="owned-count">Owned: {{ ownedCount }}</span>
         <span class="production-rate"
@@ -22,12 +22,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useGameStore } from '../stores/gameStore'
+import { useGameStore, type GeneratorConfig } from '../stores/gameStore'
 import HCUDisplay from './HCUDisplay.vue'
 
 const props = defineProps<{
-  generatorId: string
-  generatorName: string
+  generator: GeneratorConfig
 }>()
 
 const gameStore = useGameStore()
@@ -35,12 +34,13 @@ const isPurchasing = ref(false)
 
 // Component-specific computed values (these need computed because they depend on props)
 const ownedCount = computed(() => {
-  const generator = gameStore.generators.find((g) => g.id === props.generatorId)
-  return generator ? generator.owned : 0
+  // Get the reactive owned count from the store, not the static prop
+  const storeGenerator = gameStore.generators.find(g => g.id === props.generator.id)
+  return storeGenerator ? storeGenerator.owned : 0
 })
 
 const cost = computed(() => {
-  return gameStore.getGeneratorCost(props.generatorId)
+  return gameStore.getGeneratorCost(props.generator)
 })
 
 const canAfford = computed(() => {
@@ -48,7 +48,7 @@ const canAfford = computed(() => {
 })
 
 const actualProductionRate = computed(() => {
-  return gameStore.getGeneratorProductionRate(props.generatorId) * gameStore.globalMultiplier
+  return gameStore.getGeneratorProductionRate(props.generator) * gameStore.globalMultiplier
 })
 
 // Handle purchase with visual feedback
@@ -59,7 +59,7 @@ const handlePurchase = async () => {
 
   // Visual feedback delay
   setTimeout(() => {
-    gameStore.purchaseGenerator(props.generatorId)
+    gameStore.purchaseGenerator(props.generator)
     isPurchasing.value = false
   }, 100)
 }

@@ -2,17 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useGameStore } from '../gameStore'
 import { createTestPinia } from '../../test-utils'
 import { mathTestCases, testScenarios, mockGenerators, mockUpgrades } from '../../test-utils/fixtures'
+import { BASIC_AD_BOT_FARM, CLICKBAIT_ENGINE } from '../../config/generators'
+import { AUTOMATED_CONTENT_SCRIPT } from '../../config/upgrades'
 
 // Mock the composables to control their behavior in tests
-vi.mock('../../composables/useGameConfig', () => ({
-  useGameConfig: () => ({
-    getDefaultConfig: () => ({
-      generators: mockGenerators.map(g => ({ ...g })),
-      upgrades: mockUpgrades.map(u => ({ ...u })),
-      narratives: []
-    })
-  })
-}))
+// Note: useGameConfig was removed, store now imports configs directly
 
 vi.mock('../../composables/useGameLoop', () => ({
   useGameLoop: () => ({
@@ -115,7 +109,7 @@ describe('GameStore', () => {
           const generator = store.generators.find(g => g.baseCost === baseCost && g.growthRate === growthRate)
           if (generator) {
             generator.owned = owned
-            const cost = store.getGeneratorCost(generator.id)
+            const cost = store.getGeneratorCost(generator)
             expect(cost).toBe(expected)
           }
         })
@@ -124,7 +118,9 @@ describe('GameStore', () => {
       it('should return 0 for non-existent generator', () => {
         const store = useGameStore()
         
-        const cost = store.getGeneratorCost('nonexistent')
+        // Test non-existent generator by creating a mock object
+        const mockGenerator = { id: 'nonexistent', name: 'Test', baseCost: 0, growthRate: 1, baseProduction: 0, owned: 0 }
+        const cost = store.getGeneratorCost(mockGenerator)
         
         expect(cost).toBe(0)
       })
@@ -137,7 +133,7 @@ describe('GameStore', () => {
         
         generator.owned = 5
         
-        const rate = store.getGeneratorProductionRate(generator.id)
+        const rate = store.getGeneratorProductionRate(generator)
         
         expect(rate).toBe(5) // baseProduction (1) * owned (5) * multiplier (1)
       })
@@ -150,7 +146,7 @@ describe('GameStore', () => {
         generator.owned = 4
         upgrade.isPurchased = true
         
-        const rate = store.getGeneratorProductionRate(generator.id)
+        const rate = store.getGeneratorProductionRate(generator)
         
         expect(rate).toBe(5) // baseProduction (1) * owned (4) * multiplier (1.25)
       })
@@ -276,58 +272,58 @@ describe('GameStore', () => {
 
     it('should check generator purchase eligibility', () => {
       const store = useGameStore()
-      const generatorId = 'basicAdBotFarm'
+      const generator = BASIC_AD_BOT_FARM
       
       store.addContentUnits(5)
-      expect(store.canPurchaseGenerator(generatorId)).toBe(false)
+      expect(store.canPurchaseGenerator(generator)).toBe(false)
       
       store.addContentUnits(5)
-      expect(store.canPurchaseGenerator(generatorId)).toBe(true)
+      expect(store.canPurchaseGenerator(generator)).toBe(true)
     })
 
     it('should purchase generator successfully', () => {
       const store = useGameStore()
-      const generatorId = 'basicAdBotFarm'
+      const generator = BASIC_AD_BOT_FARM
       
       store.addContentUnits(20)
       
-      const result = store.purchaseGenerator(generatorId)
-      const generator = store.getGenerator(generatorId)
+      const result = store.purchaseGenerator(generator)
+      const storeGenerator = store.getGenerator(generator.id)
       
       expect(result).toBe(true)
-      expect(generator?.owned).toBe(1)
+      expect(storeGenerator?.owned).toBe(1)
       expect(store.contentUnits).toBe(10) // 20 - 10 cost
     })
 
     it('should not purchase generator when insufficient funds', () => {
       const store = useGameStore()
-      const generatorId = 'basicAdBotFarm'
+      const generator = BASIC_AD_BOT_FARM
       
       store.addContentUnits(5)
       
-      const result = store.purchaseGenerator(generatorId)
-      const generator = store.getGenerator(generatorId)
+      const result = store.purchaseGenerator(generator)
+      const storeGenerator = store.getGenerator(generator.id)
       
       expect(result).toBe(false)
-      expect(generator?.owned).toBe(0)
+      expect(storeGenerator?.owned).toBe(0)
       expect(store.contentUnits).toBe(5)
     })
 
     it('should calculate increasing costs for multiple purchases', () => {
       const store = useGameStore()
-      const generatorId = 'basicAdBotFarm'
-      const generator = store.getGenerator(generatorId)!
+      const generatorConfig = BASIC_AD_BOT_FARM
+      const generator = store.getGenerator(generatorConfig.id)!
       
       // First purchase: cost should be 10
-      expect(store.getGeneratorCost(generatorId)).toBe(10)
+      expect(store.getGeneratorCost(generatorConfig)).toBe(10)
       
       generator.owned = 1
       // Second purchase: cost should be 11 (10 * 1.15^1)
-      expect(store.getGeneratorCost(generatorId)).toBe(11)
+      expect(store.getGeneratorCost(generatorConfig)).toBe(11)
       
       generator.owned = 5
       // Sixth purchase: cost should be 20 (10 * 1.15^5)
-      expect(store.getGeneratorCost(generatorId)).toBe(20)
+      expect(store.getGeneratorCost(generatorConfig)).toBe(20)
     })
   })
 
@@ -343,67 +339,67 @@ describe('GameStore', () => {
 
     it('should check upgrade requirements', () => {
       const store = useGameStore()
-      const upgradeId = 'automatedContentScript'
+      const upgrade = AUTOMATED_CONTENT_SCRIPT
       const generator = store.getGenerator('basicAdBotFarm')!
       
       generator.owned = 3
-      expect(store.areUpgradeRequirementsMet(upgradeId)).toBe(false)
+      expect(store.areUpgradeRequirementsMet(upgrade)).toBe(false)
       
       generator.owned = 5
-      expect(store.areUpgradeRequirementsMet(upgradeId)).toBe(true)
+      expect(store.areUpgradeRequirementsMet(upgrade)).toBe(true)
       
       generator.owned = 10
-      expect(store.areUpgradeRequirementsMet(upgradeId)).toBe(true)
+      expect(store.areUpgradeRequirementsMet(upgrade)).toBe(true)
     })
 
     it('should check upgrade purchase eligibility', () => {
       const store = useGameStore()
-      const upgradeId = 'automatedContentScript'
+      const upgrade = AUTOMATED_CONTENT_SCRIPT
       const generator = store.getGenerator('basicAdBotFarm')!
       
       // Not enough generators
       generator.owned = 3
       store.addContentUnits(100)
-      expect(store.canPurchaseUpgrade(upgradeId)).toBe(false)
+      expect(store.canPurchaseUpgrade(upgrade)).toBe(false)
       
       // Enough generators, not enough money
       generator.owned = 5
       store.contentUnits = 30
-      expect(store.canPurchaseUpgrade(upgradeId)).toBe(false)
+      expect(store.canPurchaseUpgrade(upgrade)).toBe(false)
       
       // Both requirements met
       generator.owned = 5
       store.contentUnits = 100
-      expect(store.canPurchaseUpgrade(upgradeId)).toBe(true)
+      expect(store.canPurchaseUpgrade(upgrade)).toBe(true)
     })
 
     it('should purchase upgrade successfully', () => {
       const store = useGameStore()
-      const upgradeId = 'automatedContentScript'
+      const upgrade = AUTOMATED_CONTENT_SCRIPT
       const generator = store.getGenerator('basicAdBotFarm')!
       
       generator.owned = 5
       store.addContentUnits(100)
       
-      const result = store.purchaseUpgrade(upgradeId)
-      const upgrade = store.getUpgrade(upgradeId)!
+      const result = store.purchaseUpgrade(upgrade)
+      const storeUpgrade = store.getUpgrade(upgrade.id)!
       
       expect(result).toBe(true)
-      expect(upgrade.isPurchased).toBe(true)
+      expect(storeUpgrade.isPurchased).toBe(true)
       expect(store.contentUnits).toBe(50) // 100 - 50 cost
     })
 
     it('should not purchase already purchased upgrade', () => {
       const store = useGameStore()
-      const upgradeId = 'automatedContentScript'
+      const upgradeConfig = AUTOMATED_CONTENT_SCRIPT
       const generator = store.getGenerator('basicAdBotFarm')!
-      const upgrade = store.getUpgrade(upgradeId)!
+      const upgrade = store.getUpgrade(upgradeConfig.id)!
       
       generator.owned = 5
       upgrade.isPurchased = true
       store.addContentUnits(100)
       
-      const result = store.purchaseUpgrade(upgradeId)
+      const result = store.purchaseUpgrade(upgradeConfig)
       
       expect(result).toBe(false)
       expect(store.contentUnits).toBe(100) // No money spent
@@ -526,7 +522,7 @@ describe('GameStore', () => {
       // Set to a high owned count that might cause overflow
       generator.owned = 200
       
-      const cost = store.getGeneratorCost(generator.id)
+      const cost = store.getGeneratorCost(generator)
       
       // Cost should be finite and positive
       expect(cost).toBeGreaterThan(0)
@@ -553,7 +549,7 @@ describe('GameStore', () => {
       
       store.upgrades.push(upgradeWithNoReqs)
       
-      expect(store.areUpgradeRequirementsMet('noReqsUpgrade')).toBe(true)
+      expect(store.areUpgradeRequirementsMet(upgradeWithNoReqs)).toBe(true)
     })
 
     it('should handle maximum safe integer values', () => {

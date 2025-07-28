@@ -1,23 +1,21 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useGameConfig, type GeneratorConfig, type UpgradeConfig } from '../composables/useGameConfig'
+import { generators as generatorConfigs, type GeneratorConfig } from '../config/generators'
+import { upgrades as upgradeConfigs, type UpgradeConfig } from '../config/upgrades'
+import { narratives, type NarrativeEvent } from '../config/narratives'
 import { useGameLoop } from '../composables/useGameLoop'
 import { useNarrative } from '../composables/useNarrative'
 import { useTaskSystem } from '../composables/useTaskSystem'
 
-export type { GeneratorConfig, UpgradeConfig }
+export type { GeneratorConfig, UpgradeConfig, NarrativeEvent }
 
 export const useGameStore = defineStore('game', () => {
   // ===== INITIALIZE COMPOSABLES =====
   
-  const gameConfig = useGameConfig()
   const gameLoop = useGameLoop()
   
-  // Initialize with default config
-  const defaultConfig = gameConfig.getDefaultConfig()
-  
   // Initialize narrative system with narratives
-  const narrativeSystem = useNarrative(defaultConfig.narratives)
+  const narrativeSystem = useNarrative(narratives.map(n => ({ ...n, isViewed: false })))
   
   // Initialize task system with game loop's current time
   const taskSystem = useTaskSystem(() => gameLoop.currentTime.value)
@@ -28,11 +26,11 @@ export const useGameStore = defineStore('game', () => {
   const contentUnits = ref(0)
   const lifetimeContentUnits = ref(0)
   
-  // Generators (initialized from config)
-  const generators = ref<GeneratorConfig[]>(defaultConfig.generators)
+  // Generators (initialized from config with owned count)
+  const generators = ref<GeneratorConfig[]>(generatorConfigs.map(g => ({ ...g, owned: 0 })))
   
-  // Upgrades (initialized from config)
-  const upgrades = ref<UpgradeConfig[]>(defaultConfig.upgrades)
+  // Upgrades (initialized from config with purchased state)
+  const upgrades = ref<UpgradeConfig[]>(upgradeConfigs.map(u => ({ ...u, isPurchased: false })))
   
   // Prestige
   const prestigeLevel = ref(0)
@@ -201,8 +199,8 @@ export const useGameStore = defineStore('game', () => {
   /**
    * Calculate generator cost based on owned count
    */
-  function getGeneratorCost(generatorId: string): number {
-    const generator = generators.value.find(g => g.id === generatorId)
+  function getGeneratorCost(generatorConfig: GeneratorConfig): number {
+    const generator = generators.value.find(g => g.id === generatorConfig.id)
     if (!generator) return 0
     
     // cost_next = cost_base × (rate_growth)^owned
@@ -212,26 +210,26 @@ export const useGameStore = defineStore('game', () => {
   /**
    * Check if player can purchase generator
    */
-  function canPurchaseGenerator(generatorId: string): boolean {
-    const cost = getGeneratorCost(generatorId)
+  function canPurchaseGenerator(generatorConfig: GeneratorConfig): boolean {
+    const cost = getGeneratorCost(generatorConfig)
     return canAfford(cost)
   }
   
   /**
    * Purchase a generator
    */
-  function purchaseGenerator(generatorId: string): boolean {
-    const generator = generators.value.find(g => g.id === generatorId)
+  function purchaseGenerator(generatorConfig: GeneratorConfig): boolean {
+    const generator = generators.value.find(g => g.id === generatorConfig.id)
     if (!generator) return false
     
-    const cost = getGeneratorCost(generatorId)
+    const cost = getGeneratorCost(generatorConfig)
     
     if (canAfford(cost)) {
       if (spendContentUnits(cost)) {
         generator.owned++
         
         // Trigger narrative events for generator purchase
-        narrativeSystem.triggerNarrative('generatorPurchase', undefined, generatorId)
+        narrativeSystem.triggerNarrative('generatorPurchase', undefined, generatorConfig.id)
         
         return true
       }
@@ -243,8 +241,8 @@ export const useGameStore = defineStore('game', () => {
   /**
    * Get generator production rate
    */
-  function getGeneratorProductionRate(id: string): number {
-    const generator = generators.value.find(g => g.id === id)
+  function getGeneratorProductionRate(generatorConfig: GeneratorConfig): number {
+    const generator = generators.value.find(g => g.id === generatorConfig.id)
     if (!generator) return 0
     
     let rate = generator.baseProduction * generator.owned
@@ -265,8 +263,8 @@ export const useGameStore = defineStore('game', () => {
   /**
    * Check if upgrade requirements are met
    */
-  function areUpgradeRequirementsMet(upgradeId: string): boolean {
-    const upgrade = upgrades.value.find(u => u.id === upgradeId)
+  function areUpgradeRequirementsMet(upgradeConfig: UpgradeConfig): boolean {
+    const upgrade = upgrades.value.find(u => u.id === upgradeConfig.id)
     if (!upgrade) return false
     
     for (const requirement of upgrade.requirements) {
@@ -282,25 +280,25 @@ export const useGameStore = defineStore('game', () => {
   /**
    * Check if player can purchase upgrade
    */
-  function canPurchaseUpgrade(upgradeId: string): boolean {
-    const upgrade = upgrades.value.find(u => u.id === upgradeId)
+  function canPurchaseUpgrade(upgradeConfig: UpgradeConfig): boolean {
+    const upgrade = upgrades.value.find(u => u.id === upgradeConfig.id)
     if (!upgrade) return false
     
     return (
       !upgrade.isPurchased &&
       canAfford(upgrade.cost) &&
-      areUpgradeRequirementsMet(upgradeId)
+      areUpgradeRequirementsMet(upgradeConfig)
     )
   }
   
   /**
    * Purchase an upgrade
    */
-  function purchaseUpgrade(upgradeId: string): boolean {
-    const upgrade = upgrades.value.find(u => u.id === upgradeId)
+  function purchaseUpgrade(upgradeConfig: UpgradeConfig): boolean {
+    const upgrade = upgrades.value.find(u => u.id === upgradeConfig.id)
     if (!upgrade) return false
     
-    if (!canPurchaseUpgrade(upgradeId)) {
+    if (!canPurchaseUpgrade(upgradeConfig)) {
       return false
     }
     
@@ -308,7 +306,7 @@ export const useGameStore = defineStore('game', () => {
       upgrade.isPurchased = true
       
       // Trigger narrative events for upgrade purchase
-      narrativeSystem.triggerNarrative('upgrade', undefined, upgradeId)
+      narrativeSystem.triggerNarrative('upgrade', undefined, upgradeConfig.id)
       
       return true
     }
