@@ -59,7 +59,6 @@ describe('useGameLoop', () => {
 
       expect(firstState).toBe(true)
       expect(secondState).toBe(true)
-      expect(mockCallbacks.hasTriggeredGameStart).toHaveBeenCalledTimes(1)
     })
 
     it('should handle stopping when not running', () => {
@@ -71,26 +70,28 @@ describe('useGameLoop', () => {
     })
   })
 
-  describe('Game Start Trigger', () => {
-    it('should trigger game start narrative on first loop start', () => {
+  describe('Game Loop Management Extended', () => {
+    it('should start game loop without errors', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
 
       gameLoop.startGameLoop(mockCallbacks)
 
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('gameStart')
-      expect(mockCallbacks.setHasTriggeredGameStart).toHaveBeenCalledWith(true)
+      expect(gameLoop.isRunning.value).toBe(true)
     })
 
-    it('should not trigger game start narrative on subsequent starts', () => {
+    it('should not start multiple loops', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.hasTriggeredGameStart.mockReturnValue(true)
 
       gameLoop.startGameLoop(mockCallbacks)
+      const firstState = gameLoop.isRunning.value
 
-      expect(mockCallbacks.triggerNarrative).not.toHaveBeenCalledWith('gameStart')
-      expect(mockCallbacks.setHasTriggeredGameStart).not.toHaveBeenCalled()
+      gameLoop.startGameLoop(mockCallbacks)
+      const secondState = gameLoop.isRunning.value
+
+      expect(firstState).toBe(true)
+      expect(secondState).toBe(true)
     })
   })
 
@@ -146,83 +147,18 @@ describe('useGameLoop', () => {
     })
   })
 
-  describe('Resource Narrative Triggers', () => {
-    it('should trigger narrative when HCU amount increases', () => {
+  describe('Narrative System Integration', () => {
+    it('should check narratives on each tick', () => {
       const gameLoop = useGameLoop()
       const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getResourceAmount.mockReturnValue(100)
-      mockCallbacks.getLastContentUnitsCheck.mockReturnValue(50)
 
       gameLoop.startGameLoop(mockCallbacks)
       vi.advanceTimersByTime(100)
 
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('resourceAmount', 100, 'hcu')
-      expect(mockCallbacks.setLastContentUnitsCheck).toHaveBeenCalledWith(100)
-    })
-
-    it('should not trigger narrative when HCU amount stays the same', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getResourceAmount.mockReturnValue(100)
-      mockCallbacks.getLastContentUnitsCheck.mockReturnValue(100)
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(100)
-
-      expect(mockCallbacks.triggerNarrative).not.toHaveBeenCalledWith(
-        'resourceAmount',
-        expect.any(Number),
-        'hcu',
-      )
-      expect(mockCallbacks.setLastContentUnitsCheck).not.toHaveBeenCalled()
-    })
-
-
-    it('should trigger when crossing integer boundaries', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getResourceAmount.mockReturnValue(101.1)
-      mockCallbacks.getLastContentUnitsCheck.mockReturnValue(100.9)
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(100)
-
-      // Math.floor(101.1) = 101, Math.floor(100.9) = 100, so trigger
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('resourceAmount', 101.1, 'hcu')
+      expect(mockCallbacks.checkAndTriggerNarratives).toHaveBeenCalledWith({})
     })
   })
 
-  describe('Time Elapsed Triggers', () => {
-    it('should trigger time elapsed narrative on every tick', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-      const startTime = 1000000
-      mockCallbacks.getGameStartTime.mockReturnValue(startTime)
-
-      // Mock current time to be 1000 ms after start
-      vi.setSystemTime(startTime + 1000)
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(100)
-
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('timeElapsed', 1100)
-    })
-
-    it('should calculate time elapsed correctly over multiple ticks', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-      const startTime = 1000000
-      mockCallbacks.getGameStartTime.mockReturnValue(startTime)
-
-      vi.setSystemTime(startTime)
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(200) // 2 ticks
-
-      // Time should have advanced by 200ms
-      expect(mockCallbacks.triggerNarrative).toHaveBeenLastCalledWith('timeElapsed', 200)
-    })
-  })
 
   describe('Current Time Updates', () => {
     it('should update current time on every tick', () => {
@@ -251,7 +187,6 @@ describe('useGameLoop', () => {
         .mockReturnValueOnce(10)
         .mockReturnValueOnce(15)
         .mockReturnValue(20)
-      mockCallbacks.getLastContentUnitsCheck.mockReturnValue(5)
 
       // Set up task completion
       mockCallbacks.getTaskProgress
@@ -263,13 +198,7 @@ describe('useGameLoop', () => {
 
       // Verify all systems worked
       expect(mockCallbacks.applyResourceProduction).toHaveBeenCalledTimes(2)
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('gameStart')
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith(
-        'resourceAmount',
-        expect.any(Number),
-        'hcu',
-      )
-      expect(mockCallbacks.triggerNarrative).toHaveBeenCalledWith('timeElapsed', expect.any(Number))
+      expect(mockCallbacks.checkAndTriggerNarratives).toHaveBeenCalledWith({})
       expect(mockCallbacks.completeTask).toHaveBeenCalled()
     })
 
@@ -301,14 +230,12 @@ function createMockCallbacks() {
   return {
     addResource: vi.fn(),
     completeTask: vi.fn().mockReturnValue(true),
-    triggerNarrative: vi.fn(),
+    checkAndTriggerNarratives: vi.fn(),
     getTaskProgress: vi.fn().mockReturnValue({ isComplete: false }),
     getResourceAmount: vi.fn().mockReturnValue(0),
-    getLastContentUnitsCheck: vi.fn().mockReturnValue(0),
-    setLastContentUnitsCheck: vi.fn(),
     getGameStartTime: vi.fn().mockReturnValue(Date.now()),
-    hasTriggeredGameStart: vi.fn().mockReturnValue(false),
-    setHasTriggeredGameStart: vi.fn(),
     applyResourceProduction: vi.fn(),
+    getCurrentTime: vi.fn().mockReturnValue(Date.now()),
+    getGameState: vi.fn().mockReturnValue({}),
   }
 }

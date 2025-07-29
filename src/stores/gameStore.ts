@@ -404,16 +404,7 @@ export const useGameStore = defineStore(
       const generator = gameState.value.generators.find((g) => g.id === generatorId)
       if (!generator) return false
       
-      const currentGameState: GameState = {
-        resources: gameState.value.resources,
-        generators: gameState.value.generators,
-        upgrades: gameState.value.upgrades,
-        narratives: gameState.value.narratives,
-        prestige: gameState.value.prestige,
-        gameStartTime: gameState.value.gameStartTime
-      }
-      
-      const result = UnlockSystem.checkConditions(generator.unlockConditions || [], currentGameState)
+      const result = UnlockSystem.checkConditions(generator.unlockConditions || [], gameState.value)
       return result.isUnlocked
     }
 
@@ -441,8 +432,8 @@ export const useGameStore = defineStore(
 
       generator.owned++
 
-      // Trigger narrative events for generator purchase
-      narrativeSystem.triggerNarrative('generatorPurchase', undefined, generatorId)
+      // Check narrative events after generator purchase
+      narrativeSystem.checkAndTriggerNarratives(gameState.value)
 
       return true
     }
@@ -476,16 +467,7 @@ export const useGameStore = defineStore(
       const upgrade = gameState.value.upgrades.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
-      const currentGameState: GameState = {
-        resources: gameState.value.resources,
-        generators: gameState.value.generators,
-        upgrades: gameState.value.upgrades,
-        narratives: gameState.value.narratives,
-        prestige: gameState.value.prestige,
-        gameStartTime: gameState.value.gameStartTime
-      }
-      
-      const result = UnlockSystem.checkConditions(upgrade.unlockConditions || [], currentGameState)
+      const result = UnlockSystem.checkConditions(upgrade.unlockConditions || [], gameState.value)
       return result.isUnlocked
     }
 
@@ -529,8 +511,8 @@ export const useGameStore = defineStore(
 
       upgrade.isPurchased = true
 
-      // Trigger narrative events for upgrade purchase
-      narrativeSystem.triggerNarrative('upgrade', undefined, upgradeId)
+      // Check narrative events after upgrade purchase
+      narrativeSystem.checkAndTriggerNarratives(gameState.value)
 
       return true
     }
@@ -546,11 +528,8 @@ export const useGameStore = defineStore(
         addResource(reward.resourceId, reward.amount)
       }
 
-      // Check narrative triggers for all resources that were rewarded
-      for (const reward of clickRewards.value) {
-        const resourceAmount = getResourceAmount(reward.resourceId)
-        narrativeSystem.triggerNarrative('resourceAmount', resourceAmount, reward.resourceId)
-      }
+      // Check narrative events after click rewards
+      narrativeSystem.checkAndTriggerNarratives(gameState.value)
     }
 
     // ===== PRESTIGE SYSTEM =====
@@ -563,8 +542,8 @@ export const useGameStore = defineStore(
         return false
       }
 
-      // Trigger narrative events for prestige
-      narrativeSystem.triggerNarrative('prestige', gameState.value.prestige.level)
+      // Check narrative events after prestige
+      narrativeSystem.checkAndTriggerNarratives(gameState.value)
 
       // Increase prestige level
       gameState.value.prestige.level++
@@ -612,17 +591,14 @@ export const useGameStore = defineStore(
       gameLoop.startGameLoop({
         addResource: addResource,
         completeTask: () => taskSystem.completeTask(addResource),
-        triggerNarrative: narrativeSystem.triggerNarrative,
+        checkAndTriggerNarratives: narrativeSystem.checkAndTriggerNarratives,
         getTaskProgress: () => taskSystem.taskProgress.value,
         getResourceAmount: getResourceAmount,
-        getLastContentUnitsCheck: narrativeSystem.getLastContentUnitsCheck,
-        setLastContentUnitsCheck: narrativeSystem.setLastContentUnitsCheck,
         getGameStartTime: narrativeSystem.getGameStartTime,
         getCurrentTime: () => gameLoop.currentTime.value,
-        hasTriggeredGameStart: narrativeSystem.getHasTriggeredGameStart,
-        setHasTriggeredGameStart: narrativeSystem.setHasTriggeredGameStart,
         applyResourceDecay: applyResourceDecay,
         applyResourceProduction: applyResourceProduction,
+        getGameState: () => gameState.value,
       })
     }
 
@@ -646,14 +622,13 @@ export const useGameStore = defineStore(
         executeGameTick({
           addResource: addResource,
           completeTask: () => taskSystem.completeTask(addResource),
-          triggerNarrative: narrativeSystem.triggerNarrative,
+          checkAndTriggerNarratives: narrativeSystem.checkAndTriggerNarratives,
           getTaskProgress: () => taskSystem.taskProgress.value,
           getResourceAmount: getResourceAmount,
-          getLastContentUnitsCheck: narrativeSystem.getLastContentUnitsCheck,
-          setLastContentUnitsCheck: narrativeSystem.setLastContentUnitsCheck,
           getGameStartTime: narrativeSystem.getGameStartTime,
           getCurrentTime: () => gameLoop.currentTime.value,
           applyResourceProduction: applyResourceProduction,
+          getGameState: () => gameState.value,
         })
 
         // Apply currency decay for depletable resources
@@ -708,36 +683,10 @@ export const useGameStore = defineStore(
         const resourceConfig = getResourceConfig(resourceId)
         if (!resourceConfig || !resourceConfig.unlockConditions) return true
         
-        const currentGameState: GameState = {
-          resources: gameState.value.resources,
-          generators: gameState.value.generators,
-          upgrades: gameState.value.upgrades,
-          narratives: gameState.value.narratives,
-          prestige: gameState.value.prestige,
-          gameStartTime: gameState.value.gameStartTime
-        }
-        
-        const result = UnlockSystem.checkConditions(resourceConfig.unlockConditions, currentGameState)
+        const result = UnlockSystem.checkConditions(resourceConfig.unlockConditions, gameState.value)
         return result.isUnlocked
       },
 
-      // ===== NARRATIVE UNLOCK CHECKS =====
-      checkNarrativeUnlocked: (narrativeId: string): boolean => {
-        const narrative = gameState.value.narratives.find(n => n.id === narrativeId)
-        if (!narrative || !narrative.unlockConditions) return true
-        
-        const currentGameState: GameState = {
-          resources: gameState.value.resources,
-          generators: gameState.value.generators,
-          upgrades: gameState.value.upgrades,
-          narratives: gameState.value.narratives,
-          prestige: gameState.value.prestige,
-          gameStartTime: gameState.value.gameStartTime
-        }
-        
-        const result = UnlockSystem.checkConditions(narrative.unlockConditions, currentGameState)
-        return result.isUnlocked
-      },
 
       // ===== UPGRADE ACTIONS =====
       getUpgrade,
@@ -761,7 +710,7 @@ export const useGameStore = defineStore(
 
       // ===== NARRATIVE SYSTEM =====
       onNarrativeEvent: narrativeSystem.onNarrativeEvent,
-      triggerNarrative: narrativeSystem.triggerNarrative,
+      checkAndTriggerNarratives: narrativeSystem.checkAndTriggerNarratives,
       getNextPendingEvent: narrativeSystem.getNextPendingEvent,
       hasPendingEvents: narrativeSystem.hasPendingEvents,
     }

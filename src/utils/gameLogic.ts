@@ -1,18 +1,19 @@
 /**
  * Shared game loop tick logic to prevent duplication
  */
+import type { GameState } from '../stores/gameStore'
+
 export interface GameTickCallbacks {
   addResource: (resourceId: string, amount: number) => void
   completeTask: () => boolean
-  triggerNarrative: (type: string, value?: number, context?: string) => void
+  checkAndTriggerNarratives: (gameState: GameState) => void
   getTaskProgress: () => { isComplete: boolean }
   getResourceAmount: (resourceId: string) => number
-  getLastContentUnitsCheck: () => number
-  setLastContentUnitsCheck: (value: number) => void
   getGameStartTime: () => number
   getCurrentTime: () => number
   applyResourceDecay?: () => void
   applyResourceProduction?: () => void
+  getGameState: () => GameState
 }
 
 /**
@@ -30,18 +31,9 @@ export function executeGameTick(callbacks: GameTickCallbacks): void {
     callbacks.completeTask()
   }
 
-  // Check narrative triggers based on HCU resource amount
-  const contentUnits = callbacks.getResourceAmount('hcu')
-  const lastContentUnitsCheck = callbacks.getLastContentUnitsCheck()
-  if (Math.floor(contentUnits) > Math.floor(lastContentUnitsCheck)) {
-    callbacks.triggerNarrative('resourceAmount', contentUnits, 'hcu')
-    callbacks.setLastContentUnitsCheck(contentUnits)
-  }
-
-  // Check time elapsed triggers
-  const gameStartTime = callbacks.getGameStartTime()
-  const timeElapsed = callbacks.getCurrentTime() - gameStartTime
-  callbacks.triggerNarrative('timeElapsed', timeElapsed)
+  // Check narrative triggers using unified system
+  const gameState = callbacks.getGameState()
+  callbacks.checkAndTriggerNarratives(gameState)
 
   // Apply resource decay for depletable resources
   if (callbacks.applyResourceDecay) {

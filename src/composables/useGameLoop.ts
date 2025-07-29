@@ -19,12 +19,7 @@ export function useGameLoop() {
    * Start the main game loop
    * @param callbacks - Object containing game functions to call during the loop
    */
-  function startGameLoop(
-    callbacks: GameTickCallbacks & {
-      hasTriggeredGameStart: () => boolean
-      setHasTriggeredGameStart: (value: boolean) => void
-    },
-  ) {
+  function startGameLoop(callbacks: GameTickCallbacks) {
     if (gameLoop !== null) return
 
     isRunning.value = true
@@ -39,12 +34,6 @@ export function useGameLoop() {
         getCurrentTime: () => currentTime.value,
       })
     }, tickRate)
-
-    // Trigger game start narrative (only once)
-    if (!callbacks.hasTriggeredGameStart()) {
-      callbacks.triggerNarrative('gameStart')
-      callbacks.setHasTriggeredGameStart(true)
-    }
   }
 
   /**

@@ -1,5 +1,7 @@
 import { ref } from 'vue'
 import type { NarrativeEvent } from '../config/narratives'
+import { UnlockSystem } from '../utils/unlockSystem'
+import type { GameState } from '../stores/gameStore'
 
 /**
  * Narrative system composable that manages story events, triggers, and progression
@@ -16,8 +18,6 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
   })
 
   // Narrative tracking state
-  const hasTriggeredGameStart = ref(false)
-  const lastContentUnitsCheck = ref(0)
   const eventCallbacks = ref<((event: NarrativeEvent) => void)[]>([])
 
   /**
@@ -28,36 +28,16 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
   }
 
   /**
-   * Generic narrative trigger function
-   * Finds and triggers eligible events based on criteria
+   * Check and trigger eligible narrative events based on game state
    */
-  function triggerNarrative(
-    triggerType: string,
-    triggerValue?: number,
-    triggerCondition?: string,
-  ): void {
+  function checkAndTriggerNarratives(gameState: GameState): void {
     const eligibleEvents = narrative.value.currentStoryEvents.filter((event) => {
       // Skip already viewed events
       if (event.isViewed) return false
 
-      // Check trigger type
-      if (event.triggerType !== triggerType) return false
-
-      // Check trigger value (if specified)
-      if (event.triggerValue !== undefined) {
-        if (triggerValue === undefined || triggerValue < event.triggerValue) {
-          return false
-        }
-      }
-
-      // Check trigger condition (if specified)
-      if (event.triggerCondition !== undefined) {
-        if (triggerCondition !== event.triggerCondition) {
-          return false
-        }
-      }
-
-      return true
+      // Check unlock conditions using unified system
+      const result = UnlockSystem.checkConditions(event.unlockConditions, gameState)
+      return result.isUnlocked
     })
 
     // Sort by priority (highest first)
@@ -113,36 +93,22 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
   }
 
   // Getters for game loop integration
-  const getLastContentUnitsCheck = () => lastContentUnitsCheck.value
-  const setLastContentUnitsCheck = (value: number) => {
-    lastContentUnitsCheck.value = value
-  }
   const getGameStartTime = () => narrative.value.gameStartTime
-  const getHasTriggeredGameStart = () => hasTriggeredGameStart.value
-  const setHasTriggeredGameStart = (value: boolean) => {
-    hasTriggeredGameStart.value = value
-  }
 
   return {
     // State
     narrative,
-    hasTriggeredGameStart,
-    lastContentUnitsCheck,
     eventCallbacks,
 
     // Actions
     onNarrativeEvent,
-    triggerNarrative,
+    checkAndTriggerNarratives,
     triggerNarrativeEvent,
     getNextPendingEvent,
     hasPendingEvents,
     resetForPrestige,
 
     // Game loop integration helpers
-    getLastContentUnitsCheck,
-    setLastContentUnitsCheck,
     getGameStartTime,
-    getHasTriggeredGameStart,
-    setHasTriggeredGameStart,
   }
 }
