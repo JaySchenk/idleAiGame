@@ -19,8 +19,8 @@ describe('PrestigeButton', () => {
   })
 
   function createWrapper() {
-    return mount(PrestigeButton, { 
-      global: { plugins: [pinia] }
+    return mount(PrestigeButton, {
+      global: { plugins: [pinia] },
     })
   }
 
@@ -124,7 +124,7 @@ describe('PrestigeButton', () => {
       const performPrestigeSpy = vi.spyOn(store, 'performPrestige').mockReturnValue(true)
 
       await wrapper.find('.prestige-button').trigger('click')
-      
+
       // Fast-forward through the 1000ms delay
       vi.advanceTimersByTime(1000)
       await wrapper.vm.$nextTick()

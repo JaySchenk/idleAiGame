@@ -14,18 +14,16 @@ describe('UpgradeButton', () => {
     vi.useFakeTimers()
     pinia = createStandardTestPinia()
     store = useGameStore(pinia)
-    
+
     mockUpgrade = {
       id: 'testUpgrade',
       name: 'Test Upgrade',
       description: 'A test upgrade for testing purposes',
       category: 'production',
       costs: [{ resourceId: 'hcu', amount: 100 }],
-      unlockConditions: [
-        { type: 'generator', generatorId: 'basicAdBotFarm', minOwned: 5 }
-      ],
+      unlockConditions: [{ type: 'generator', generatorId: 'basicAdBotFarm', minOwned: 5 }],
       effects: [{ type: 'production_multiplier', targetId: 'basicAdBotFarm', value: 1.25 }],
-      isPurchased: false
+      isPurchased: false,
     }
   })
 
@@ -34,9 +32,9 @@ describe('UpgradeButton', () => {
   })
 
   function createWrapper(upgrade = mockUpgrade) {
-    return mount(UpgradeButton, { 
+    return mount(UpgradeButton, {
       global: { plugins: [pinia] },
-      props: { upgrade }
+      props: { upgrade },
     })
   }
 
@@ -45,7 +43,9 @@ describe('UpgradeButton', () => {
       const wrapper = createWrapper()
 
       expect(wrapper.find('.upgrade-title').text()).toBe('Test Upgrade')
-      expect(wrapper.find('.upgrade-description').text()).toBe('A test upgrade for testing purposes')
+      expect(wrapper.find('.upgrade-description').text()).toBe(
+        'A test upgrade for testing purposes',
+      )
       expect(wrapper.find('.upgrade-cost').exists()).toBe(true)
     })
 
@@ -54,8 +54,8 @@ describe('UpgradeButton', () => {
         ...mockUpgrade,
         costs: [
           { resourceId: 'hcu', amount: 100 },
-          { resourceId: 'hcu', amount: 50 }
-        ]
+          { resourceId: 'hcu', amount: 50 },
+        ],
       }
       const wrapper = createWrapper(upgradeWithMultipleCosts)
 
@@ -93,9 +93,7 @@ describe('UpgradeButton', () => {
     it('displays resource requirements', () => {
       const upgradeWithResourceReq = {
         ...mockUpgrade,
-        unlockConditions: [
-          { type: 'resource', resourceId: 'hcu', minAmount: 1000 }
-        ]
+        unlockConditions: [{ type: 'resource', resourceId: 'hcu', minAmount: 1000 }],
       }
       const wrapper = createWrapper(upgradeWithResourceReq)
 
@@ -105,9 +103,7 @@ describe('UpgradeButton', () => {
     it('handles unknown generator gracefully', () => {
       const upgradeWithUnknownGen = {
         ...mockUpgrade,
-        unlockConditions: [
-          { type: 'generator', generatorId: 'nonexistent', minOwned: 1 }
-        ]
+        unlockConditions: [{ type: 'generator', generatorId: 'nonexistent', minOwned: 1 }],
       }
       const wrapper = createWrapper(upgradeWithUnknownGen)
 
@@ -118,8 +114,8 @@ describe('UpgradeButton', () => {
       const upgradeWithUnknownCondition = {
         ...mockUpgrade,
         unlockConditions: [
-          { type: 'unknown' as 'resource' } // Cast to valid type since this is testing fallback behavior
-        ]
+          { type: 'unknown' as 'resource' }, // Cast to valid type since this is testing fallback behavior
+        ],
       }
       const wrapper = createWrapper(upgradeWithUnknownCondition)
 

@@ -9,17 +9,25 @@
         </div>
         <div class="narrative-content">
           <p class="narrative-text">{{ currentEvent?.content }}</p>
-          <div class="narrative-stability">
-            <span class="stability-label">Societal Stability: </span>
-            <span class="stability-value" :class="getStabilityClass()">
-              {{ gameStore.narrative.societalStability }}%
-            </span>
+          <div v-if="currentEvent?.resourceEffects" class="narrative-effects">
+            <span class="effects-label">Resource Effects:</span>
+            <div class="effects-list">
+              <div
+                v-for="effect in currentEvent.resourceEffects"
+                :key="effect.resourceId"
+                class="effect-item"
+                :class="getEffectClass(effect.amount)"
+              >
+                <span class="effect-resource">{{ getResourceDisplayName(effect.resourceId) }}</span>
+                <span class="effect-value"
+                  >{{ effect.amount > 0 ? '+' : '' }}{{ effect.amount }}</span
+                >
+              </div>
+            </div>
           </div>
         </div>
         <div class="narrative-actions">
-          <button class="narrative-button" @click="closeModal">
-            Continue
-          </button>
+          <button class="narrative-button" @click="closeModal">Continue</button>
         </div>
       </div>
     </div>
@@ -27,24 +35,11 @@
     <!-- Persistent narrative panel -->
     <div v-if="!showModal" class="narrative-panel">
       <div class="narrative-panel-header">
-        <h4>System Status</h4>
-        <div class="stability-indicator" :class="getStabilityClass()">
-          <span class="stability-text"
-            >Stability: {{ gameStore.narrative.societalStability }}%</span
-          >
-          <div class="stability-bar">
-            <div
-              class="stability-fill"
-              :style="{ width: gameStore.narrative.societalStability + '%' }"
-            ></div>
-          </div>
-        </div>
+        <h4>System Chronicle</h4>
       </div>
 
       <div class="narrative-archive">
-        <div v-if="hasViewedEvents" class="archive-header">
-          <h5 class="archive-title">Story Chronicle</h5>
-        </div>
+        <div v-if="hasViewedEvents" class="archive-header"></div>
 
         <div v-if="hasViewedEvents" class="archive-list">
           <div
@@ -54,8 +49,8 @@
             @click="reviewEvent(event)"
           >
             <span class="archive-title">{{ event.title }}</span>
-            <span class="archive-impact" :class="getImpactClass(event.societalStabilityImpact)">
-              {{ event.societalStabilityImpact > 0 ? '+' : '' }}{{ event.societalStabilityImpact }}
+            <span class="archive-effects">
+              {{ getEventEffectsSummary(event) }}
             </span>
           </div>
         </div>
@@ -96,19 +91,26 @@ const handleNarrativeEvent = showEvent
 const reviewEvent = showEvent
 
 // Styling helpers
-const getStabilityClass = () => {
-  const stability = gameStore.narrative.societalStability
-  if (stability >= 80) return 'stability-high'
-  if (stability >= 50) return 'stability-medium'
-  if (stability >= 25) return 'stability-low'
-  return 'stability-critical'
+const getEffectClass = (amount: number) => {
+  if (amount > 0) return 'effect-positive'
+  if (amount < -15) return 'effect-severe'
+  if (amount < -5) return 'effect-moderate'
+  return 'effect-minor'
 }
 
-const getImpactClass = (impact: number) => {
-  if (impact > 0) return 'impact-positive'
-  if (impact < -20) return 'impact-severe'
-  if (impact < -10) return 'impact-moderate'
-  return 'impact-minor'
+const getResourceDisplayName = (resourceId: string) => {
+  const resourceConfig = gameStore.getResourceConfig(resourceId)
+  return resourceConfig ? resourceConfig.displayName : resourceId.toUpperCase()
+}
+
+const getEventEffectsSummary = (event: NarrativeEvent) => {
+  if (!event.resourceEffects || event.resourceEffects.length === 0) return 'No effects'
+  return event.resourceEffects
+    .map(
+      (effect) =>
+        `${getResourceDisplayName(effect.resourceId)} ${effect.amount > 0 ? '+' : ''}${effect.amount}`,
+    )
+    .join(', ')
 }
 
 // Check for pending events periodically
@@ -137,7 +139,6 @@ onMounted(() => {
     clearInterval(pendingEventInterval)
   })
 })
-
 </script>
 
 <style scoped>
@@ -224,36 +225,66 @@ onMounted(() => {
   font-family: 'Courier New', monospace;
 }
 
-.narrative-stability {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.narrative-effects {
   margin-top: 1rem;
   padding: 0.5rem;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 5px;
 }
 
-.stability-label {
+.effects-label {
   color: #cccccc;
   font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  display: block;
 }
 
-.stability-value {
+.effects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.effect-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+.effect-resource {
+  color: #cccccc;
+}
+
+.effect-value {
   font-weight: bold;
-  font-size: 1rem;
 }
 
-.stability-high {
+.effect-positive {
+  border-left: 3px solid #00ff88;
+}
+.effect-positive .effect-value {
   color: #00ff88;
 }
-.stability-medium {
+.effect-minor {
+  border-left: 3px solid #ffaa00;
+}
+.effect-minor .effect-value {
   color: #ffaa00;
 }
-.stability-low {
+.effect-moderate {
+  border-left: 3px solid #ff6600;
+}
+.effect-moderate .effect-value {
   color: #ff6600;
 }
-.stability-critical {
+.effect-severe {
+  border-left: 3px solid #ff0000;
+}
+.effect-severe .effect-value {
   color: #ff0000;
 }
 
@@ -300,44 +331,6 @@ onMounted(() => {
   font-size: 1.1rem;
 }
 
-.stability-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-}
-
-.stability-text {
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
-.stability-bar {
-  width: 100px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.stability-fill {
-  height: 100%;
-  transition: width 0.3s ease;
-}
-
-.stability-high .stability-fill {
-  background: #00ff88;
-}
-.stability-medium .stability-fill {
-  background: #ffaa00;
-}
-.stability-low .stability-fill {
-  background: #ff6600;
-}
-.stability-critical .stability-fill {
-  background: #ff0000;
-}
-
 .archive-header {
   margin-bottom: 0.5rem;
 }
@@ -376,22 +369,10 @@ onMounted(() => {
   font-size: 0.9rem;
 }
 
-.archive-impact {
+.archive-effects {
   font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.impact-positive {
-  color: #00ff88;
-}
-.impact-minor {
-  color: #ffaa00;
-}
-.impact-moderate {
-  color: #ff6600;
-}
-.impact-severe {
-  color: #ff0000;
+  color: #cccccc;
+  font-style: italic;
 }
 
 @keyframes fadeIn {

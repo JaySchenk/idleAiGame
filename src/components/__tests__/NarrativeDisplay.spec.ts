@@ -9,8 +9,13 @@ const mockNarrativeEvent = {
   id: 'testEvent',
   title: 'Test Narrative Event',
   content: 'This is a test narrative content for testing purposes.',
-  societalStabilityImpact: -10,
-  isViewed: false
+  unlockConditions: [],
+  resourceEffects: [
+    { resourceId: 'pt', amount: -5 },
+    { resourceId: 'sc', amount: -3 },
+  ],
+  priority: 100,
+  isViewed: false,
 }
 
 describe('NarrativeDisplay', () => {
@@ -21,17 +26,30 @@ describe('NarrativeDisplay', () => {
     vi.useFakeTimers()
     pinia = createStandardTestPinia()
     store = useGameStore(pinia)
-    
+
     // Setup mock narrative state
     store.narrative = {
-      societalStability: 75,
-      currentStoryEvents: [mockNarrativeEvent]
+      currentStoryEvents: [mockNarrativeEvent],
+      viewedEvents: [],
+      pendingEvents: [],
+      isNarrativeActive: false,
+      gameStartTime: Date.now(),
     }
-    
+
     // Mock store methods
     store.hasPendingEvents = vi.fn().mockReturnValue(false)
     store.getNextPendingEvent = vi.fn().mockReturnValue(null)
     store.onNarrativeEvent = vi.fn()
+
+    // Mock getResourceConfig
+    store.getResourceConfig = vi.fn().mockImplementation((resourceId) => {
+      const configs = {
+        pt: { symbol: 'PT', displayName: 'Public Trust' },
+        sc: { symbol: 'SC', displayName: 'Social Cohesion' },
+        hcu: { symbol: 'HCU', displayName: 'Hollow Content Units' },
+      }
+      return configs[resourceId]
+    })
   })
 
   afterEach(() => {
@@ -39,8 +57,8 @@ describe('NarrativeDisplay', () => {
   })
 
   function createWrapper() {
-    return mount(NarrativeDisplay, { 
-      global: { plugins: [pinia] }
+    return mount(NarrativeDisplay, {
+      global: { plugins: [pinia] },
     })
   }
 
@@ -55,39 +73,18 @@ describe('NarrativeDisplay', () => {
     it('displays system status header', () => {
       const wrapper = createWrapper()
 
-      expect(wrapper.find('.narrative-panel-header h4').text()).toBe('System Status')
-    })
-
-    it('shows stability indicator with correct value', () => {
-      const wrapper = createWrapper()
-
-      expect(wrapper.find('.stability-text').text()).toBe('Stability: 75%')
-      expect(wrapper.find('.stability-fill').attributes('style')).toBe('width: 75%;')
-    })
-
-    it('applies correct stability class based on value', () => {
-      const testCases = [
-        { stability: 85, expectedClass: 'stability-high' },
-        { stability: 65, expectedClass: 'stability-medium' },
-        { stability: 35, expectedClass: 'stability-low' },
-        { stability: 15, expectedClass: 'stability-critical' }
-      ]
-
-      testCases.forEach(({ stability, expectedClass }) => {
-        store.narrative.societalStability = stability
-        const wrapper = createWrapper()
-        
-        expect(wrapper.find('.stability-indicator').classes()).toContain(expectedClass)
-      })
+      expect(wrapper.find('.narrative-panel-header h4').text()).toBe('System Chronicle')
     })
   })
 
   describe('Archive Display', () => {
     it('shows archive when there are viewed events', () => {
-      store.narrative.currentStoryEvents = [{
-        ...mockNarrativeEvent,
-        isViewed: true
-      }]
+      store.narrative.currentStoryEvents = [
+        {
+          ...mockNarrativeEvent,
+          isViewed: true,
+        },
+      ]
       const wrapper = createWrapper()
 
       expect(wrapper.find('.archive-header').exists()).toBe(true)
@@ -95,10 +92,12 @@ describe('NarrativeDisplay', () => {
     })
 
     it('hides archive when no viewed events', () => {
-      store.narrative.currentStoryEvents = [{
-        ...mockNarrativeEvent,
-        isViewed: false
-      }]
+      store.narrative.currentStoryEvents = [
+        {
+          ...mockNarrativeEvent,
+          isViewed: false,
+        },
+      ]
       const wrapper = createWrapper()
 
       expect(wrapper.find('.archive-header').exists()).toBe(false)
@@ -109,7 +108,7 @@ describe('NarrativeDisplay', () => {
       const viewedEvent = {
         ...mockNarrativeEvent,
         isViewed: true,
-        societalStabilityImpact: -15
+        resourceEffects: [{ resourceId: 'pt', amount: -10 }],
       }
       store.narrative.currentStoryEvents = [viewedEvent]
       const wrapper = createWrapper()
@@ -117,35 +116,14 @@ describe('NarrativeDisplay', () => {
       const archiveItem = wrapper.find('.archive-item')
       expect(archiveItem.exists()).toBe(true)
       expect(archiveItem.find('.archive-title').text()).toBe('Test Narrative Event')
-      expect(archiveItem.find('.archive-impact').text()).toBe('-15')
-    })
-
-    it('applies correct impact classes', () => {
-      const testCases = [
-        { impact: 5, expectedClass: 'impact-positive' },
-        { impact: -5, expectedClass: 'impact-minor' },
-        { impact: -15, expectedClass: 'impact-moderate' },
-        { impact: -25, expectedClass: 'impact-severe' }
-      ]
-
-      testCases.forEach(({ impact, expectedClass }) => {
-        const event = {
-          ...mockNarrativeEvent,
-          isViewed: true,
-          societalStabilityImpact: impact
-        }
-        store.narrative.currentStoryEvents = [event]
-        const wrapper = createWrapper()
-        
-        expect(wrapper.find('.archive-impact').classes()).toContain(expectedClass)
-      })
+      expect(archiveItem.find('.archive-effects').text()).toBe('Public Trust -10')
     })
   })
 
   describe('Modal Functionality', () => {
     it('shows modal when event is triggered', async () => {
       const wrapper = createWrapper()
-      
+
       // Simulate triggering an event
       await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
 
@@ -155,16 +133,41 @@ describe('NarrativeDisplay', () => {
 
     it('displays event details in modal', async () => {
       const wrapper = createWrapper()
-      
+
       await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
 
       expect(wrapper.find('.narrative-title').text()).toBe('Test Narrative Event')
-      expect(wrapper.find('.stability-value').text()).toBe('75%')
+      expect(wrapper.find('.effects-label').text()).toBe('Resource Effects:')
+      expect(wrapper.findAll('.effect-item')).toHaveLength(2)
+    })
+
+    it('shows resource effects correctly in modal', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
+
+      const effectItems = wrapper.findAll('.effect-item')
+      expect(effectItems[0].find('.effect-resource').text()).toBe('Public Trust')
+      expect(effectItems[0].find('.effect-value').text()).toBe('-5')
+      expect(effectItems[1].find('.effect-resource').text()).toBe('Social Cohesion')
+      expect(effectItems[1].find('.effect-value').text()).toBe('-3')
+    })
+
+    it('hides resource effects section when event has no effects', async () => {
+      const eventWithoutEffects = {
+        ...mockNarrativeEvent,
+        resourceEffects: undefined,
+      }
+      const wrapper = createWrapper()
+
+      await wrapper.vm.handleNarrativeEvent(eventWithoutEffects)
+
+      expect(wrapper.find('.narrative-effects').exists()).toBe(false)
     })
 
     it('closes modal when close button clicked', async () => {
       const wrapper = createWrapper()
-      
+
       await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
       expect(wrapper.find('.narrative-modal').exists()).toBe(true)
 
@@ -174,7 +177,7 @@ describe('NarrativeDisplay', () => {
 
     it('closes modal when overlay clicked', async () => {
       const wrapper = createWrapper()
-      
+
       await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
       expect(wrapper.find('.narrative-modal').exists()).toBe(true)
 
@@ -184,7 +187,7 @@ describe('NarrativeDisplay', () => {
 
     it('does not close modal when content clicked', async () => {
       const wrapper = createWrapper()
-      
+
       await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
       expect(wrapper.find('.narrative-modal').exists()).toBe(true)
 
@@ -193,76 +196,11 @@ describe('NarrativeDisplay', () => {
     })
   })
 
-  describe('Typewriter Effect', () => {
-    it('starts typewriter effect when event shown', async () => {
-      const wrapper = createWrapper()
-      
-      await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
-
-      expect(wrapper.vm.isTyping).toBe(true)
-      expect(wrapper.find('.narrative-button').text()).toBe('Skip')
-    })
-
-    it('progressively reveals text during typewriter', async () => {
-      const wrapper = createWrapper()
-      
-      await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
-
-      // Fast forward typewriter effect
-      vi.advanceTimersByTime(300) // Should reveal about 10 characters at 30ms intervals
-      await wrapper.vm.$nextTick()
-
-      const displayedText = wrapper.vm.displayText
-      expect(displayedText.length).toBeGreaterThan(0)
-      expect(displayedText.length).toBeLessThan(mockNarrativeEvent.content.length)
-    })
-
-    it('completes typewriter effect automatically', async () => {
-      const wrapper = createWrapper()
-      
-      await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
-
-      // Fast forward past the entire content length
-      vi.advanceTimersByTime(mockNarrativeEvent.content.length * 30 + 100)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.vm.isTyping).toBe(false)
-      expect(wrapper.vm.displayText).toBe(mockNarrativeEvent.content)
-      expect(wrapper.find('.narrative-button').text()).toBe('Continue')
-    })
-
-    it('skips typewriter when button clicked during typing', async () => {
-      const wrapper = createWrapper()
-      
-      await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
-      expect(wrapper.vm.isTyping).toBe(true)
-
-      await wrapper.find('.narrative-button').trigger('click')
-
-      expect(wrapper.vm.isTyping).toBe(false)
-      expect(wrapper.vm.displayText).toBe(mockNarrativeEvent.content)
-    })
-
-    it('closes modal when button clicked after typing complete', async () => {
-      const wrapper = createWrapper()
-      
-      await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
-      
-      // Complete typewriter effect
-      vi.advanceTimersByTime(mockNarrativeEvent.content.length * 30 + 100)
-      await wrapper.vm.$nextTick()
-
-      await wrapper.find('.narrative-button').trigger('click')
-
-      expect(wrapper.find('.narrative-modal').exists()).toBe(false)
-    })
-  })
-
   describe('Archive Review', () => {
     it('opens modal when archive item clicked', async () => {
       const viewedEvent = {
         ...mockNarrativeEvent,
-        isViewed: true
+        isViewed: true,
       }
       store.narrative.currentStoryEvents = [viewedEvent]
       const wrapper = createWrapper()
@@ -270,8 +208,7 @@ describe('NarrativeDisplay', () => {
       await wrapper.find('.archive-item').trigger('click')
 
       expect(wrapper.find('.narrative-modal').exists()).toBe(true)
-      expect(wrapper.vm.isTyping).toBe(false)
-      expect(wrapper.vm.displayText).toBe(viewedEvent.content)
+      expect(wrapper.find('.narrative-title').text()).toBe('Test Narrative Event')
     })
   })
 
@@ -301,18 +238,6 @@ describe('NarrativeDisplay', () => {
   })
 
   describe('Lifecycle Management', () => {
-    it('cleans up typewriter effect on unmount', async () => {
-      const wrapper = createWrapper()
-      
-      await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
-      expect(wrapper.vm.isTyping).toBe(true)
-
-      wrapper.unmount()
-
-      // Should not throw errors and should clean up properly
-      expect(true).toBe(true) // Test passes if no errors thrown
-    })
-
     it('sets up periodic pending event check', () => {
       const clearIntervalSpy = vi.spyOn(window, 'clearInterval')
       const wrapper = createWrapper()
@@ -324,38 +249,17 @@ describe('NarrativeDisplay', () => {
   })
 
   describe('Edge Cases', () => {
-    it('handles null current event gracefully', async () => {
-      const wrapper = createWrapper()
-      
-      wrapper.vm.currentEvent = null
-      
-      // Should not throw when starting typewriter with null event
-      expect(() => wrapper.vm.startTypewriterEffect()).not.toThrow()
-    })
-
-    it('handles empty content gracefully', async () => {
-      const emptyEvent = {
+    it('handles events with empty resource effects', async () => {
+      const eventWithoutEffects = {
         ...mockNarrativeEvent,
-        content: ''
+        resourceEffects: undefined,
       }
       const wrapper = createWrapper()
-      
-      await wrapper.vm.handleNarrativeEvent(emptyEvent)
 
-      expect(wrapper.vm.displayText).toBe('')
-      expect(wrapper.vm.isTyping).toBe(true) // Should still start effect
-    })
+      await wrapper.vm.handleNarrativeEvent(eventWithoutEffects)
 
-    it('prevents multiple simultaneous typewriter effects', async () => {
-      const wrapper = createWrapper()
-      
-      await wrapper.vm.handleNarrativeEvent(mockNarrativeEvent)
-      const firstInterval = wrapper.vm.typewriterInterval
-
-      await wrapper.vm.handleNarrativeEvent({...mockNarrativeEvent, id: 'second'})
-      
-      // Should have stopped previous effect and started new one
-      expect(wrapper.vm.typewriterInterval).not.toBe(firstInterval)
+      expect(wrapper.find('.narrative-modal').exists()).toBe(true)
+      expect(wrapper.find('.narrative-effects').exists()).toBe(false)
     })
   })
 })

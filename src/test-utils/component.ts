@@ -10,17 +10,14 @@ import { createStandardTestPinia } from './pinia'
  */
 export function mountWithPinia(component: unknown, options: Record<string, unknown> = {}) {
   const pinia = createStandardTestPinia()
-  
+
   const mergedOptions = {
     ...options,
     global: {
       ...options.global,
-      plugins: [
-        ...(options.global?.plugins || []),
-        pinia,
-      ],
+      plugins: [...(options.global?.plugins || []), pinia],
     },
   }
-  
+
   return mount(component, mergedOptions)
 }

@@ -9,7 +9,8 @@ export const getAllComponentMocks = () => ({
   CurrencyDisplay: {
     name: 'CurrencyDisplay',
     props: ['resourceId', 'amount', 'showUnit'],
-    template: '<span class="currency-display">{{ amount }}{{ showUnit !== false ? ` ${resourceId.toUpperCase()}` : "" }}</span>',
+    template:
+      '<span class="currency-display">{{ amount }}{{ showUnit !== false ? ` ${resourceId.toUpperCase()}` : "" }}</span>',
   },
   ResourceDisplay: {
     name: 'ResourceDisplay',
@@ -22,15 +23,17 @@ export const getAllComponentMocks = () => ({
     emits: ['click'],
   },
   GeneratorPurchaseButton: {
-    name: 'GeneratorPurchaseButton', 
+    name: 'GeneratorPurchaseButton',
     props: ['generatorId', 'generatorName'],
-    template: '<button class="generator-purchase" @click="$emit(\'purchase\')">Purchase {{ generatorName || generatorId }}</button>',
+    template:
+      '<button class="generator-purchase" @click="$emit(\'purchase\')">Purchase {{ generatorName || generatorId }}</button>',
     emits: ['purchase'],
   },
   UpgradeButton: {
     name: 'UpgradeButton',
     props: ['upgradeId', 'upgradeName'],
-    template: '<button class="upgrade-button" @click="$emit(\'purchase\')">{{ upgradeName || "Upgrade" }}</button>',
+    template:
+      '<button class="upgrade-button" @click="$emit(\'purchase\')">{{ upgradeName || "Upgrade" }}</button>',
     emits: ['purchase'],
   },
   PrestigeButton: {

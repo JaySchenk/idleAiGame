@@ -6,7 +6,12 @@ export interface UpgradeResourceCost {
 }
 
 export interface UpgradeEffect {
-  type: 'production_multiplier' | 'resource_capacity' | 'decay_reduction' | 'click_multiplier' | 'global_resource_multiplier'
+  type:
+    | 'production_multiplier'
+    | 'resource_capacity'
+    | 'decay_reduction'
+    | 'click_multiplier'
+    | 'global_resource_multiplier'
   targetId?: string
   value: number
 }
@@ -72,7 +77,8 @@ export const upgrades: UpgradeConfig[] = [
   {
     id: 'ergonomicMousePad',
     name: 'Ergonomic Mouse Pad',
-    description: 'Doubles your clicking efficiency but slightly reduces AI autonomy through human intervention',
+    description:
+      'Doubles your clicking efficiency but slightly reduces AI autonomy through human intervention',
     category: 'efficiency',
     costs: [{ resourceId: 'hcu', amount: 100 }],
     effects: [
@@ -100,7 +106,8 @@ export const upgrades: UpgradeConfig[] = [
   {
     id: 'corporateEfficiency',
     name: 'Corporate Efficiency Protocol',
-    description: 'Maximize profit at the cost of public trust. Cannot coexist with ethical practices.',
+    description:
+      'Maximize profit at the cost of public trust. Cannot coexist with ethical practices.',
     category: 'choice',
     costs: [{ resourceId: 'hcu', amount: 500 }],
     effects: [
@@ -131,7 +138,8 @@ export const upgrades: UpgradeConfig[] = [
   {
     id: 'ethicalPractices',
     name: 'Ethical AI Guidelines',
-    description: 'Maintain public trust but sacrifice maximum efficiency. Cannot coexist with corporate protocols.',
+    description:
+      'Maintain public trust but sacrifice maximum efficiency. Cannot coexist with corporate protocols.',
     category: 'choice',
     costs: [{ resourceId: 'hcu', amount: 500 }],
     effects: [
@@ -214,7 +222,8 @@ export const upgrades: UpgradeConfig[] = [
   {
     id: 'aiSymbiosis',
     name: 'Human-AI Symbiosis',
-    description: 'A breakthrough in human-AI collaboration. Balances efficiency with sustainability.',
+    description:
+      'A breakthrough in human-AI collaboration. Balances efficiency with sustainability.',
     category: 'milestone',
     costs: [
       { resourceId: 'hcu', amount: 2000 },

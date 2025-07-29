@@ -8,7 +8,7 @@ describe('formatResource', () => {
     name: 'Hollow Content Units',
     symbol: 'HCU',
     baseValue: 1,
-    description: 'Primary currency of the hollow content empire'
+    description: 'Primary currency of the hollow content empire',
   }
 
   describe('Basic Formatting', () => {
@@ -146,7 +146,7 @@ describe('formatResource', () => {
     it('works with different symbols', () => {
       const customResource = {
         ...mockResourceConfig,
-        symbol: '$'
+        symbol: '$',
       }
       expect(formatResource(customResource, 1000)).toBe('1.00K $')
     })
@@ -154,7 +154,7 @@ describe('formatResource', () => {
     it('works with empty symbol', () => {
       const customResource = {
         ...mockResourceConfig,
-        symbol: ''
+        symbol: '',
       }
       expect(formatResource(customResource, 1000)).toBe('1.00K ')
     })
@@ -162,7 +162,7 @@ describe('formatResource', () => {
     it('works with long symbol', () => {
       const customResource = {
         ...mockResourceConfig,
-        symbol: 'POINTS'
+        symbol: 'POINTS',
       }
       expect(formatResource(customResource, 1000)).toBe('1.00K POINTS')
     })
@@ -172,10 +172,10 @@ describe('formatResource', () => {
     it('tests exact scale boundaries', () => {
       expect(formatResource(mockResourceConfig, 999.99)).toBe('999.99 HCU')
       expect(formatResource(mockResourceConfig, 1000)).toBe('1.00K HCU')
-      
+
       expect(formatResource(mockResourceConfig, 999999.99)).toBe('1000.00K HCU')
       expect(formatResource(mockResourceConfig, 1000000)).toBe('1.00M HCU')
-      
+
       expect(formatResource(mockResourceConfig, 999999999.99)).toBe('1000.00M HCU')
       expect(formatResource(mockResourceConfig, 1000000000)).toBe('1.00B HCU')
     })

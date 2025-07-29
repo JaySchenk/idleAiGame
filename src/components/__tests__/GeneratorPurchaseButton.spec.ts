@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils' 
+import { mount } from '@vue/test-utils'
 import { useGameStore } from '../../stores/gameStore'
 import GeneratorPurchaseButton from '../GeneratorPurchaseButton.vue'
 import { createStandardTestPinia } from '../../test-utils/pinia'
@@ -14,9 +14,9 @@ describe('GeneratorPurchaseButton', () => {
   })
 
   function createWrapper(props = { generatorId: 'basicAdBotFarm' }) {
-    return mount(GeneratorPurchaseButton, { 
+    return mount(GeneratorPurchaseButton, {
       props,
-      global: { plugins: [pinia] } 
+      global: { plugins: [pinia] },
     })
   }
 
@@ -203,7 +203,6 @@ describe('GeneratorPurchaseButton', () => {
     })
   })
 
-
   describe('Accessibility', () => {
     it('uses proper button semantics', () => {
       const wrapper = createWrapper()
@@ -211,7 +210,5 @@ describe('GeneratorPurchaseButton', () => {
       const button = wrapper.find('.purchase-button')
       expect(button.element.tagName).toBe('BUTTON')
     })
-
-
   })
 })

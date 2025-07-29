@@ -1,4 +1,3 @@
-
 import type { UnlockCondition } from '../utils/unlockSystem'
 
 export interface ResourceCost {

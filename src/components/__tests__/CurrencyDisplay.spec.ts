@@ -15,7 +15,7 @@ describe('CurrencyDisplay', () => {
 
     // Ensure store is properly initialized
     const store = useGameStore()
-    
+
     return { wrapper, store }
   }
 
@@ -178,16 +178,12 @@ describe('CurrencyDisplay', () => {
       expect(wrapper.text()).toBe('0.00 HCU')
     })
 
-
-
-
-
     it('handles missing resource config gracefully', () => {
-      const { wrapper } = createWrapper({ 
+      const { wrapper } = createWrapper({
         resourceId: 'nonexistent',
-        amount: 100 
+        amount: 100,
       })
-      
+
       // Should fallback to basic number display when resource config missing
       expect(wrapper.text()).toBe('100')
     })
@@ -198,6 +194,5 @@ describe('CurrencyDisplay', () => {
       const { wrapper } = createWrapper({ amount: 1000 })
       expect(wrapper.text()).toContain('HCU')
     })
-
   })
 })

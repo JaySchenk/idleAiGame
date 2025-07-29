@@ -41,9 +41,7 @@ export const resources: ResourceConfig[] = [
     initialValue: 0,
     isDepletable: false,
     healthyWhenHigh: true,
-    unlockConditions: [
-      { type: 'generator', generatorId: 'automatedCustomerService', minOwned: 1 }
-    ],
+    unlockConditions: [{ type: 'generator', generatorId: 'automatedCustomerService', minOwned: 1 }],
     visualIndicators: {
       healthy: '#ff6b35', // Orange
       warning: '#f59e0b', // Amber
@@ -58,9 +56,7 @@ export const resources: ResourceConfig[] = [
     initialValue: 0,
     isDepletable: false,
     healthyWhenHigh: true,
-    unlockConditions: [
-      { type: 'generator', generatorId: 'aiGeneratedNews', minOwned: 1 }
-    ],
+    unlockConditions: [{ type: 'generator', generatorId: 'aiGeneratedNews', minOwned: 1 }],
     visualIndicators: {
       healthy: '#8b5cf6', // Purple
       warning: '#f59e0b', // Amber

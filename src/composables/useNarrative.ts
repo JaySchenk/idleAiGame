@@ -6,12 +6,14 @@ import type { GameState } from '../stores/gameStore'
 /**
  * Narrative system composable that manages story events, triggers, and progression
  */
-export function useNarrative(initialNarratives: NarrativeEvent[]) {
+export function useNarrative(
+  initialNarratives: NarrativeEvent[],
+  addResource: (resourceId: string, amount: number) => void,
+) {
   // Narrative state
   const narrative = ref({
     currentStoryEvents: initialNarratives,
     viewedEvents: [] as string[],
-    societalStability: 100,
     pendingEvents: [] as NarrativeEvent[],
     isNarrativeActive: false,
     gameStartTime: Date.now(),
@@ -51,18 +53,19 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
 
   /**
    * Trigger a specific narrative event
-   * Marks event as viewed, applies effects, and notifies subscribers
+   * Marks event as viewed, applies resource effects, and notifies subscribers
    */
   function triggerNarrativeEvent(event: NarrativeEvent): void {
     // Mark event as viewed
     event.isViewed = true
     narrative.value.viewedEvents.push(event.id)
 
-    // Apply societal stability impact
-    narrative.value.societalStability = Math.max(
-      0,
-      Math.min(100, narrative.value.societalStability + event.societalStabilityImpact),
-    )
+    // Apply resource effects
+    if (event.resourceEffects) {
+      event.resourceEffects.forEach((effect) => {
+        addResource(effect.resourceId, effect.amount)
+      })
+    }
 
     // Add to pending events for display
     narrative.value.pendingEvents.push(event)

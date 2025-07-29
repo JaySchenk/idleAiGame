@@ -22,4 +22,3 @@ export function createStandardTestPinia(config: Partial<typeof STANDARD_PINIA_CO
     ...config,
   })
 }
-

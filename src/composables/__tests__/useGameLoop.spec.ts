@@ -105,7 +105,6 @@ describe('useGameLoop', () => {
 
       expect(mockCallbacks.applyResourceProduction).toHaveBeenCalled()
     })
-
   })
 
   describe('Task System Integration', () => {
@@ -159,7 +158,6 @@ describe('useGameLoop', () => {
     })
   })
 
-
   describe('Current Time Updates', () => {
     it('should update current time on every tick', () => {
       const gameLoop = useGameLoop()
@@ -172,7 +170,6 @@ describe('useGameLoop', () => {
 
       expect(gameLoop.currentTime.value).toBeGreaterThan(initialTime)
     })
-
   })
 
   describe('Integration and Edge Cases', () => {
@@ -201,8 +198,6 @@ describe('useGameLoop', () => {
       expect(mockCallbacks.checkAndTriggerNarratives).toHaveBeenCalledWith({})
       expect(mockCallbacks.completeTask).toHaveBeenCalled()
     })
-
-
 
     it('should stop cleanly and not continue processing', () => {
       const gameLoop = useGameLoop()

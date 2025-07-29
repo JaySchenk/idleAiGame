@@ -187,7 +187,6 @@ describe('useTaskSystem', () => {
     })
   })
 
-
   describe('Integration Scenarios', () => {
     it('should handle rapid completion cycles', () => {
       const taskSystem = useTaskSystem(mockCurrentTime)
@@ -225,11 +224,9 @@ describe('useTaskSystem', () => {
         expect(progress.isComplete).toBe(expectedComplete[index])
       })
     })
-
   })
 
   describe('Edge Cases', () => {
-
     it('should handle concurrent completion attempts', () => {
       const taskSystem = useTaskSystem(mockCurrentTime)
       const addContentUnits = vi.fn()
@@ -245,7 +242,5 @@ describe('useTaskSystem', () => {
       expect(result2).toBe(false) // Second call should fail since task was reset
       expect(addContentUnits).toHaveBeenCalledTimes(1)
     })
-
-
   })
 })

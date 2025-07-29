@@ -56,7 +56,10 @@ export const useGameStore = defineStore(
     const gameLoop = useGameLoop()
 
     // Initialize narrative system with narratives
-    const narrativeSystem = useNarrative(narratives.map((n) => ({ ...n, isViewed: false })))
+    const narrativeSystem = useNarrative(
+      narratives.map((n) => ({ ...n, isViewed: false })),
+      (resourceId: string, amount: number) => addResource(resourceId, amount),
+    )
 
     // Initialize task system with game loop's current time
     const taskSystem = useTaskSystem(() => gameLoop.currentTime.value)
@@ -195,7 +198,11 @@ export const useGameStore = defineStore(
      * Primary resource production rate (HCU) for display purposes
      */
     const productionRate = computed(() => {
-      return getHCUProductionRate(gameState.value, getGeneratorMultiplier, getGlobalResourceMultiplier)
+      return getHCUProductionRate(
+        gameState.value,
+        getGeneratorMultiplier,
+        getGlobalResourceMultiplier,
+      )
     })
 
     /**
@@ -204,7 +211,11 @@ export const useGameStore = defineStore(
     function getResourceProductionRate(resourceId: string): number {
       // Get base generator production/consumption
       const baseProduction = calculateResourceProduction(gameState.value, getGeneratorMultiplier)
-      const finalProduction = applyGlobalMultipliers(baseProduction, gameState.value, getGlobalResourceMultiplier)
+      const finalProduction = applyGlobalMultipliers(
+        baseProduction,
+        gameState.value,
+        getGlobalResourceMultiplier,
+      )
       let netRate = finalProduction.get(resourceId) || 0
 
       // Add natural decay for depletable resources
@@ -224,7 +235,11 @@ export const useGameStore = defineStore(
      */
     function applyResourceProduction(): void {
       const baseProduction = calculateResourceProduction(gameState.value, getGeneratorMultiplier)
-      const finalProduction = applyGlobalMultipliers(baseProduction, gameState.value, getGlobalResourceMultiplier)
+      const finalProduction = applyGlobalMultipliers(
+        baseProduction,
+        gameState.value,
+        getGlobalResourceMultiplier,
+      )
 
       // Apply the production changes (scaled for tick rate)
       const tickMultiplier = GAME_CONSTANTS.TICK_RATE / 1000
@@ -403,7 +418,7 @@ export const useGameStore = defineStore(
     function checkUnlockConditions(generatorId: string): boolean {
       const generator = gameState.value.generators.find((g) => g.id === generatorId)
       if (!generator) return false
-      
+
       const result = UnlockSystem.checkConditions(generator.unlockConditions || [], gameState.value)
       return result.isUnlocked
     }
@@ -682,11 +697,13 @@ export const useGameStore = defineStore(
       checkResourceUnlocked: (resourceId: string): boolean => {
         const resourceConfig = getResourceConfig(resourceId)
         if (!resourceConfig || !resourceConfig.unlockConditions) return true
-        
-        const result = UnlockSystem.checkConditions(resourceConfig.unlockConditions, gameState.value)
+
+        const result = UnlockSystem.checkConditions(
+          resourceConfig.unlockConditions,
+          gameState.value,
+        )
         return result.isUnlocked
       },
-
 
       // ===== UPGRADE ACTIONS =====
       getUpgrade,

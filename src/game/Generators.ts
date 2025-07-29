@@ -80,12 +80,12 @@ export function applyGlobalMultipliers(
   for (const [resourceId, change] of resourceChanges) {
     if (change > 0) {
       let totalMultiplier = prestigeMultiplier
-      
+
       // Apply resource-specific global multiplier if function provided
       if (getGlobalResourceMultiplier) {
         totalMultiplier *= getGlobalResourceMultiplier(resourceId)
       }
-      
+
       multipliedChanges.set(resourceId, change * totalMultiplier)
     } else {
       multipliedChanges.set(resourceId, change) // Don't multiply consumption
@@ -104,7 +104,11 @@ export function getHCUProductionRate(
   getGlobalResourceMultiplier?: (resourceId: string) => number,
 ): number {
   const resourceChanges = calculateResourceProduction(gameState, getGeneratorMultiplier)
-  const globalChanges = applyGlobalMultipliers(resourceChanges, gameState, getGlobalResourceMultiplier)
+  const globalChanges = applyGlobalMultipliers(
+    resourceChanges,
+    gameState,
+    getGlobalResourceMultiplier,
+  )
 
   return globalChanges.get('hcu') || 0
 }

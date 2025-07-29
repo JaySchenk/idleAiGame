@@ -129,7 +129,8 @@ describe('Game Integration Tests', () => {
             gameStore.purchaseUpgrade(upgrade)
             expect(gameStore.getUpgrade(upgrade)!.isPurchased).toBe(true)
           }
-        } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        } catch (_error) {
+          // eslint-disable-line @typescript-eslint/no-unused-vars
           // Some upgrades might not be reachable in reasonable time - that's OK
         }
       }
@@ -209,7 +210,8 @@ describe('Game Integration Tests', () => {
             },
             5000, // Reasonable limit
           )
-        } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        } catch (_error) {
+          // eslint-disable-line @typescript-eslint/no-unused-vars
           // If we can't reach the milestone, that's OK for this test
         }
 
@@ -224,7 +226,6 @@ describe('Game Integration Tests', () => {
       expect(gameStore.narrative).toBeDefined()
     })
   })
-
 
   describe('Error Recovery', () => {
     it('should handle corrupted game state gracefully', async () => {
@@ -245,7 +246,5 @@ describe('Game Integration Tests', () => {
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBeGreaterThanOrEqual(0)
       expect(gameStore.gameState.prestige.level).toBeGreaterThanOrEqual(0)
     })
-
   })
-
 })

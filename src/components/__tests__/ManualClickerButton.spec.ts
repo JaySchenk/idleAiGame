@@ -14,8 +14,8 @@ describe('ManualClickerButton', () => {
   })
 
   function createWrapper() {
-    return mount(ManualClickerButton, { 
-      global: { plugins: [pinia] }
+    return mount(ManualClickerButton, {
+      global: { plugins: [pinia] },
     })
   }
 
@@ -82,7 +82,7 @@ describe('ManualClickerButton', () => {
       const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
-      
+
       for (let i = 0; i < 5; i++) {
         await button.trigger('click')
       }
@@ -159,7 +159,7 @@ describe('ManualClickerButton', () => {
       const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
-      
+
       await button.trigger('click')
       await button.trigger('click')
       await button.trigger('click')
@@ -167,7 +167,6 @@ describe('ManualClickerButton', () => {
       expect(wrapper.findAll('.click-animation')).toHaveLength(3)
     })
   })
-
 
   describe('Edge Cases', () => {
     it('handles click events correctly', async () => {
@@ -179,7 +178,6 @@ describe('ManualClickerButton', () => {
 
       expect(store.getResourceAmount('hcu')).toBeGreaterThan(initialAmount)
     })
-
   })
 
   describe('Accessibility', () => {
@@ -196,11 +194,9 @@ describe('ManualClickerButton', () => {
       const button = wrapper.find('.clicker-button')
       expect(button.attributes('disabled')).toBeUndefined()
     })
-
   })
 
   describe('Component Lifecycle', () => {
-
     it('maintains component state correctly', async () => {
       const wrapper = createWrapper()
 

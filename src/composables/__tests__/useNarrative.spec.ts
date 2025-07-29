@@ -6,8 +6,8 @@ import type { GameState } from '../../stores/gameStore'
 // Mock the UnlockSystem
 vi.mock('../../utils/unlockSystem', () => ({
   UnlockSystem: {
-    checkConditions: vi.fn()
-  }
+    checkConditions: vi.fn(),
+  },
 }))
 
 import { UnlockSystem } from '../../utils/unlockSystem'
@@ -63,14 +63,12 @@ describe('useNarrative', () => {
     // Mock game state
     mockGameState = {
       resources: {
-        hcu: { current: 50, lifetime: 100 }
+        hcu: { current: 50, lifetime: 100 },
       },
-      generators: [
-        { id: 'basicAdBotFarm', owned: 1, name: 'Basic Ad-Bot Farm' }
-      ],
+      generators: [{ id: 'basicAdBotFarm', owned: 1, name: 'Basic Ad-Bot Farm' }],
       upgrades: [],
       narratives: [],
-      prestige: { level: 0 }
+      prestige: { level: 0 },
     } as GameState
   })
 
@@ -80,7 +78,6 @@ describe('useNarrative', () => {
 
       expect(narrative.narrative.value.currentStoryEvents).toHaveLength(4)
       expect(narrative.narrative.value.viewedEvents).toEqual([])
-      expect(narrative.narrative.value.societalStability).toBe(100)
       expect(narrative.narrative.value.pendingEvents).toEqual([])
       expect(narrative.narrative.value.isNarrativeActive).toBe(false)
       expect(narrative.narrative.value.gameStartTime).toBeGreaterThan(0)
@@ -120,12 +117,12 @@ describe('useNarrative', () => {
   describe('Narrative Checking with Unlock System', () => {
     it('should check unlock conditions for all narratives', () => {
       const narrative = useNarrative(mockNarrativeEvents)
-      
+
       // Mock all narratives as locked
       vi.mocked(UnlockSystem.checkConditions).mockReturnValue({
         isUnlocked: false,
         isVisible: true,
-        failedConditions: []
+        failedConditions: [],
       })
 
       narrative.checkAndTriggerNarratives(mockGameState)
@@ -144,12 +141,12 @@ describe('useNarrative', () => {
         .mockReturnValueOnce({
           isUnlocked: true,
           isVisible: true,
-          failedConditions: []
+          failedConditions: [],
         })
         .mockReturnValue({
           isUnlocked: false,
           isVisible: true,
-          failedConditions: []
+          failedConditions: [],
         })
 
       narrative.checkAndTriggerNarratives(mockGameState)
@@ -169,17 +166,17 @@ describe('useNarrative', () => {
         .mockReturnValueOnce({
           isUnlocked: true,
           isVisible: true,
-          failedConditions: []
+          failedConditions: [],
         })
         .mockReturnValueOnce({
           isUnlocked: true,
           isVisible: true,
-          failedConditions: []
+          failedConditions: [],
         })
         .mockReturnValue({
           isUnlocked: false,
           isVisible: true,
-          failedConditions: []
+          failedConditions: [],
         })
 
       narrative.checkAndTriggerNarratives(mockGameState)
@@ -202,7 +199,7 @@ describe('useNarrative', () => {
       vi.mocked(UnlockSystem.checkConditions).mockReturnValue({
         isUnlocked: true,
         isVisible: true,
-        failedConditions: []
+        failedConditions: [],
       })
 
       narrative.checkAndTriggerNarratives(mockGameState)
@@ -214,11 +211,11 @@ describe('useNarrative', () => {
 
     it('should pass correct unlock conditions to UnlockSystem', () => {
       const narrative = useNarrative(mockNarrativeEvents)
-      
+
       vi.mocked(UnlockSystem.checkConditions).mockReturnValue({
         isUnlocked: false,
         isVisible: true,
-        failedConditions: []
+        failedConditions: [],
       })
 
       narrative.checkAndTriggerNarratives(mockGameState)
@@ -226,53 +223,12 @@ describe('useNarrative', () => {
       // Check that correct unlock conditions were passed
       expect(UnlockSystem.checkConditions).toHaveBeenCalledWith(
         mockNarrativeEvents[0].unlockConditions,
-        mockGameState
+        mockGameState,
       )
       expect(UnlockSystem.checkConditions).toHaveBeenCalledWith(
         mockNarrativeEvents[1].unlockConditions,
-        mockGameState
+        mockGameState,
       )
-    })
-  })
-
-  describe('Societal Stability', () => {
-    it('should apply societal stability impact', () => {
-      const narrative = useNarrative(mockNarrativeEvents)
-
-      narrative.triggerNarrativeEvent(mockNarrativeEvents[0]) // -5 impact
-
-      expect(narrative.narrative.value.societalStability).toBe(95)
-    })
-
-    it('should accumulate multiple stability impacts', () => {
-      const narrative = useNarrative(mockNarrativeEvents)
-
-      narrative.triggerNarrativeEvent(mockNarrativeEvents[0]) // -5 impact
-      narrative.triggerNarrativeEvent(mockNarrativeEvents[1]) // -1 impact
-
-      expect(narrative.narrative.value.societalStability).toBe(94)
-    })
-
-    it('should not go below 0', () => {
-      const narrative = useNarrative(mockNarrativeEvents)
-
-      // Set up extreme negative impact
-      mockNarrativeEvents[0].societalStabilityImpact = -150
-
-      narrative.triggerNarrativeEvent(mockNarrativeEvents[0])
-
-      expect(narrative.narrative.value.societalStability).toBe(0)
-    })
-
-    it('should not go above 100', () => {
-      const narrative = useNarrative(mockNarrativeEvents)
-
-      // Set up positive impact
-      mockNarrativeEvents[0].societalStabilityImpact = 50
-
-      narrative.triggerNarrativeEvent(mockNarrativeEvents[0])
-
-      expect(narrative.narrative.value.societalStability).toBe(100)
     })
   })
 
@@ -337,12 +293,10 @@ describe('useNarrative', () => {
       narrative.triggerNarrativeEvent(mockNarrativeEvents[0])
 
       expect(narrative.narrative.value.viewedEvents).toContain('gameStart')
-      expect(narrative.narrative.value.societalStability).toBe(95)
 
       narrative.resetForPrestige()
 
       expect(narrative.narrative.value.viewedEvents).toContain('gameStart')
-      expect(narrative.narrative.value.societalStability).toBe(95)
     })
   })
 
@@ -355,7 +309,6 @@ describe('useNarrative', () => {
       expect(startTime).toBeGreaterThan(0)
       expect(startTime).toBe(narrative.narrative.value.gameStartTime)
     })
-
   })
 
   describe('Direct Event Triggering', () => {
@@ -369,7 +322,6 @@ describe('useNarrative', () => {
       expect(callback).toHaveBeenCalledWith(mockNarrativeEvents[0])
       expect(mockNarrativeEvents[0].isViewed).toBe(true)
       expect(narrative.narrative.value.viewedEvents).toContain('gameStart')
-      expect(narrative.narrative.value.societalStability).toBe(95)
       expect(narrative.narrative.value.pendingEvents).toEqual([mockNarrativeEvents[0]])
     })
   })
@@ -394,12 +346,12 @@ describe('useNarrative', () => {
       }
 
       const narrative = useNarrative([narrativeWithEmptyConditions])
-      
+
       // Empty conditions should always return unlocked
       vi.mocked(UnlockSystem.checkConditions).mockReturnValue({
         isUnlocked: true,
         isVisible: true,
-        failedConditions: []
+        failedConditions: [],
       })
 
       narrative.checkAndTriggerNarratives(mockGameState)
