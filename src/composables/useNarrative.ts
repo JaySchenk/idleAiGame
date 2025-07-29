@@ -89,9 +89,6 @@ export function useNarrative(initialNarratives: NarrativeEvent[]) {
 
     // Notify subscribers
     eventCallbacks.value.forEach((callback) => callback(event))
-
-    console.log(`Narrative Event Triggered: ${event.title}`)
-    console.log(`Societal Stability: ${narrative.value.societalStability}%`)
   }
 
   /**

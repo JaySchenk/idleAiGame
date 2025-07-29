@@ -362,9 +362,6 @@ export const useGameStore = defineStore(
       for (const cost of costs) {
         if (!spendResource(cost.resourceId, cost.amount)) {
           // This shouldn't happen if canPurchaseGenerator worked correctly
-          console.error(
-            `Failed to spend ${cost.amount} ${cost.resourceId} for generator ${generatorId}`,
-          )
           return false
         }
       }
@@ -453,9 +450,6 @@ export const useGameStore = defineStore(
       for (const cost of upgrade.costs) {
         if (!spendResource(cost.resourceId, cost.amount)) {
           // This shouldn't happen if canPurchaseUpgrade worked correctly
-          console.error(
-            `Failed to spend ${cost.amount} ${cost.resourceId} for upgrade ${upgradeId}`,
-          )
           return false
         }
       }

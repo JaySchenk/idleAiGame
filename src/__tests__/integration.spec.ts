@@ -181,7 +181,6 @@ describe('Game Integration Tests', () => {
           }
         } catch (error) {
           // Some upgrades might not be reachable in reasonable time - that's OK
-          console.log(`Skipped upgrade ${upgrade}: ${error}`)
         }
       }
 
@@ -262,7 +261,6 @@ describe('Game Integration Tests', () => {
           )
         } catch (error) {
           // If we can't reach the milestone, that's OK for this test
-          console.log(`Could not reach milestone ${milestone}: ${error}`)
         }
 
         // Run a few more ticks to ensure narrative triggers
