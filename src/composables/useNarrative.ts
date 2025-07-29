@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import type { NarrativeEvent } from '../config/narratives'
-import { UnlockSystem } from '../utils/unlockSystem'
+import { UnlockSystem } from '../game/unlockSystem'
 import type { GameState } from '../stores/gameStore'
 
 /**

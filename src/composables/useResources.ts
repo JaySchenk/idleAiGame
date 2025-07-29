@@ -2,7 +2,7 @@ import type { ComputedRef } from 'vue'
 import type { GameState } from '../stores/gameStore'
 import { resources, type ResourceConfig } from '../config/resources'
 import { GAME_CONSTANTS } from '../config/gameConstants'
-import { UnlockSystem } from '../utils/unlockSystem'
+import { UnlockSystem } from '../game/unlockSystem'
 import { useMultipliers } from './useMultipliers'
 
 export interface ResourceState {

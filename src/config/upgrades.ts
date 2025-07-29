@@ -1,4 +1,4 @@
-import type { UnlockCondition } from '../utils/unlockSystem'
+import type { UnlockCondition } from '../game/unlockSystem'
 
 export interface UpgradeResourceCost {
   resourceId: string

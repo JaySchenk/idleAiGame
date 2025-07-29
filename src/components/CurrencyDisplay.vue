@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
-import { formatResource } from '../utils/formatters'
+import { useFormatters } from '../composables/useFormatters'
 
 interface Props {
   resourceId: string
@@ -18,6 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const gameStore = useGameStore()
+const { formatResource } = useFormatters()
 const resourceConfig = computed(() => gameStore.resourceSystem.getResourceConfig(props.resourceId))
 
 const formattedAmount = computed(() => {

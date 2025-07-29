@@ -1,7 +1,7 @@
 import type { ComputedRef } from 'vue'
 import type { GameState } from '../stores/gameStore'
 import { type GeneratorConfig, type ResourceCost } from '../config/generators'
-import { UnlockSystem } from '../utils/unlockSystem'
+import { UnlockSystem } from '../game/unlockSystem'
 import { useMultipliers } from './useMultipliers'
 
 export interface GeneratorResourceCallbacks {

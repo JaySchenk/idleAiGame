@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { GAME_CONSTANTS } from '../config/gameConstants'
-import { executeGameTick, type GameTickCallbacks } from '../utils/gameLogic'
+import { executeGameTick, type GameTickCallbacks } from '../game/gameLoop'
 
 /**
  * Game loop composable that manages the main game tick cycle

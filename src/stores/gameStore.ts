@@ -6,7 +6,7 @@ import {
   type ResourceCost,
   type ResourceProduction,
 } from '../config/generators'
-import type { UnlockCondition } from '../utils/unlockSystem'
+import type { UnlockCondition } from '../game/unlockSystem'
 import { upgrades as upgradeConfigs, type UpgradeConfig } from '../config/upgrades'
 import { resources, type ResourceConfig } from '../config/resources'
 import { narratives, type NarrativeEvent } from '../config/narratives'
@@ -14,11 +14,11 @@ import { useGameLoop } from '../composables/useGameLoop'
 import { useNarrative } from '../composables/useNarrative'
 import { useTaskSystem } from '../composables/useTaskSystem'
 import { GAME_CONSTANTS } from '../config/gameConstants'
-import { executeGameTick } from '../utils/gameLogic'
+import { executeGameTick } from '../game/gameLoop'
 import { useResources } from '../composables/useResources'
 import { useGenerators } from '../composables/useGenerators'
 import { useMultipliers } from '../composables/useMultipliers'
-import { UnlockSystem } from '../utils/unlockSystem'
+import { UnlockSystem } from '../game/unlockSystem'
 
 export type {
   GeneratorConfig,

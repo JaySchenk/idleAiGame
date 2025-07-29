@@ -4,13 +4,13 @@ import type { NarrativeEvent } from '../../config/narratives'
 import type { GameState } from '../../stores/gameStore'
 
 // Mock the UnlockSystem
-vi.mock('../../utils/unlockSystem', () => ({
+vi.mock('../../game/unlockSystem', () => ({
   UnlockSystem: {
     checkConditions: vi.fn(),
   },
 }))
 
-import { UnlockSystem } from '../../utils/unlockSystem'
+import { UnlockSystem } from '../../game/unlockSystem'
 
 describe('useNarrative', () => {
   let mockNarrativeEvents: NarrativeEvent[]
