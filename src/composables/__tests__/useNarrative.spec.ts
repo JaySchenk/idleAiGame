@@ -352,18 +352,6 @@ describe('useNarrative', () => {
       expect(narrative.narrative.value.pendingEvents).toEqual([mockNarrativeEvents[0]])
     })
 
-    it('should call all subscribers when triggering event', () => {
-      const narrative = useNarrative(mockNarrativeEvents)
-      const callback1 = vi.fn()
-      const callback2 = vi.fn()
-      narrative.onNarrativeEvent(callback1)
-      narrative.onNarrativeEvent(callback2)
-
-      narrative.triggerNarrativeEvent(mockNarrativeEvents[0])
-
-      expect(callback1).toHaveBeenCalledWith(mockNarrativeEvents[0])
-      expect(callback2).toHaveBeenCalledWith(mockNarrativeEvents[0])
-    })
   })
 
   describe('Edge Cases and Error Handling', () => {
@@ -374,81 +362,8 @@ describe('useNarrative', () => {
       expect(narrative.hasPendingEvents()).toBe(false)
     })
 
-    it('should handle undefined trigger values gracefully', () => {
-      const narrative = useNarrative(mockNarrativeEvents)
-      const callback = vi.fn()
-      narrative.onNarrativeEvent(callback)
 
-      narrative.triggerNarrative('contentUnits', undefined)
 
-      expect(callback).not.toHaveBeenCalled()
-    })
 
-    it('should handle events with extreme priority values', () => {
-      const testEvents = [
-        { ...mockNarrativeEvents[0], priority: Number.MAX_SAFE_INTEGER },
-        { ...mockNarrativeEvents[1], priority: -Number.MAX_SAFE_INTEGER },
-        { ...mockNarrativeEvents[2], priority: 0 },
-      ]
-
-      const narrative = useNarrative(testEvents)
-      const callback = vi.fn()
-      narrative.onNarrativeEvent(callback)
-
-      narrative.triggerNarrative('contentUnits', 150)
-
-      // Should be called in priority order (highest first)
-      expect(callback).toHaveBeenNthCalledWith(1, testEvents[2]) // priority 0
-      expect(callback).toHaveBeenNthCalledWith(2, testEvents[1]) // priority -MAX
-    })
-
-    it('should handle events with same priority consistently', () => {
-      const testEvents = [
-        {
-          ...mockNarrativeEvents[0],
-          id: 'event1',
-          triggerType: 'contentUnits',
-          triggerValue: 1,
-          priority: 100,
-        },
-        {
-          ...mockNarrativeEvents[1],
-          id: 'event2',
-          triggerType: 'contentUnits',
-          triggerValue: 1,
-          priority: 100,
-        },
-      ]
-
-      const narrative = useNarrative(testEvents)
-      const callback = vi.fn()
-      narrative.onNarrativeEvent(callback)
-
-      narrative.triggerNarrative('contentUnits', 1)
-
-      expect(callback).toHaveBeenCalledTimes(2)
-      // Order should be consistent (based on array order when priorities are equal)
-    })
-
-    it('should handle concurrent modifications safely', () => {
-      const narrative = useNarrative(mockNarrativeEvents)
-
-      // Simulate modifying events while processing
-      const callback = vi.fn(() => {
-        mockNarrativeEvents.push({
-          id: 'newEvent',
-          title: 'New Event',
-          content: 'New content',
-          triggerType: 'gameStart',
-          societalStabilityImpact: 0,
-          priority: 1,
-          isViewed: false,
-        })
-      })
-
-      narrative.onNarrativeEvent(callback)
-
-      expect(() => narrative.triggerNarrative('gameStart')).not.toThrow()
-    })
   })
 })

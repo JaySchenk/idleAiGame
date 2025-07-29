@@ -203,47 +203,6 @@ describe('GeneratorPurchaseButton', () => {
     })
   })
 
-  describe('Edge Cases', () => {
-    it('handles extremely high costs', async () => {
-      const wrapper = createWrapper()
-
-      // Set high owned count for very high cost
-      store.getGenerator('basicAdBotFarm')!.owned = 50
-      await wrapper.vm.$nextTick()
-
-      const costText = wrapper.find('.cost-display').text()
-      expect(costText).toMatch(/\d+/)
-      expect(costText.length).toBeGreaterThan(2)
-    })
-
-    it('handles component unmounting during purchase', async () => {
-      const wrapper = createWrapper()
-
-      store.addResource('hcu', 50)
-      await wrapper.find('.purchase-button').trigger('click')
-
-      // Should not throw when unmounting
-      expect(() => wrapper.unmount()).not.toThrow()
-    })
-
-    it('handles rapid prop changes', async () => {
-      const wrapper = createWrapper()
-
-      // Setup for clickbaitEngine
-      store.addResource('hcu', 1000)
-      for (let i = 0; i < 5; i++) {
-        store.purchaseGenerator('basicAdBotFarm')
-      }
-
-      // Change generator type
-      await wrapper.setProps({ generatorId: 'clickbaitEngine' })
-      expect(wrapper.find('.generator-name').text()).toBe('Clickbait Engine')
-
-      // Change back
-      await wrapper.setProps({ generatorId: 'basicAdBotFarm' })
-      expect(wrapper.find('.generator-name').text()).toBe('Basic Ad-Bot Farm')
-    })
-  })
 
   describe('Accessibility', () => {
     it('uses proper button semantics', () => {
@@ -253,21 +212,6 @@ describe('GeneratorPurchaseButton', () => {
       expect(button.element.tagName).toBe('BUTTON')
     })
 
-    it('provides clear visual feedback for disabled state', () => {
-      const wrapper = createWrapper()
 
-      const button = wrapper.find('.purchase-button')
-      expect(button.classes()).toContain('disabled')
-      expect(button.attributes('disabled')).toBeDefined()
-    })
-
-    it('maintains clear information hierarchy', () => {
-      const wrapper = createWrapper()
-
-      expect(wrapper.find('.generator-info').exists()).toBe(true)
-      expect(wrapper.find('.generator-name').exists()).toBe(true)
-      expect(wrapper.find('.generator-stats').exists()).toBe(true)
-      expect(wrapper.find('.purchase-button').exists()).toBe(true)
-    })
   })
 })

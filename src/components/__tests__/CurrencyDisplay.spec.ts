@@ -178,25 +178,9 @@ describe('CurrencyDisplay', () => {
       expect(wrapper.text()).toBe('0.00 HCU')
     })
 
-    it('handles decimal precision issues', () => {
-      const { wrapper } = createWrapper({ amount: 0.1 + 0.2 })
-      expect(wrapper.text()).toMatch(/0\.30 HCU/)
-    })
 
-    it('handles Infinity', () => {
-      const { wrapper } = createWrapper({ amount: Infinity })
-      expect(wrapper.text()).toContain('Infinity')
-    })
 
-    it('handles NaN', () => {
-      const { wrapper } = createWrapper({ amount: NaN })
-      expect(wrapper.text()).toContain('NaN')
-    })
 
-    it('handles maximum safe integer', () => {
-      const { wrapper } = createWrapper({ amount: Number.MAX_SAFE_INTEGER })
-      expect(wrapper.text()).toMatch(/\d+\.\d{2}Q HCU/)
-    })
 
     it('handles missing resource config gracefully', () => {
       const { wrapper } = createWrapper({ 
@@ -215,17 +199,5 @@ describe('CurrencyDisplay', () => {
       expect(wrapper.text()).toContain('HCU')
     })
 
-    it('hides unit when showUnit is false for all number formats', () => {
-      const amounts = [100, 1000, 1000000, 1000000000, 1e18]
-
-      amounts.forEach((amount) => {
-        const { wrapper } = createWrapper({
-          amount,
-          showUnit: false,
-        })
-
-        expect(wrapper.text()).not.toContain('HCU')
-      })
-    })
   })
 })

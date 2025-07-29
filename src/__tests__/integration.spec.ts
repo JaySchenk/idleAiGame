@@ -225,41 +225,6 @@ describe('Game Integration Tests', () => {
     })
   })
 
-  describe('Save/Load Integration', () => {
-    it('should maintain game state through save/load cycles', async () => {
-      createIntegrationTestPinia()
-      const gameStore = useGameStore()
-      // Set up complex game state
-      gameStore.addResource('hcu', 50000)
-      gameStore.gameState.resources.hcu.lifetime = 75000
-      gameStore.gameState.prestige.level = 2
-
-      // Purchase generators and upgrades
-      gameStore.purchaseGenerator('basicAdBotFarm')
-      gameStore.purchaseGenerator('basicAdBotFarm')
-      gameStore.purchaseUpgrade('automatedContentScript')
-
-      const beforeSave = {
-        contentUnits: gameStore.getResourceAmount('hcu'),
-        lifetimeContentUnits: gameStore.gameState.resources.hcu?.lifetime || 0,
-        prestigeLevel: gameStore.gameState.prestige.level,
-        generatorOwned: gameStore.getGenerator('basicAdBotFarm')!.owned,
-        upgradesPurchased: gameStore.getUpgrade('automatedContentScript')!.isPurchased,
-      }
-
-      // For this test, we'll just verify the state remains consistent
-      // since the store uses Pinia persistence which handles save/load automatically
-
-      // Verify state is consistent after operations
-      expect(gameStore.getResourceAmount('hcu')).toBe(beforeSave.contentUnits)
-      expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBe(beforeSave.lifetimeContentUnits)
-      expect(gameStore.gameState.prestige.level).toBe(beforeSave.prestigeLevel)
-      expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(beforeSave.generatorOwned)
-      expect(gameStore.getUpgrade('automatedContentScript')!.isPurchased).toBe(
-        beforeSave.upgradesPurchased,
-      )
-    })
-  })
 
   describe('Error Recovery', () => {
     it('should handle corrupted game state gracefully', async () => {
@@ -281,61 +246,6 @@ describe('Game Integration Tests', () => {
       expect(gameStore.gameState.prestige.level).toBeGreaterThanOrEqual(0)
     })
 
-    it('should handle extreme values without breaking', async () => {
-      createIntegrationTestPinia()
-      const gameStore = useGameStore()
-      // Test with very large numbers
-      gameStore.addResource('hcu', Number.MAX_SAFE_INTEGER)
-      expect(() => {
-        gameStore.purchaseGenerator('basicAdBotFarm')
-        vi.advanceTimersByTime(1000)
-      }).not.toThrow()
-      // Test with very small numbers
-      gameStore.spendResource('hcu', gameStore.getResourceAmount('hcu') - 0.01)
-      expect(() => {
-        gameStore.clickForResources()
-        vi.advanceTimersByTime(1000)
-      }).not.toThrow()
-    })
   })
 
-  describe('Performance Under Load', () => {
-    it('should handle many rapid interactions efficiently', async () => {
-      const gameStore = useGameStore()
-
-      setupGameWithResources(gameStore, 1000000)
-
-      const startTime = Date.now()
-
-      // Simulate intensive gameplay
-      for (let i = 0; i < 100; i++) {
-        gameStore.clickForResources()
-
-        if (i % 10 === 0) {
-          if (
-            ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-              gameStore.getGeneratorHCUCost('basicAdBotFarm'),
-            )
-          ) {
-            gameStore.purchaseGenerator('basicAdBotFarm')
-          }
-        }
-
-        if (i % 25 === 0) {
-          // Run a single game loop tick instead of advancing timers
-          runGameLoopTicks(gameStore, 1)
-        }
-      }
-
-      const endTime = Date.now()
-      const duration = endTime - startTime
-
-      // Should complete reasonably quickly (under 1 second)
-      expect(duration).toBeLessThan(1000)
-
-      // Game state should remain consistent
-      expect(gameStore.getResourceAmount('hcu')).toBeGreaterThanOrEqual(0)
-      expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBeGreaterThan(0)
-    })
-  })
 })

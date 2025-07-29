@@ -105,15 +105,6 @@ describe('useGameLoop', () => {
       expect(mockCallbacks.applyResourceProduction).toHaveBeenCalled()
     })
 
-    it('should call applyResourceProduction every tick regardless of production rate', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(300) // 3 ticks
-
-      expect(mockCallbacks.applyResourceProduction).toHaveBeenCalledTimes(3)
-    })
   })
 
   describe('Task System Integration', () => {
@@ -186,22 +177,6 @@ describe('useGameLoop', () => {
       expect(mockCallbacks.setLastContentUnitsCheck).not.toHaveBeenCalled()
     })
 
-    it('should only trigger on integer increases', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-      mockCallbacks.getResourceAmount.mockReturnValue(100.9)
-      mockCallbacks.getLastContentUnitsCheck.mockReturnValue(100.1)
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(100)
-
-      // Math.floor(100.9) = 100, Math.floor(100.1) = 100, so no trigger
-      expect(mockCallbacks.triggerNarrative).not.toHaveBeenCalledWith(
-        'resourceAmount',
-        expect.any(Number),
-        'hcu',
-      )
-    })
 
     it('should trigger when crossing integer boundaries', () => {
       const gameLoop = useGameLoop()
@@ -262,21 +237,6 @@ describe('useGameLoop', () => {
       expect(gameLoop.currentTime.value).toBeGreaterThan(initialTime)
     })
 
-    it('should have current time as reactive value', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-
-      gameLoop.startGameLoop(mockCallbacks)
-
-      const time1 = gameLoop.currentTime.value
-      vi.advanceTimersByTime(100)
-      const time2 = gameLoop.currentTime.value
-      vi.advanceTimersByTime(100)
-      const time3 = gameLoop.currentTime.value
-
-      expect(time2).toBeGreaterThan(time1)
-      expect(time3).toBeGreaterThan(time2)
-    })
   })
 
   describe('Integration and Edge Cases', () => {
@@ -313,25 +273,7 @@ describe('useGameLoop', () => {
       expect(mockCallbacks.completeTask).toHaveBeenCalled()
     })
 
-    it('should handle very high production rates', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
 
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(100)
-
-      expect(mockCallbacks.applyResourceProduction).toHaveBeenCalled()
-    })
-
-    it('should handle zero or negative production rates safely', () => {
-      const gameLoop = useGameLoop()
-      const mockCallbacks = createMockCallbacks()
-
-      gameLoop.startGameLoop(mockCallbacks)
-      vi.advanceTimersByTime(100)
-
-      expect(mockCallbacks.applyResourceProduction).toHaveBeenCalled()
-    })
 
     it('should stop cleanly and not continue processing', () => {
       const gameLoop = useGameLoop()

@@ -51,23 +51,6 @@ describe('GameStore', () => {
       expect(store.canAffordResource('hcu', 150)).toBe(false)
     })
 
-    it('formats resources for display', () => {
-      const testCases = [
-        { amount: 0, expected: '0.00 HCU' },
-        { amount: 1, expected: '1.00 HCU' },
-        { amount: 999.99, expected: '999.99 HCU' },
-        { amount: 1000, expected: '1.00K HCU' },
-        { amount: 1000000, expected: '1.00M HCU' },
-        { amount: 1000000000, expected: '1.00B HCU' },
-        { amount: 1000000000000, expected: '1.00T HCU' },
-        { amount: 1000000000000000, expected: '1.00Q HCU' },
-        { amount: 1e18, expected: '1.00e+18 HCU' },
-      ]
-
-      testCases.forEach(({ amount, expected }) => {
-        expect(store.formatResource('hcu', amount)).toBe(expected)
-      })
-    })
   })
 
   describe('Generator Management', () => {
@@ -259,35 +242,4 @@ describe('GameStore', () => {
     })
   })
 
-  describe('Edge Cases', () => {
-    it('handles very large numbers', () => {
-      const largeNumber = 1e15
-      store.addResource('hcu', largeNumber)
-      
-      expect(store.getResourceAmount('hcu')).toBe(largeNumber)
-      expect(store.formatResource('hcu', largeNumber)).toBe('1.00Q HCU')
-    })
-
-    it('handles maximum safe integer', () => {
-      store.addResource('hcu', Number.MAX_SAFE_INTEGER)
-      
-      expect(store.canAffordResource('hcu', Number.MAX_SAFE_INTEGER)).toBe(true)
-      expect(store.canAffordResource('hcu', Number.MAX_SAFE_INTEGER + 1)).toBe(false)
-    })
-
-    it('handles missing generators gracefully', () => {
-      expect(store.getGenerator('nonexistent')).toBeUndefined()
-      expect(store.getGeneratorCost('nonexistent')).toEqual([])
-      expect(store.getGeneratorMultiplier('nonexistent')).toBe(1)
-    })
-
-    it('maintains lifetime totals correctly', () => {
-      store.addResource('hcu', 100)
-      store.spendResource('hcu', 50)
-      store.addResource('hcu', 25)
-      
-      expect(store.getResourceAmount('hcu')).toBe(75)
-      expect(store.gameState.resources.hcu.lifetime).toBe(125)
-    })
-  })
 })

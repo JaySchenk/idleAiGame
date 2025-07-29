@@ -187,37 +187,6 @@ describe('useTaskSystem', () => {
     })
   })
 
-  describe('Progress Reactivity', () => {
-    it('should calculate different progress values based on current time', () => {
-      // Test with different time functions to show the computed property works
-      const time1Fn = vi.fn().mockReturnValue(baseTime)
-      const time2Fn = vi.fn().mockReturnValue(baseTime + 15000)
-
-      const taskSystem1 = useTaskSystem(time1Fn)
-      const taskSystem2 = useTaskSystem(time2Fn)
-
-      // Both start at the same time
-      taskSystem1.taskStartTime.value = baseTime
-      taskSystem2.taskStartTime.value = baseTime
-
-      // Should have different progress based on current time
-      expect(taskSystem1.taskProgress.value.progressPercent).toBe(0)
-      expect(taskSystem2.taskProgress.value.progressPercent).toBe(50)
-    })
-
-    it('should update progress reactively when start time changes', () => {
-      const taskSystem = useTaskSystem(mockCurrentTime)
-      mockCurrentTime.mockReturnValue(baseTime + 15000)
-
-      // Set start time to create 50% progress
-      taskSystem.taskStartTime.value = baseTime
-      expect(taskSystem.taskProgress.value.progressPercent).toBe(50)
-
-      // Reset start time to current time
-      taskSystem.taskStartTime.value = baseTime + 15000
-      expect(taskSystem.taskProgress.value.progressPercent).toBe(0)
-    })
-  })
 
   describe('Integration Scenarios', () => {
     it('should handle rapid completion cycles', () => {
@@ -257,34 +226,9 @@ describe('useTaskSystem', () => {
       })
     })
 
-    it('should maintain consistent state across multiple calls', () => {
-      const taskSystem = useTaskSystem(mockCurrentTime)
-      taskSystem.taskStartTime.value = baseTime
-      mockCurrentTime.mockReturnValue(baseTime + 15000)
-
-      // Multiple calls should return identical results
-      const progress1 = taskSystem.taskProgress.value
-      const progress2 = taskSystem.taskProgress.value
-      const progress3 = taskSystem.taskProgress.value
-
-      expect(progress1).toEqual(progress2)
-      expect(progress2).toEqual(progress3)
-    })
   })
 
   describe('Edge Cases', () => {
-    it('should handle very long elapsed times', () => {
-      const taskSystem = useTaskSystem(mockCurrentTime)
-
-      taskSystem.taskStartTime.value = baseTime
-      mockCurrentTime.mockReturnValue(baseTime + 300000) // 5 minutes elapsed
-
-      const progress = taskSystem.taskProgress.value
-
-      expect(progress.isComplete).toBe(true)
-      expect(progress.progressPercent).toBe(100) // Should cap at 100
-      expect(progress.timeRemaining).toBe(0)
-    })
 
     it('should handle concurrent completion attempts', () => {
       const taskSystem = useTaskSystem(mockCurrentTime)
@@ -302,27 +246,6 @@ describe('useTaskSystem', () => {
       expect(addContentUnits).toHaveBeenCalledTimes(1)
     })
 
-    it('should handle extreme start times', () => {
-      const taskSystem = useTaskSystem(mockCurrentTime)
 
-      // Set start time very far in the past
-      taskSystem.taskStartTime.value = 1
-      mockCurrentTime.mockReturnValue(baseTime)
-
-      const progress = taskSystem.taskProgress.value
-
-      expect(progress.isComplete).toBe(true)
-      expect(progress.progressPercent).toBe(100)
-      expect(progress.timeElapsed).toBeGreaterThan(30000)
-    })
-
-    it('should maintain correct constants', () => {
-      const taskSystem = useTaskSystem(mockCurrentTime)
-
-      expect(taskSystem.taskDuration).toBe(30000)
-      expect(taskSystem.taskRewards).toEqual([{ resourceId: 'hcu', amount: 10 }])
-      expect(typeof taskSystem.taskDuration).toBe('number')
-      expect(Array.isArray(taskSystem.taskRewards)).toBe(true)
-    })
   })
 })

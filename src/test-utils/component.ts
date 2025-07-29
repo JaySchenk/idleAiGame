@@ -3,9 +3,24 @@
  */
 
 import { mount } from '@vue/test-utils'
-import { withPinia } from './pinia'
+import { createStandardTestPinia } from './pinia'
 
 /**
  * Mount a component with standard Pinia setup
  */
-export const mountWithPinia = withPinia(mount)
+export function mountWithPinia(component: unknown, options: Record<string, unknown> = {}) {
+  const pinia = createStandardTestPinia()
+  
+  const mergedOptions = {
+    ...options,
+    global: {
+      ...options.global,
+      plugins: [
+        ...(options.global?.plugins || []),
+        pinia,
+      ],
+    },
+  }
+  
+  return mount(component, mergedOptions)
+}

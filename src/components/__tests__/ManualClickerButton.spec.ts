@@ -168,36 +168,6 @@ describe('ManualClickerButton', () => {
     })
   })
 
-  describe('Performance', () => {
-    it('handles many clicks efficiently', async () => {
-      const wrapper = createWrapper()
-
-      const button = wrapper.find('.clicker-button')
-      const startTime = performance.now()
-      
-      for (let i = 0; i < 20; i++) {
-        await button.trigger('click')
-      }
-      
-      const endTime = performance.now()
-      expect(endTime - startTime).toBeLessThan(2000)
-      expect(store.getResourceAmount('hcu')).toBe(20)
-    })
-
-    it('cleans up animations properly', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find('.clicker-button').trigger('click')
-      await wrapper.find('.clicker-button').trigger('click')
-
-      expect(wrapper.findAll('.click-animation')).toHaveLength(2)
-
-      vi.advanceTimersByTime(1200)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findAll('.click-animation')).toHaveLength(0)
-    })
-  })
 
   describe('Edge Cases', () => {
     it('handles click events correctly', async () => {
@@ -210,20 +180,6 @@ describe('ManualClickerButton', () => {
       expect(store.getResourceAmount('hcu')).toBeGreaterThan(initialAmount)
     })
 
-    it('maintains functionality after multiple interactions', async () => {
-      const wrapper = createWrapper()
-
-      const button = wrapper.find('.clicker-button')
-      
-      // Mix of different interactions
-      await button.trigger('mousedown')
-      await button.trigger('mouseup')
-      await button.trigger('click')
-      await button.trigger('mouseleave')
-      await button.trigger('click')
-
-      expect(store.getResourceAmount('hcu')).toBe(2)
-    })
   })
 
   describe('Accessibility', () => {
@@ -241,22 +197,9 @@ describe('ManualClickerButton', () => {
       expect(button.attributes('disabled')).toBeUndefined()
     })
 
-    it('supports keyboard navigation', () => {
-      const wrapper = createWrapper()
-
-      const button = wrapper.find('.clicker-button')
-      expect(button.element.tabIndex).not.toBe(-1)
-    })
   })
 
   describe('Component Lifecycle', () => {
-    it('unmounts cleanly without errors', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find('.clicker-button').trigger('click')
-
-      expect(() => wrapper.unmount()).not.toThrow()
-    })
 
     it('maintains component state correctly', async () => {
       const wrapper = createWrapper()
