@@ -15,10 +15,18 @@
 
     <div class="upgrade-requirements" v-if="!requirementsMet">
       <div class="requirement-text">Requires:</div>
-      <div v-for="req in upgrade.requirements" :key="req.generatorId" class="requirement-item">
-        {{ req.minOwned }} {{ getGeneratorName(req.generatorId) }}
-        <span class="requirement-progress">
-          ({{ getGeneratorOwned(req.generatorId) }}/{{ req.minOwned }})
+      <div v-for="condition in upgrade.unlockConditions" :key="condition.generatorId || condition.resourceId" class="requirement-item">
+        <span v-if="condition.type === 'generator' && condition.generatorId">
+          {{ condition.minOwned }} {{ getGeneratorName(condition.generatorId) }}
+          <span class="requirement-progress">
+            ({{ getGeneratorOwned(condition.generatorId) }}/{{ condition.minOwned }})
+          </span>
+        </span>
+        <span v-else-if="condition.type === 'resource' && condition.resourceId">
+          {{ condition.minAmount }} {{ condition.resourceId }}
+        </span>
+        <span v-else>
+          {{ condition.type }} condition
         </span>
       </div>
     </div>

@@ -284,7 +284,7 @@ describe('Game Integration Tests', () => {
       // Set up complex game state
       gameStore.addResource('hcu', 50000)
       gameStore.gameState.resources.hcu.lifetime = 75000
-      gameStore.gameState.prestigeLevel = 2
+      gameStore.gameState.prestige.level = 2
 
       // Purchase generators and upgrades
       gameStore.purchaseGenerator('basicAdBotFarm')
@@ -294,7 +294,7 @@ describe('Game Integration Tests', () => {
       const beforeSave = {
         contentUnits: gameStore.getResourceAmount('hcu'),
         lifetimeContentUnits: gameStore.gameState.resources.hcu?.lifetime || 0,
-        prestigeLevel: gameStore.gameState.prestigeLevel,
+        prestigeLevel: gameStore.gameState.prestige.level,
         generatorOwned: gameStore.getGenerator('basicAdBotFarm')!.owned,
         upgradesPurchased: gameStore.getUpgrade('automatedContentScript')!.isPurchased,
       }
@@ -305,7 +305,7 @@ describe('Game Integration Tests', () => {
       // Verify state is consistent after operations
       expect(gameStore.getResourceAmount('hcu')).toBe(beforeSave.contentUnits)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBe(beforeSave.lifetimeContentUnits)
-      expect(gameStore.gameState.prestigeLevel).toBe(beforeSave.prestigeLevel)
+      expect(gameStore.gameState.prestige.level).toBe(beforeSave.prestigeLevel)
       expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(beforeSave.generatorOwned)
       expect(gameStore.getUpgrade('automatedContentScript')!.isPurchased).toBe(
         beforeSave.upgradesPurchased,

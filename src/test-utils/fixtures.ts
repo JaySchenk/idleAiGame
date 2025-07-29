@@ -54,12 +54,13 @@ export const mockUpgrades: UpgradeConfig[] = [
     id: 'automatedContentScript',
     name: 'Soul-Crushing Automation',
     description: 'Increases Mindless Ad-Bot Farm production by 25%',
-    cost: 50,
+    costs: [{ resourceId: 'hcu', amount: 50 }],
     targetGenerator: 'basicAdBotFarm',
     effectType: 'production_multiplier',
     effectValue: 1.25,
-    requirements: [
+    unlockConditions: [
       {
+        type: 'generator',
         generatorId: 'basicAdBotFarm',
         minOwned: 5,
       },
@@ -70,12 +71,13 @@ export const mockUpgrades: UpgradeConfig[] = [
     id: 'clickbaitOptimizer',
     name: 'Clickbait Optimizer',
     description: 'Increases Clickbait Engine production by 50%',
-    cost: 250,
+    costs: [{ resourceId: 'hcu', amount: 250 }],
     targetGenerator: 'clickbaitEngine',
     effectType: 'production_multiplier',
     effectValue: 1.5,
-    requirements: [
+    unlockConditions: [
       {
+        type: 'generator',
         generatorId: 'clickbaitEngine',
         minOwned: 3,
       },

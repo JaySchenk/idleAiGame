@@ -1,11 +1,51 @@
 export interface UnlockCondition {
-  type: 'resource' | 'generator' | 'upgrade' | 'narrative'
+  type: 
+    | 'resource' 
+    | 'generator' 
+    | 'upgrade' 
+    | 'narrative' 
+    | 'prestige' 
+    | 'time' 
+    | 'achievement'
+    | 'multiple'
+  
+  // Resource conditions
   resourceId?: string
   minAmount?: number
+  maxAmount?: number
+  
+  // Generator conditions
   generatorId?: string
   minOwned?: number
+  maxOwned?: number
+  
+  // Upgrade conditions
   upgradeId?: string
+  
+  // Narrative conditions
   narrativeId?: string
+  
+  // Prestige conditions
+  minPrestigeLevel?: number
+  
+  // Time conditions (in milliseconds)
+  minPlayTime?: number
+  
+  // Achievement conditions (for future use)
+  achievementId?: string
+  
+  // Multiple conditions (AND/OR logic)
+  conditions?: UnlockCondition[]
+  logic?: 'AND' | 'OR'
+  
+  // Comparison operator for numeric values
+  comparison?: '>' | '<' | '>=' | '<=' | '==' | '!='
+  
+  // Visibility control
+  visible?: boolean // If false, item is hidden when locked (default: true)
+  
+  // Optional description for debugging/UI
+  description?: string
 }
 
 export interface ResourceCost {

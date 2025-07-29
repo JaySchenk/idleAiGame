@@ -1,7 +1,4 @@
-export interface UpgradeRequirement {
-  generatorId: string
-  minOwned: number
-}
+import type { UnlockCondition } from './generators'
 
 export interface UpgradeResourceCost {
   resourceId: string
@@ -16,7 +13,7 @@ export interface UpgradeConfig {
   targetGenerator: string
   effectType: 'production_multiplier' | 'global_multiplier'
   effectValue: number
-  requirements: UpgradeRequirement[]
+  unlockConditions: UnlockCondition[]
   isPurchased: boolean
 }
 
@@ -29,8 +26,9 @@ export const upgrades: UpgradeConfig[] = [
     targetGenerator: 'basicAdBotFarm',
     effectType: 'production_multiplier',
     effectValue: 1.25,
-    requirements: [
+    unlockConditions: [
       {
+        type: 'generator',
         generatorId: 'basicAdBotFarm',
         minOwned: 5,
       },
@@ -45,8 +43,9 @@ export const upgrades: UpgradeConfig[] = [
     targetGenerator: 'clickbaitEngine',
     effectType: 'production_multiplier',
     effectValue: 1.5,
-    requirements: [
+    unlockConditions: [
       {
+        type: 'generator',
         generatorId: 'clickbaitEngine',
         minOwned: 3,
       },

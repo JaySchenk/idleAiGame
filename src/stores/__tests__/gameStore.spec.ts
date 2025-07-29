@@ -544,7 +544,7 @@ describe('GameStore', () => {
       const upgradeWithNoReqs = {
         ...mockUpgrades[0],
         id: 'noReqsUpgrade',
-        requirements: [],
+        unlockConditions: [],
       }
 
       store.gameState.upgrades.push(upgradeWithNoReqs)

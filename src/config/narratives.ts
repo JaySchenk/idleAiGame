@@ -1,3 +1,5 @@
+import type { UnlockCondition } from './generators'
+
 export interface NarrativeEvent {
   id: string
   title: string
@@ -11,6 +13,7 @@ export interface NarrativeEvent {
     | 'timeElapsed'
   triggerValue?: number
   triggerCondition?: string // For resourceAmount triggers, this would be the resourceId
+  unlockConditions?: UnlockCondition[] // Optional unlock conditions for narratives
   isViewed: boolean
   societalStabilityImpact: number
   priority: number
@@ -163,6 +166,10 @@ export const narratives: NarrativeEvent[] = [
     triggerType: 'resourceAmount',
     triggerValue: 100000,
     triggerCondition: 'hcu',
+    unlockConditions: [
+      { type: 'prestige', minPrestigeLevel: 2 },
+      { type: 'resource', resourceId: 'aa', minAmount: 50 }
+    ],
     isViewed: false,
     societalStabilityImpact: -70,
     priority: 50,

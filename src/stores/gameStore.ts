@@ -21,6 +21,7 @@ import {
   applyGlobalMultipliers,
   getHCUProductionRate,
 } from '../game/Generators'
+import { UnlockSystem } from '../utils/unlockSystem'
 
 export type {
   GeneratorConfig,
@@ -42,7 +43,9 @@ export interface GameState {
   resources: Record<string, ResourceState>
   generators: GeneratorConfig[]
   upgrades: UpgradeConfig[]
+  narratives: NarrativeEvent[]
   prestige: { level: number }
+  gameStartTime?: number
 }
 
 export const useGameStore = defineStore(
@@ -66,6 +69,7 @@ export const useGameStore = defineStore(
       ),
       generators: generatorConfigs.map((g) => ({ ...g, owned: 0 })),
       upgrades: upgradeConfigs.map((u) => ({ ...u, isPurchased: false })),
+      narratives: narratives.map((n) => ({ ...n, isViewed: false })),
       prestige: { level: 0 },
     })
 
@@ -325,43 +329,19 @@ export const useGameStore = defineStore(
      */
     function checkUnlockConditions(generatorId: string): boolean {
       const generator = gameState.value.generators.find((g) => g.id === generatorId)
-      if (!generator || !generator.unlockConditions) return true
-
-      for (const condition of generator.unlockConditions) {
-        switch (condition.type) {
-          case 'resource':
-            if (condition.resourceId && condition.minAmount) {
-              const resourceValue = getResourceAmount(condition.resourceId)
-              if (resourceValue < condition.minAmount) {
-                return false
-              }
-            }
-            break
-          case 'generator':
-            if (condition.generatorId && condition.minOwned) {
-              const targetGenerator = gameState.value.generators.find(
-                (g) => g.id === condition.generatorId,
-              )
-              if (!targetGenerator || targetGenerator.owned < condition.minOwned) {
-                return false
-              }
-            }
-            break
-          case 'upgrade':
-            if (condition.upgradeId) {
-              const upgrade = gameState.value.upgrades.find((u) => u.id === condition.upgradeId)
-              if (!upgrade || !upgrade.isPurchased) {
-                return false
-              }
-            }
-            break
-          case 'narrative':
-            // Add narrative condition check if needed
-            break
-        }
+      if (!generator) return false
+      
+      const currentGameState: GameState = {
+        resources: gameState.value.resources,
+        generators: gameState.value.generators,
+        upgrades: gameState.value.upgrades,
+        narratives: gameState.value.narratives,
+        prestige: gameState.value.prestige,
+        gameStartTime: gameState.value.gameStartTime
       }
-
-      return true
+      
+      const result = UnlockSystem.checkConditions(generator.unlockConditions || [], currentGameState)
+      return result.isUnlocked
     }
 
     /**
@@ -420,20 +400,23 @@ export const useGameStore = defineStore(
     }
 
     /**
-     * Check if upgrade requirements are met
+     * Check if upgrade unlock conditions are met
      */
     function areUpgradeRequirementsMet(upgradeId: string): boolean {
       const upgrade = gameState.value.upgrades.find((u) => u.id === upgradeId)
       if (!upgrade) return false
 
-      for (const requirement of upgrade.requirements) {
-        const generator = gameState.value.generators.find((g) => g.id === requirement.generatorId)
-        if (!generator || generator.owned < requirement.minOwned) {
-          return false
-        }
+      const currentGameState: GameState = {
+        resources: gameState.value.resources,
+        generators: gameState.value.generators,
+        upgrades: gameState.value.upgrades,
+        narratives: gameState.value.narratives,
+        prestige: gameState.value.prestige,
+        gameStartTime: gameState.value.gameStartTime
       }
-
-      return true
+      
+      const result = UnlockSystem.checkConditions(upgrade.unlockConditions || [], currentGameState)
+      return result.isUnlocked
     }
 
     /**
@@ -648,6 +631,42 @@ export const useGameStore = defineStore(
       purchaseGenerator,
       getGeneratorProductionRate,
       checkUnlockConditions,
+
+      // ===== RESOURCE UNLOCK CHECKS =====
+      checkResourceUnlocked: (resourceId: string): boolean => {
+        const resourceConfig = getResourceConfig(resourceId)
+        if (!resourceConfig || !resourceConfig.unlockConditions) return true
+        
+        const currentGameState: GameState = {
+          resources: gameState.value.resources,
+          generators: gameState.value.generators,
+          upgrades: gameState.value.upgrades,
+          narratives: gameState.value.narratives,
+          prestige: gameState.value.prestige,
+          gameStartTime: gameState.value.gameStartTime
+        }
+        
+        const result = UnlockSystem.checkConditions(resourceConfig.unlockConditions, currentGameState)
+        return result.isUnlocked
+      },
+
+      // ===== NARRATIVE UNLOCK CHECKS =====
+      checkNarrativeUnlocked: (narrativeId: string): boolean => {
+        const narrative = gameState.value.narratives.find(n => n.id === narrativeId)
+        if (!narrative || !narrative.unlockConditions) return true
+        
+        const currentGameState: GameState = {
+          resources: gameState.value.resources,
+          generators: gameState.value.generators,
+          upgrades: gameState.value.upgrades,
+          narratives: gameState.value.narratives,
+          prestige: gameState.value.prestige,
+          gameStartTime: gameState.value.gameStartTime
+        }
+        
+        const result = UnlockSystem.checkConditions(narrative.unlockConditions, currentGameState)
+        return result.isUnlocked
+      },
 
       // ===== UPGRADE ACTIONS =====
       getUpgrade,

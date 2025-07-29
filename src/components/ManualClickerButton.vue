@@ -71,7 +71,7 @@ let animationId = 0
 // Get resource display name
 const getResourceDisplayName = (resourceId: string): string => {
   const resource = gameStore.getResourceConfig(resourceId)
-  return resource ? resource.unit : resourceId.toUpperCase()
+  return resource ? resource.symbol : resourceId.toUpperCase()
 }
 
 // Handle click with visual feedback
