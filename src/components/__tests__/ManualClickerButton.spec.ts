@@ -1,35 +1,27 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import { useGameStore } from '../../stores/gameStore'
 import ManualClickerButton from '../ManualClickerButton.vue'
-
-// Mock CurrencyDisplay component
-vi.mock('../CurrencyDisplay.vue', () => ({
-  default: {
-    name: 'CurrencyDisplay',
-    props: ['resourceId', 'amount', 'showUnit'],
-    template: '<span>{{ amount }} {{ showUnit !== false ? resourceId.toUpperCase() : "" }}</span>',
-  },
-}))
+import { createStandardTestPinia } from '../../test-utils/pinia'
 
 describe('ManualClickerButton', () => {
   let store: ReturnType<typeof useGameStore>
-  let pinia: any
+  let pinia: ReturnType<typeof createStandardTestPinia>
 
   beforeEach(() => {
-    pinia = createTestingPinia({
-      createSpy: vi.fn,
-      stubActions: false,
-    })
+    pinia = createStandardTestPinia()
     store = useGameStore(pinia)
   })
 
+  function createWrapper() {
+    return mount(ManualClickerButton, { 
+      global: { plugins: [pinia] }
+    })
+  }
+
   describe('Rendering', () => {
     it('renders the clicker button with correct elements', () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.find('.clicker-title').text()).toBe('Desperate Human Touch')
       expect(wrapper.find('.click-text').text()).toBe('CLICK')
@@ -38,18 +30,14 @@ describe('ManualClickerButton', () => {
     })
 
     it('displays click rewards from store', () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.find('.clicker-description').exists()).toBe(true)
       expect(wrapper.find('.click-reward').exists()).toBe(true)
     })
 
     it('applies proper CSS classes', () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.find('.clicker-container').exists()).toBe(true)
       expect(wrapper.find('.clicker-button').exists()).toBe(true)
@@ -59,9 +47,7 @@ describe('ManualClickerButton', () => {
 
   describe('Click Functionality', () => {
     it('calls clickForResources when clicked', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const clickSpy = vi.spyOn(store, 'clickForResources')
 
@@ -71,9 +57,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('adds resources when clicked', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const initialUnits = store.getResourceAmount('hcu')
 
@@ -84,9 +68,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('applies prestige multiplier to clicks', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.gameState.prestige.level = 1 // 1.25x multiplier
 
@@ -97,9 +79,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('handles multiple clicks', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
       
@@ -113,9 +93,7 @@ describe('ManualClickerButton', () => {
 
   describe('Visual Feedback', () => {
     it('shows clicking state during interaction', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
       expect(button.classes()).not.toContain('clicking')
@@ -130,9 +108,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('handles mouse events for visual feedback', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
 
@@ -144,9 +120,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('handles mouse leave events', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
 
@@ -160,9 +134,7 @@ describe('ManualClickerButton', () => {
 
   describe('Click Animations', () => {
     it('creates click animation on click', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.findAll('.click-animation')).toHaveLength(0)
 
@@ -172,9 +144,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('removes animations after timeout', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       await wrapper.find('.clicker-button').trigger('click')
       expect(wrapper.findAll('.click-animation')).toHaveLength(1)
@@ -186,9 +156,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('handles multiple rapid click animations', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
       
@@ -202,9 +170,7 @@ describe('ManualClickerButton', () => {
 
   describe('Performance', () => {
     it('handles many clicks efficiently', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
       const startTime = performance.now()
@@ -219,9 +185,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('cleans up animations properly', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       await wrapper.find('.clicker-button').trigger('click')
       await wrapper.find('.clicker-button').trigger('click')
@@ -237,9 +201,7 @@ describe('ManualClickerButton', () => {
 
   describe('Edge Cases', () => {
     it('handles click events correctly', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const initialAmount = store.getResourceAmount('hcu')
 
@@ -249,9 +211,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('maintains functionality after multiple interactions', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
       
@@ -268,27 +228,21 @@ describe('ManualClickerButton', () => {
 
   describe('Accessibility', () => {
     it('uses proper button semantics', () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
       expect(button.element.tagName).toBe('BUTTON')
     })
 
     it('is always enabled for interaction', () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
       expect(button.attributes('disabled')).toBeUndefined()
     })
 
     it('supports keyboard navigation', () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.clicker-button')
       expect(button.element.tabIndex).not.toBe(-1)
@@ -297,9 +251,7 @@ describe('ManualClickerButton', () => {
 
   describe('Component Lifecycle', () => {
     it('unmounts cleanly without errors', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       await wrapper.find('.clicker-button').trigger('click')
 
@@ -307,9 +259,7 @@ describe('ManualClickerButton', () => {
     })
 
     it('maintains component state correctly', async () => {
-      const wrapper = mount(ManualClickerButton, {
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       await wrapper.find('.clicker-button').trigger('click')
       expect(store.getResourceAmount('hcu')).toBe(1)

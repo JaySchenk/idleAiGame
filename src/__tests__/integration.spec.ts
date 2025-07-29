@@ -9,56 +9,6 @@ import {
 import { useGameStore } from '../stores/gameStore'
 // Use string IDs directly instead of importing config objects
 
-// Mock all components to focus on integration logic
-vi.mock('../components/ResourceDisplay.vue', () => ({
-  default: {
-    name: 'ResourceDisplay',
-    template: '<div class="resource-display">Resource Display</div>',
-  },
-}))
-
-vi.mock('../components/ManualClickerButton.vue', () => ({
-  default: {
-    name: 'ManualClickerButton',
-    template: '<button class="manual-clicker" @click="$emit(\'click\')">Click</button>',
-    emits: ['click'],
-  },
-}))
-
-vi.mock('../components/GeneratorPurchaseButton.vue', () => ({
-  default: {
-    name: 'GeneratorPurchaseButton',
-    props: ['generatorId', 'generatorName'],
-    template:
-      '<button class="generator-purchase" @click="$emit(\'purchase\')">Purchase {{ generatorName }}</button>',
-    emits: ['purchase'],
-  },
-}))
-
-vi.mock('../components/UpgradeButton.vue', () => ({
-  default: {
-    name: 'UpgradeButton',
-    props: ['upgradeId'],
-    template: '<button class="upgrade-button" @click="$emit(\'purchase\')">Upgrade</button>',
-    emits: ['purchase'],
-  },
-}))
-
-vi.mock('../components/PrestigeButton.vue', () => ({
-  default: {
-    name: 'PrestigeButton',
-    template: '<button class="prestige-button" @click="$emit(\'prestige\')">Prestige</button>',
-    emits: ['prestige'],
-  },
-}))
-
-vi.mock('../components/NarrativeDisplay.vue', () => ({
-  default: {
-    name: 'NarrativeDisplay',
-    template: '<div class="narrative-display">Narrative</div>',
-  },
-}))
-
 describe('Game Integration Tests', () => {
   beforeEach(() => {
     createIntegrationTestPinia()
@@ -179,7 +129,7 @@ describe('Game Integration Tests', () => {
             gameStore.purchaseUpgrade(upgrade)
             expect(gameStore.getUpgrade(upgrade)!.isPurchased).toBe(true)
           }
-        } catch (error) {
+        } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
           // Some upgrades might not be reachable in reasonable time - that's OK
         }
       }
@@ -259,7 +209,7 @@ describe('Game Integration Tests', () => {
             },
             5000, // Reasonable limit
           )
-        } catch (error) {
+        } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
           // If we can't reach the milestone, that's OK for this test
         }
 

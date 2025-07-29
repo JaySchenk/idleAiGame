@@ -1,24 +1,15 @@
-import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { describe, it, expect } from 'vitest'
 import CurrencyDisplay from '../CurrencyDisplay.vue'
 import { useGameStore } from '../../stores/gameStore'
+import { mountWithPinia } from '../../test-utils/component'
 
 describe('CurrencyDisplay', () => {
   function createWrapper(props = {}) {
-    const wrapper = mount(CurrencyDisplay, {
+    const wrapper = mountWithPinia(CurrencyDisplay, {
       props: {
         resourceId: 'hcu',
         amount: 100,
         ...props,
-      },
-      global: {
-        plugins: [
-          createTestingPinia({
-            createSpy: vi.fn,
-            stubActions: false,
-          }),
-        ],
       },
     })
 

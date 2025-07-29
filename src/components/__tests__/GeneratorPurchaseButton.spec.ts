@@ -1,36 +1,28 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils' 
 import { useGameStore } from '../../stores/gameStore'
 import GeneratorPurchaseButton from '../GeneratorPurchaseButton.vue'
-
-// Mock CurrencyDisplay component
-vi.mock('../CurrencyDisplay.vue', () => ({
-  default: {
-    name: 'CurrencyDisplay',
-    props: ['resourceId', 'amount', 'showUnit'],
-    template: '<span>{{ amount }} {{ showUnit !== false ? "HCU" : "" }}</span>',
-  },
-}))
+import { createStandardTestPinia } from '../../test-utils/pinia'
 
 describe('GeneratorPurchaseButton', () => {
   let store: ReturnType<typeof useGameStore>
-  let pinia: any
+  let pinia: ReturnType<typeof createStandardTestPinia>
 
   beforeEach(() => {
-    pinia = createTestingPinia({
-      createSpy: vi.fn,
-      stubActions: false,
-    })
+    pinia = createStandardTestPinia()
     store = useGameStore(pinia)
   })
 
+  function createWrapper(props = { generatorId: 'basicAdBotFarm' }) {
+    return mount(GeneratorPurchaseButton, { 
+      props,
+      global: { plugins: [pinia] } 
+    })
+  }
+
   describe('Rendering', () => {
     it('displays generator information correctly', () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.find('.generator-name').text()).toBe('Basic Ad-Bot Farm')
       expect(wrapper.find('.owned-count').text()).toContain('Owned: 0')
@@ -39,19 +31,13 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('shows correct base cost', () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.find('.cost-display').text()).toContain('10')
     })
 
     it('updates cost when generator count changes', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       // Purchase one generator to increase cost
       store.addResource('hcu', 100)
@@ -65,10 +51,7 @@ describe('GeneratorPurchaseButton', () => {
 
   describe('Purchase Functionality', () => {
     it('enables purchase button when affordable', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
@@ -78,10 +61,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('disables purchase button when unaffordable', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       // Default state - no money
       const button = wrapper.find('.purchase-button')
@@ -89,10 +69,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('executes purchase when clicked and affordable', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
@@ -106,10 +83,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('shows purchasing state during purchase', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
@@ -124,10 +98,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('prevents multiple rapid purchases', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.addResource('hcu', 100)
 
@@ -147,19 +118,13 @@ describe('GeneratorPurchaseButton', () => {
 
   describe('Production Display', () => {
     it('shows zero production when no generators owned', () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.find('.production-info').text()).toContain('0')
     })
 
     it('shows correct production rate', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.getGenerator('basicAdBotFarm')!.owned = 5
       await wrapper.vm.$nextTick()
@@ -168,10 +133,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('applies upgrade multipliers to production display', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.getGenerator('basicAdBotFarm')!.owned = 4
       store.getUpgrade('automatedContentScript')!.isPurchased = true
@@ -182,10 +144,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('applies prestige multipliers to production display', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.getGenerator('basicAdBotFarm')!.owned = 1
       store.gameState.prestige.level = 1 // 1.25x multiplier
@@ -197,10 +156,7 @@ describe('GeneratorPurchaseButton', () => {
 
   describe('Different Generator Types', () => {
     it('works with different generator configurations', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'clickbaitEngine' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper({ generatorId: 'clickbaitEngine' })
 
       // Unlock clickbaitEngine by meeting requirements
       store.addResource('hcu', 1000)
@@ -216,10 +172,7 @@ describe('GeneratorPurchaseButton', () => {
 
   describe('Reactivity', () => {
     it('updates affordability when player money changes', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       // Initially unaffordable
       expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
@@ -238,10 +191,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('updates owned count display', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.find('.owned-count').text()).toContain('Owned: 0')
 
@@ -255,10 +205,7 @@ describe('GeneratorPurchaseButton', () => {
 
   describe('Edge Cases', () => {
     it('handles extremely high costs', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       // Set high owned count for very high cost
       store.getGenerator('basicAdBotFarm')!.owned = 50
@@ -270,10 +217,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('handles component unmounting during purchase', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       store.addResource('hcu', 50)
       await wrapper.find('.purchase-button').trigger('click')
@@ -283,10 +227,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('handles rapid prop changes', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       // Setup for clickbaitEngine
       store.addResource('hcu', 1000)
@@ -306,20 +247,14 @@ describe('GeneratorPurchaseButton', () => {
 
   describe('Accessibility', () => {
     it('uses proper button semantics', () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.purchase-button')
       expect(button.element.tagName).toBe('BUTTON')
     })
 
     it('provides clear visual feedback for disabled state', () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       const button = wrapper.find('.purchase-button')
       expect(button.classes()).toContain('disabled')
@@ -327,10 +262,7 @@ describe('GeneratorPurchaseButton', () => {
     })
 
     it('maintains clear information hierarchy', () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: { generatorId: 'basicAdBotFarm' },
-        global: { plugins: [pinia] },
-      })
+      const wrapper = createWrapper()
 
       expect(wrapper.find('.generator-info').exists()).toBe(true)
       expect(wrapper.find('.generator-name').exists()).toBe(true)

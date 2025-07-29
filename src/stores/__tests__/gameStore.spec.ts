@@ -1,16 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createTestingPinia } from '@pinia/testing'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { useGameStore } from '../gameStore'
+import { createStandardTestPinia } from '../../test-utils/pinia'
 
 describe('GameStore', () => {
   let store: ReturnType<typeof useGameStore>
 
   beforeEach(() => {
     // Create a fresh store for each test
-    const pinia = createTestingPinia({
-      createSpy: vi.fn,
-      stubActions: false, // We want to test real actions
-    })
+    const pinia = createStandardTestPinia()
     store = useGameStore(pinia)
   })
 
