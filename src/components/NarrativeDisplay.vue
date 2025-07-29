@@ -8,7 +8,7 @@
           <button class="narrative-close" @click="closeModal">×</button>
         </div>
         <div class="narrative-content">
-          <p class="narrative-text">{{ displayText }}</p>
+          <p class="narrative-text">{{ currentEvent?.content }}</p>
           <div class="narrative-stability">
             <span class="stability-label">Societal Stability: </span>
             <span class="stability-value" :class="getStabilityClass()">
@@ -17,8 +17,8 @@
           </div>
         </div>
         <div class="narrative-actions">
-          <button class="narrative-button" @click="acknowledgeEvent">
-            {{ isTyping ? 'Skip' : 'Continue' }}
+          <button class="narrative-button" @click="closeModal">
+            Continue
           </button>
         </div>
       </div>
@@ -72,14 +72,10 @@ import type { NarrativeEvent } from '../config/narratives'
 const gameStore = useGameStore()
 
 // Component state
-const showModal = ref(false)
 const currentEvent = ref<NarrativeEvent | null>(null)
-const displayText = ref('')
-const isTyping = ref(false)
 
-// Typewriter effect state
-let typewriterInterval: number | null = null
-let currentCharIndex = 0
+// Computed modal state
+const showModal = computed(() => currentEvent.value !== null)
 
 // Archive state using reactive state
 const viewedEvents = computed(() =>
@@ -88,62 +84,16 @@ const viewedEvents = computed(() =>
 const hasViewedEvents = computed(() => viewedEvents.value.length > 0)
 
 // Event handling
-const handleNarrativeEvent = (event: NarrativeEvent) => {
+const showEvent = (event: NarrativeEvent) => {
   currentEvent.value = event
-  displayText.value = ''
-  currentCharIndex = 0
-  showModal.value = true
-  startTypewriterEffect()
-}
-
-const startTypewriterEffect = () => {
-  if (!currentEvent.value) return
-
-  isTyping.value = true
-  const text = currentEvent.value.content
-
-  typewriterInterval = setInterval(() => {
-    if (currentCharIndex < text.length) {
-      displayText.value += text[currentCharIndex]
-      currentCharIndex++
-    } else {
-      stopTypewriterEffect()
-    }
-  }, 30) // Adjust speed as needed
-}
-
-const stopTypewriterEffect = () => {
-  if (typewriterInterval) {
-    clearInterval(typewriterInterval)
-    typewriterInterval = null
-  }
-  isTyping.value = false
-}
-
-const acknowledgeEvent = () => {
-  if (isTyping.value) {
-    // Skip typewriter effect
-    stopTypewriterEffect()
-    displayText.value = currentEvent.value?.content || ''
-  } else {
-    // Close modal
-    closeModal()
-  }
 }
 
 const closeModal = () => {
-  stopTypewriterEffect()
-  showModal.value = false
   currentEvent.value = null
-  displayText.value = ''
 }
 
-const reviewEvent = (event: NarrativeEvent) => {
-  currentEvent.value = event
-  displayText.value = event.content
-  showModal.value = true
-  isTyping.value = false
-}
+const handleNarrativeEvent = showEvent
+const reviewEvent = showEvent
 
 // Styling helpers
 const getStabilityClass = () => {
@@ -188,9 +138,6 @@ onMounted(() => {
   })
 })
 
-onUnmounted(() => {
-  stopTypewriterEffect()
-})
 </script>
 
 <style scoped>
