@@ -64,7 +64,7 @@ describe('UpgradeButton', () => {
     })
 
     it('shows requirements section when not met', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 3
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 3
       const wrapper = createWrapper()
 
       expect(wrapper.find('.upgrade-requirements').exists()).toBe(true)
@@ -72,7 +72,7 @@ describe('UpgradeButton', () => {
     })
 
     it('hides requirements section when met', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       vi.spyOn(store, 'areUpgradeRequirementsMet').mockReturnValue(true)
       const wrapper = createWrapper()
 
@@ -82,7 +82,7 @@ describe('UpgradeButton', () => {
 
   describe('Requirement Display', () => {
     it('displays generator requirements with progress', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 3
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 3
       const wrapper = createWrapper()
 
       const requirementItem = wrapper.find('.requirement-item')
@@ -135,7 +135,7 @@ describe('UpgradeButton', () => {
     })
 
     it('shows requirements not met when conditions not satisfied', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 3
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 3
       const wrapper = createWrapper()
 
       const button = wrapper.find('.upgrade-button')
@@ -145,7 +145,7 @@ describe('UpgradeButton', () => {
     })
 
     it('shows insufficient resources when cannot afford', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       store.gameState.resources.hcu.current = 50
       vi.spyOn(store, 'areUpgradeRequirementsMet').mockReturnValue(true)
       vi.spyOn(store, 'canPurchaseUpgrade').mockReturnValue(false)
@@ -158,7 +158,7 @@ describe('UpgradeButton', () => {
     })
 
     it('shows purchase button when all conditions met', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       store.gameState.resources.hcu.current = 200
       vi.spyOn(store, 'areUpgradeRequirementsMet').mockReturnValue(true)
       vi.spyOn(store, 'canPurchaseUpgrade').mockReturnValue(true)
@@ -171,7 +171,7 @@ describe('UpgradeButton', () => {
     })
 
     it('shows purchasing state during purchase', async () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       store.gameState.resources.hcu.current = 200
       vi.spyOn(store, 'areUpgradeRequirementsMet').mockReturnValue(true)
       vi.spyOn(store, 'canPurchaseUpgrade').mockReturnValue(true)
@@ -189,7 +189,7 @@ describe('UpgradeButton', () => {
 
   describe('Purchase Behavior', () => {
     it('calls store purchase method when clicked', async () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       store.gameState.resources.hcu.current = 200
       vi.spyOn(store, 'areUpgradeRequirementsMet').mockReturnValue(true)
       vi.spyOn(store, 'canPurchaseUpgrade').mockReturnValue(true)
@@ -204,7 +204,7 @@ describe('UpgradeButton', () => {
     })
 
     it('shows purchase effect on successful purchase', async () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       store.gameState.resources.hcu.current = 200
       vi.spyOn(store, 'areUpgradeRequirementsMet').mockReturnValue(true)
       vi.spyOn(store, 'canPurchaseUpgrade').mockReturnValue(true)
@@ -223,7 +223,7 @@ describe('UpgradeButton', () => {
     })
 
     it('hides purchase effect after animation', async () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       store.gameState.resources.hcu.current = 200
       vi.spyOn(store, 'areUpgradeRequirementsMet').mockReturnValue(true)
       vi.spyOn(store, 'canPurchaseUpgrade').mockReturnValue(true)
@@ -245,7 +245,7 @@ describe('UpgradeButton', () => {
     })
 
     it('does not purchase when requirements not met', async () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 3
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 3
       const wrapper = createWrapper()
 
       const purchaseSpy = vi.spyOn(store, 'purchaseUpgrade')
@@ -258,7 +258,7 @@ describe('UpgradeButton', () => {
     })
 
     it('prevents multiple simultaneous purchases', async () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       store.gameState.resources.hcu.current = 200
       vi.spyOn(store, 'areUpgradeRequirementsMet').mockReturnValue(true)
       vi.spyOn(store, 'canPurchaseUpgrade').mockReturnValue(true)
@@ -278,14 +278,14 @@ describe('UpgradeButton', () => {
 
   describe('Helper Functions', () => {
     it('gets generator name correctly', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 3
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 3
       const wrapper = createWrapper()
 
       expect(wrapper.text()).toContain('Basic Ad-Bot Farm')
     })
 
     it('gets generator owned count correctly', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 3
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 3
       const wrapper = createWrapper()
 
       expect(wrapper.text()).toContain('(3/5)')
@@ -294,7 +294,7 @@ describe('UpgradeButton', () => {
 
   describe('Edge Cases', () => {
     it('handles failed purchase gracefully', async () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       store.gameState.resources.hcu.current = 200
       const wrapper = createWrapper()
 

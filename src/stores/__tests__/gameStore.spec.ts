@@ -13,42 +13,42 @@ describe('GameStore', () => {
 
   describe('Resource Management', () => {
     it('initializes with default resources', () => {
-      expect(store.getResourceAmount('hcu')).toBe(0)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(0)
       expect(store.gameState.resources.hcu.lifetime).toBe(0)
     })
 
     it('adds resources correctly', () => {
-      store.addResource('hcu', 100)
+      store.resourceSystem.addResource('hcu', 100)
 
-      expect(store.getResourceAmount('hcu')).toBe(100)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(100)
       expect(store.gameState.resources.hcu.lifetime).toBe(100)
     })
 
     it('spends resources when available', () => {
-      store.addResource('hcu', 100)
+      store.resourceSystem.addResource('hcu', 100)
 
-      const result = store.spendResource('hcu', 50)
+      const result = store.resourceSystem.spendResource('hcu', 50)
 
       expect(result).toBe(true)
-      expect(store.getResourceAmount('hcu')).toBe(50)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(50)
       expect(store.gameState.resources.hcu.lifetime).toBe(100)
     })
 
     it('prevents spending more than available', () => {
-      store.addResource('hcu', 30)
+      store.resourceSystem.addResource('hcu', 30)
 
-      const result = store.spendResource('hcu', 50)
+      const result = store.resourceSystem.spendResource('hcu', 50)
 
       expect(result).toBe(false)
-      expect(store.getResourceAmount('hcu')).toBe(30)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(30)
     })
 
     it('checks affordability correctly', () => {
-      store.addResource('hcu', 100)
+      store.resourceSystem.addResource('hcu', 100)
 
-      expect(store.canAffordResource('hcu', 50)).toBe(true)
-      expect(store.canAffordResource('hcu', 100)).toBe(true)
-      expect(store.canAffordResource('hcu', 150)).toBe(false)
+      expect(store.resourceSystem.canAffordResource('hcu', 50)).toBe(true)
+      expect(store.resourceSystem.canAffordResource('hcu', 100)).toBe(true)
+      expect(store.resourceSystem.canAffordResource('hcu', 150)).toBe(false)
     })
   })
 
@@ -60,57 +60,57 @@ describe('GameStore', () => {
     })
 
     it('calculates generator costs with exponential growth', () => {
-      const generator = store.getGenerator('basicAdBotFarm')!
+      const generator = store.generatorSystem.getGenerator('basicAdBotFarm')!
 
       // Base cost
-      expect(store.getGeneratorHCUCost('basicAdBotFarm')).toBe(10)
+      expect(store.generatorSystem.getGeneratorHCUCost('basicAdBotFarm')).toBe(10)
 
       // After purchasing
       generator.owned = 1
-      expect(store.getGeneratorHCUCost('basicAdBotFarm')).toBe(11)
+      expect(store.generatorSystem.getGeneratorHCUCost('basicAdBotFarm')).toBe(11)
 
       generator.owned = 5
-      expect(store.getGeneratorHCUCost('basicAdBotFarm')).toBe(20)
+      expect(store.generatorSystem.getGeneratorHCUCost('basicAdBotFarm')).toBe(20)
     })
 
     it('purchases generators when affordable', () => {
-      store.addResource('hcu', 20)
+      store.resourceSystem.addResource('hcu', 20)
 
       const result = store.purchaseGenerator('basicAdBotFarm')
 
       expect(result).toBe(true)
-      expect(store.getGenerator('basicAdBotFarm')?.owned).toBe(1)
-      expect(store.getResourceAmount('hcu')).toBe(10)
+      expect(store.generatorSystem.getGenerator('basicAdBotFarm')?.owned).toBe(1)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(10)
     })
 
     it('prevents generator purchase when unaffordable', () => {
-      store.addResource('hcu', 5)
+      store.resourceSystem.addResource('hcu', 5)
 
       const result = store.purchaseGenerator('basicAdBotFarm')
 
       expect(result).toBe(false)
-      expect(store.getGenerator('basicAdBotFarm')?.owned).toBe(0)
-      expect(store.getResourceAmount('hcu')).toBe(5)
+      expect(store.generatorSystem.getGenerator('basicAdBotFarm')?.owned).toBe(0)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(5)
     })
 
     it('calculates production rates correctly', () => {
-      const generator = store.getGenerator('basicAdBotFarm')!
+      const generator = store.generatorSystem.getGenerator('basicAdBotFarm')!
 
       // No production when owned = 0
-      expect(store.getGeneratorProductionRate('basicAdBotFarm')).toBe(0)
+      expect(store.generatorSystem.getGeneratorProductionRate('basicAdBotFarm')).toBe(0)
 
       // Base production
       generator.owned = 5
-      expect(store.getGeneratorProductionRate('basicAdBotFarm')).toBe(5)
+      expect(store.generatorSystem.getGeneratorProductionRate('basicAdBotFarm')).toBe(5)
 
       // With upgrade multiplier
       store.getUpgrade('automatedContentScript')!.isPurchased = true
-      expect(store.getGeneratorProductionRate('basicAdBotFarm')).toBe(6.25)
+      expect(store.generatorSystem.getGeneratorProductionRate('basicAdBotFarm')).toBe(6.25)
     })
 
     it('calculates total production rate', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
-      store.getGenerator('clickbaitEngine')!.owned = 2
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('clickbaitEngine')!.owned = 2
 
       expect(store.productionRate).toBe(25) // (5 * 1) + (2 * 10)
     })
@@ -133,46 +133,46 @@ describe('GameStore', () => {
       const upgrade = 'automatedContentScript'
 
       // Not enough generators
-      store.getGenerator('basicAdBotFarm')!.owned = 3
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 3
       expect(store.areUpgradeRequirementsMet(upgrade)).toBe(false)
 
       // Enough generators
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       expect(store.areUpgradeRequirementsMet(upgrade)).toBe(true)
     })
 
     it('purchases upgrades when all conditions met', () => {
-      store.getGenerator('basicAdBotFarm')!.owned = 5
-      store.addResource('hcu', 100)
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
+      store.resourceSystem.addResource('hcu', 100)
 
       const result = store.purchaseUpgrade('automatedContentScript')
 
       expect(result).toBe(true)
       expect(store.getUpgrade('automatedContentScript')!.isPurchased).toBe(true)
-      expect(store.getResourceAmount('hcu')).toBe(50)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(50)
     })
 
     it('prevents purchasing already owned upgrades', () => {
       const upgrade = store.getUpgrade('automatedContentScript')!
       upgrade.isPurchased = true
-      store.addResource('hcu', 100)
+      store.resourceSystem.addResource('hcu', 100)
 
       const result = store.purchaseUpgrade('automatedContentScript')
 
       expect(result).toBe(false)
-      expect(store.getResourceAmount('hcu')).toBe(100)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(100)
     })
 
     it('applies upgrade multipliers to generators', () => {
-      const generator = store.getGenerator('basicAdBotFarm')!
+      const generator = store.generatorSystem.getGenerator('basicAdBotFarm')!
       generator.owned = 4
 
       // Without upgrade
-      expect(store.getGeneratorMultiplier('basicAdBotFarm')).toBe(1)
+      expect(store.multiplierSystem.getGeneratorMultiplier('basicAdBotFarm')).toBe(1)
 
       // With upgrade
       store.getUpgrade('automatedContentScript')!.isPurchased = true
-      expect(store.getGeneratorMultiplier('basicAdBotFarm')).toBe(1.25)
+      expect(store.multiplierSystem.getGeneratorMultiplier('basicAdBotFarm')).toBe(1.25)
     })
   })
 
@@ -206,16 +206,16 @@ describe('GameStore', () => {
 
     it('performs prestige reset', () => {
       // Setup pre-prestige state
-      store.addResource('hcu', 1000)
-      store.getGenerator('basicAdBotFarm')!.owned = 10
+      store.resourceSystem.addResource('hcu', 1000)
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 10
       store.getUpgrade('automatedContentScript')!.isPurchased = true
 
       const result = store.performPrestige()
 
       expect(result).toBe(true)
       expect(store.gameState.prestige.level).toBe(1)
-      expect(store.getResourceAmount('hcu')).toBe(0)
-      expect(store.getGenerator('basicAdBotFarm')!.owned).toBe(0)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(0)
+      expect(store.generatorSystem.getGenerator('basicAdBotFarm')!.owned).toBe(0)
       expect(store.getUpgrade('automatedContentScript')!.isPurchased).toBe(false)
       expect(store.gameState.resources.hcu.lifetime).toBe(1000) // Lifetime preserved
     })
@@ -225,7 +225,7 @@ describe('GameStore', () => {
     it('processes manual clicks', () => {
       store.clickForResources()
 
-      expect(store.getResourceAmount('hcu')).toBe(1)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(1)
       expect(store.gameState.resources.hcu.lifetime).toBe(1)
     })
 
@@ -233,17 +233,17 @@ describe('GameStore', () => {
       store.gameState.prestige.level = 1
       store.clickForResources()
 
-      expect(store.getResourceAmount('hcu')).toBe(1.25)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(1.25)
     })
   })
 
   describe('State Persistence', () => {
     it('maintains state throughout session', () => {
-      store.addResource('hcu', 100)
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.resourceSystem.addResource('hcu', 100)
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
 
-      expect(store.getResourceAmount('hcu')).toBe(100)
-      expect(store.getGenerator('basicAdBotFarm')!.owned).toBe(5)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(100)
+      expect(store.generatorSystem.getGenerator('basicAdBotFarm')!.owned).toBe(5)
     })
   })
 })

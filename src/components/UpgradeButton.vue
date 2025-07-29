@@ -103,7 +103,7 @@ const requirementsMet = computed(() => {
 // Check if can afford all costs
 const canAfford = computed(() => {
   return upgrade.value.costs.every((cost) =>
-    gameStore.canAffordResource(cost.resourceId, cost.amount),
+    gameStore.resourceSystem.canAffordResource(cost.resourceId, cost.amount),
   )
 })
 
@@ -188,7 +188,7 @@ const getTargetName = (targetId: string, effectType: string): string => {
   }
 
   // For resource-based effects, get resource display name
-  const resource = gameStore.getResourceConfig(targetId)
+  const resource = gameStore.resourceSystem.getResourceConfig(targetId)
   return resource ? resource.displayName : targetId
 }
 

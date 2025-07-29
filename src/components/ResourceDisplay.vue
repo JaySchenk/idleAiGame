@@ -12,7 +12,7 @@
           <div class="current-amount">
             <CurrencyDisplay
               :resource-id="resource.id"
-              :amount="gameStore.getResourceAmount(resource.id)"
+              :amount="gameStore.resourceSystem.getResourceAmount(resource.id)"
             />
           </div>
           <div class="production-rate" :class="getRateClass(resource.id)">
@@ -34,10 +34,13 @@ import { resources } from '../config/resources'
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
+const { resourceSystem, generatorSystem } = gameStore
 
 // Get production rate for a specific resource
 function getProductionRate(resourceId: string): number {
-  return gameStore.getResourceProductionRate(resourceId)
+  const baseProduction = generatorSystem.calculateResourceProduction()
+  const finalProduction = resourceSystem.applyGlobalMultipliers(baseProduction)
+  return resourceSystem.getResourceProductionRate(resourceId, finalProduction)
 }
 
 // Get CSS class for production rate based on positive/negative value
@@ -50,8 +53,8 @@ function getRateClass(resourceId: string): string {
 
 // Get border color based on resource health status
 function getBorderColor(resourceId: string): string {
-  const config = gameStore.getResourceConfig(resourceId)
-  const amount = gameStore.getResourceAmount(resourceId)
+  const config = gameStore.resourceSystem.getResourceConfig(resourceId)
+  const amount = gameStore.resourceSystem.getResourceAmount(resourceId)
 
   if (!config) return '#ffffff'
 

@@ -80,8 +80,11 @@ const props = defineProps<{
 const gameStore = useGameStore()
 const { isPurchasing, executePurchaseSimple } = usePurchaseAnimation()
 
-// Get generator from store
-const generator = computed(() => gameStore.getGenerator(props.generatorId))
+// Use pre-configured composables from store
+const { resourceSystem, generatorSystem, multiplierSystem } = gameStore
+
+// Get generator from composable
+const generator = computed(() => generatorSystem.getGenerator(props.generatorId))
 
 // Component-specific computed values
 const ownedCount = computed(() => {
@@ -89,19 +92,19 @@ const ownedCount = computed(() => {
 })
 
 const costs = computed(() => {
-  return gameStore.getGeneratorCost(props.generatorId)
+  return generatorSystem.getGeneratorCost(props.generatorId)
 })
 
 const isUnlocked = computed(() => {
-  return gameStore.checkUnlockConditions(props.generatorId)
+  return generatorSystem.checkUnlockConditions(props.generatorId)
 })
 
 const canAffordAll = computed(() => {
-  return gameStore.canPurchaseGenerator(props.generatorId)
+  return generatorSystem.canPurchaseGenerator(props.generatorId)
 })
 
 const actualMultiplier = computed(() => {
-  const generatorMultiplier = gameStore.getGeneratorMultiplier(props.generatorId)
+  const generatorMultiplier = multiplierSystem.getGeneratorMultiplier(props.generatorId)
   return ownedCount.value * generatorMultiplier * gameStore.globalMultiplier
 })
 
@@ -110,13 +113,13 @@ const getConditionText = (condition: UnlockCondition): string => {
   switch (condition.type) {
     case 'resource':
       if (condition.resourceId && condition.minAmount) {
-        const currentAmount = gameStore.getResourceAmount(condition.resourceId)
+        const currentAmount = resourceSystem.getResourceAmount(condition.resourceId)
         return `Need ${condition.minAmount} ${condition.resourceId.toUpperCase()} (${Math.floor(currentAmount)}/${condition.minAmount})`
       }
       break
     case 'generator':
       if (condition.generatorId && condition.minOwned) {
-        const targetGenerator = gameStore.getGenerator(condition.generatorId)
+        const targetGenerator = generatorSystem.getGenerator(condition.generatorId)
         const currentOwned = targetGenerator?.owned || 0
         return `Need ${condition.minOwned} ${targetGenerator?.name || condition.generatorId} (${currentOwned}/${condition.minOwned})`
       }

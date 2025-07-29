@@ -40,7 +40,7 @@ describe('GeneratorPurchaseButton', () => {
       const wrapper = createWrapper()
 
       // Purchase one generator to increase cost
-      store.addResource('hcu', 100)
+      store.resourceSystem.addResource('hcu', 100)
       store.purchaseGenerator('basicAdBotFarm')
       await wrapper.vm.$nextTick()
 
@@ -53,7 +53,7 @@ describe('GeneratorPurchaseButton', () => {
     it('enables purchase button when affordable', async () => {
       const wrapper = createWrapper()
 
-      store.addResource('hcu', 50)
+      store.resourceSystem.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
 
       const button = wrapper.find('.purchase-button')
@@ -71,21 +71,21 @@ describe('GeneratorPurchaseButton', () => {
     it('executes purchase when clicked and affordable', async () => {
       const wrapper = createWrapper()
 
-      store.addResource('hcu', 50)
+      store.resourceSystem.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
 
       await wrapper.find('.purchase-button').trigger('click')
       vi.runAllTimers() // Complete purchase delay
       await wrapper.vm.$nextTick()
 
-      expect(store.getResourceAmount('hcu')).toBe(40)
-      expect(store.getGenerator('basicAdBotFarm')?.owned).toBe(1)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(40)
+      expect(store.generatorSystem.getGenerator('basicAdBotFarm')?.owned).toBe(1)
     })
 
     it('shows purchasing state during purchase', async () => {
       const wrapper = createWrapper()
 
-      store.addResource('hcu', 50)
+      store.resourceSystem.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
 
       const button = wrapper.find('.purchase-button')
@@ -100,7 +100,7 @@ describe('GeneratorPurchaseButton', () => {
     it('prevents multiple rapid purchases', async () => {
       const wrapper = createWrapper()
 
-      store.addResource('hcu', 100)
+      store.resourceSystem.addResource('hcu', 100)
 
       // Click multiple times rapidly
       const button = wrapper.find('.purchase-button')
@@ -112,7 +112,7 @@ describe('GeneratorPurchaseButton', () => {
       await wrapper.vm.$nextTick()
 
       // Only one purchase should complete
-      expect(store.getGenerator('basicAdBotFarm')?.owned).toBe(1)
+      expect(store.generatorSystem.getGenerator('basicAdBotFarm')?.owned).toBe(1)
     })
   })
 
@@ -126,7 +126,7 @@ describe('GeneratorPurchaseButton', () => {
     it('shows correct production rate', async () => {
       const wrapper = createWrapper()
 
-      store.getGenerator('basicAdBotFarm')!.owned = 5
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 5
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.production-info').text()).toContain('5')
@@ -135,7 +135,7 @@ describe('GeneratorPurchaseButton', () => {
     it('applies upgrade multipliers to production display', async () => {
       const wrapper = createWrapper()
 
-      store.getGenerator('basicAdBotFarm')!.owned = 4
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 4
       store.getUpgrade('automatedContentScript')!.isPurchased = true
       await wrapper.vm.$nextTick()
 
@@ -146,7 +146,7 @@ describe('GeneratorPurchaseButton', () => {
     it('applies prestige multipliers to production display', async () => {
       const wrapper = createWrapper()
 
-      store.getGenerator('basicAdBotFarm')!.owned = 1
+      store.generatorSystem.getGenerator('basicAdBotFarm')!.owned = 1
       store.gameState.prestige.level = 1 // 1.25x multiplier
       await wrapper.vm.$nextTick()
 
@@ -159,7 +159,7 @@ describe('GeneratorPurchaseButton', () => {
       const wrapper = createWrapper({ generatorId: 'clickbaitEngine' })
 
       // Unlock clickbaitEngine by meeting requirements
-      store.addResource('hcu', 1000)
+      store.resourceSystem.addResource('hcu', 1000)
       for (let i = 0; i < 5; i++) {
         store.purchaseGenerator('basicAdBotFarm')
       }
@@ -178,13 +178,13 @@ describe('GeneratorPurchaseButton', () => {
       expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
 
       // Add money
-      store.addResource('hcu', 50)
+      store.resourceSystem.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.purchase-button').classes()).not.toContain('disabled')
 
       // Spend money
-      store.spendResource('hcu', 50)
+      store.resourceSystem.spendResource('hcu', 50)
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
@@ -195,7 +195,7 @@ describe('GeneratorPurchaseButton', () => {
 
       expect(wrapper.find('.owned-count').text()).toContain('Owned: 0')
 
-      store.addResource('hcu', 100)
+      store.resourceSystem.addResource('hcu', 100)
       store.purchaseGenerator('basicAdBotFarm')
       await wrapper.vm.$nextTick()
 

@@ -36,7 +36,7 @@
       <div class="progress-text">
         <CurrencyDisplay
           resource-id="hcu"
-          :amount="gameStore.getResourceAmount('hcu')"
+          :amount="gameStore.resourceSystem.getResourceAmount('hcu')"
           :show-unit="false"
         />
         /
@@ -94,7 +94,7 @@ const showRebootEffect = ref(false)
 
 // Calculate progress to prestige (based on current HCU)
 const progressPercent = computed(() => {
-  const currentHCU = gameStore.getResourceAmount('hcu')
+  const currentHCU = gameStore.resourceSystem.getResourceAmount('hcu')
   const progress = (currentHCU / gameStore.prestigeThreshold) * 100
   return Math.min(100, progress)
 })

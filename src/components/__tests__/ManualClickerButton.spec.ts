@@ -59,11 +59,11 @@ describe('ManualClickerButton', () => {
     it('adds resources when clicked', async () => {
       const wrapper = createWrapper()
 
-      const initialUnits = store.getResourceAmount('hcu')
+      const initialUnits = store.resourceSystem.getResourceAmount('hcu')
 
       await wrapper.find('.clicker-button').trigger('click')
 
-      expect(store.getResourceAmount('hcu')).toBe(initialUnits + 1)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(initialUnits + 1)
       expect(store.gameState.resources.hcu.lifetime).toBe(1)
     })
 
@@ -74,7 +74,7 @@ describe('ManualClickerButton', () => {
 
       await wrapper.find('.clicker-button').trigger('click')
 
-      expect(store.getResourceAmount('hcu')).toBe(1.25)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(1.25)
       expect(store.gameState.resources.hcu.lifetime).toBe(1.25)
     })
 
@@ -87,7 +87,7 @@ describe('ManualClickerButton', () => {
         await button.trigger('click')
       }
 
-      expect(store.getResourceAmount('hcu')).toBe(5)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(5)
     })
   })
 
@@ -172,11 +172,11 @@ describe('ManualClickerButton', () => {
     it('handles click events correctly', async () => {
       const wrapper = createWrapper()
 
-      const initialAmount = store.getResourceAmount('hcu')
+      const initialAmount = store.resourceSystem.getResourceAmount('hcu')
 
       await wrapper.find('.clicker-button').trigger('click')
 
-      expect(store.getResourceAmount('hcu')).toBeGreaterThan(initialAmount)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBeGreaterThan(initialAmount)
     })
   })
 
@@ -201,7 +201,7 @@ describe('ManualClickerButton', () => {
       const wrapper = createWrapper()
 
       await wrapper.find('.clicker-button').trigger('click')
-      expect(store.getResourceAmount('hcu')).toBe(1)
+      expect(store.resourceSystem.getResourceAmount('hcu')).toBe(1)
 
       // Component should remain functional
       expect(wrapper.find('.clicker-button').exists()).toBe(true)

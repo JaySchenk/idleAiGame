@@ -122,7 +122,7 @@ export function setupGameWithResources(
   initialLifetime: number = 0,
 ) {
   if (initialHCU > 0) {
-    ;((amount: number) => gameStore.addResource('hcu', amount))(initialHCU)
+    ;((amount: number) => gameStore.resourceSystem.addResource('hcu', amount))(initialHCU)
   }
   if (initialLifetime > 0) {
     if (!gameStore.gameState.resources.hcu) {

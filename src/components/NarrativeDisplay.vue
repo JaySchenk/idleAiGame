@@ -99,7 +99,7 @@ const getEffectClass = (amount: number) => {
 }
 
 const getResourceDisplayName = (resourceId: string) => {
-  const resourceConfig = gameStore.getResourceConfig(resourceId)
+  const resourceConfig = gameStore.resourceSystem.getResourceConfig(resourceId)
   return resourceConfig ? resourceConfig.displayName : resourceId.toUpperCase()
 }
 

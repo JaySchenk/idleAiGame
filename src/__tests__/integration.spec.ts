@@ -25,7 +25,7 @@ describe('Game Integration Tests', () => {
       const gameStore = useGameStore()
 
       // Start: Player has 0 HCU
-      expect(gameStore.getResourceAmount('hcu')).toBe(0)
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBe(0)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBe(0)
       expect(gameStore.gameState.prestige.level).toBe(0)
 
@@ -33,20 +33,22 @@ describe('Game Integration Tests', () => {
       for (let i = 0; i < 10; i++) {
         gameStore.clickForResources()
       }
-      expect(gameStore.getResourceAmount('hcu')).toBe(10)
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBe(10)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBe(10)
 
       // Phase 2: Purchase first generator
-      expect(((amount: number) => gameStore.canAffordResource('hcu', amount))(10)).toBe(true)
+      expect(
+        ((amount: number) => gameStore.resourceSystem.canAffordResource('hcu', amount))(10),
+      ).toBe(true)
       gameStore.purchaseGenerator('basicAdBotFarm')
 
-      const generator = gameStore.getGenerator('basicAdBotFarm')!
+      const generator = gameStore.generatorSystem.getGenerator('basicAdBotFarm')!
       expect(generator.owned).toBe(1)
-      expect(gameStore.getResourceAmount('hcu')).toBe(0) // Spent all on generator
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBe(0) // Spent all on generator
 
       // Phase 3: Generate passive income programmatically
       runGameLoopTicks(gameStore, 50) // 50 ticks = 5 seconds
-      expect(gameStore.getResourceAmount('hcu')).toBeGreaterThan(0) // Should have earned passive income
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBeGreaterThan(0) // Should have earned passive income
 
       // For integration test purposes, simulate rapid progression
       // Give the player enough resources to test the prestige mechanics
@@ -61,11 +63,11 @@ describe('Game Integration Tests', () => {
       gameStore.performPrestige()
 
       // After prestige: current units and generators reset, but lifetime and prestige level persist
-      expect(gameStore.getResourceAmount('hcu')).toBe(0)
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBe(0)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBe(prePrestigeLifetime) // Lifetime persists
       expect(gameStore.gameState.prestige.level).toBe(1)
       expect(gameStore.globalMultiplier).toBe(1.25) // 1.25x multiplier
-      expect(gameStore.getGenerator('basicAdBotFarm')!.owned).toBe(0)
+      expect(gameStore.generatorSystem.getGenerator('basicAdBotFarm')!.owned).toBe(0)
 
       // Test that post-prestige progression is faster due to multiplier
       for (let i = 0; i < 10; i++) {
@@ -73,7 +75,7 @@ describe('Game Integration Tests', () => {
       }
 
       // Should get more than 10 HCU due to prestige multiplier
-      expect(gameStore.getResourceAmount('hcu')).toBeGreaterThan(10)
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBeGreaterThan(10)
     })
 
     it('should handle rapid progression with automation', async () => {
@@ -87,8 +89,8 @@ describe('Game Integration Tests', () => {
         gameStore,
         () => gameStore.purchaseGenerator('basicAdBotFarm'),
         () =>
-          ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-            gameStore.getGeneratorHCUCost('basicAdBotFarm'),
+          ((amount: number) => gameStore.resourceSystem.canAffordResource('hcu', amount))(
+            gameStore.generatorSystem.getGeneratorHCUCost('basicAdBotFarm'),
           ),
         10,
       )
@@ -98,7 +100,7 @@ describe('Game Integration Tests', () => {
 
       const productionRate = gameStore.productionRate
       expect(productionRate).toBeGreaterThan(0)
-      expect(gameStore.getResourceAmount('hcu')).toBeGreaterThan(1000) // Should have earned more
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBeGreaterThan(1000) // Should have earned more
 
       // Purchase upgrades when available
       const availableUpgrades = ['automatedContentScript']
@@ -111,8 +113,8 @@ describe('Game Integration Tests', () => {
             () => {
               // Keep buying generators during progression
               if (
-                ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-                  gameStore.getGeneratorHCUCost('basicAdBotFarm'),
+                ((amount: number) => gameStore.resourceSystem.canAffordResource('hcu', amount))(
+                  gameStore.generatorSystem.getGeneratorHCUCost('basicAdBotFarm'),
                 )
               ) {
                 gameStore.purchaseGenerator('basicAdBotFarm')
@@ -129,14 +131,13 @@ describe('Game Integration Tests', () => {
             gameStore.purchaseUpgrade(upgrade)
             expect(gameStore.getUpgrade(upgrade)!.isPurchased).toBe(true)
           }
-        } catch (_error) {
-          // eslint-disable-line @typescript-eslint/no-unused-vars
+        } catch {
           // Some upgrades might not be reachable in reasonable time - that's OK
         }
       }
 
       // Verify system is stable after rapid changes
-      expect(gameStore.getResourceAmount('hcu')).toBeGreaterThan(0)
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBeGreaterThan(0)
       expect(gameStore.productionRate).toBeGreaterThan(0)
     })
   })
@@ -152,20 +153,20 @@ describe('Game Integration Tests', () => {
       const generatorTypes = ['basicAdBotFarm', 'clickbaitEngine']
 
       for (const generatorId of generatorTypes) {
-        const generator = gameStore.getGenerator(generatorId)
+        const generator = gameStore.generatorSystem.getGenerator(generatorId)
         if (generator) {
           // Purchase several of each type
           purchaseUntilUnaffordable(
             gameStore,
             () => gameStore.purchaseGenerator(generatorId),
             () =>
-              ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-                gameStore.getGeneratorHCUCost(generatorId),
+              ((amount: number) => gameStore.resourceSystem.canAffordResource('hcu', amount))(
+                gameStore.generatorSystem.getGeneratorHCUCost(generatorId),
               ),
             5,
           )
 
-          expect(gameStore.getGenerator(generatorId)!.owned).toBeGreaterThan(0)
+          expect(gameStore.generatorSystem.getGenerator(generatorId)!.owned).toBeGreaterThan(0)
         }
       }
 
@@ -176,7 +177,7 @@ describe('Game Integration Tests', () => {
       // Test scaling over time programmatically
       runGameLoopTicks(gameStore, 100) // 10 seconds
 
-      expect(gameStore.getResourceAmount('hcu')).toBeGreaterThan(50000) // Lowered expectation
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBeGreaterThan(50000) // Lowered expectation
     })
   })
 
@@ -189,7 +190,7 @@ describe('Game Integration Tests', () => {
 
       for (const milestone of milestones) {
         // First buy some generators to enable progression
-        if (gameStore.getResourceAmount('hcu') >= 10) {
+        if (gameStore.resourceSystem.getResourceAmount('hcu') >= 10) {
           gameStore.purchaseGenerator('basicAdBotFarm')
         }
 
@@ -200,18 +201,17 @@ describe('Game Integration Tests', () => {
             () => {
               // Keep buying generators when affordable during progression
               if (
-                ((amount: number) => gameStore.canAffordResource('hcu', amount))(
-                  gameStore.getGeneratorHCUCost('basicAdBotFarm'),
+                ((amount: number) => gameStore.resourceSystem.canAffordResource('hcu', amount))(
+                  gameStore.generatorSystem.getGeneratorHCUCost('basicAdBotFarm'),
                 )
               ) {
                 gameStore.purchaseGenerator('basicAdBotFarm')
               }
-              return gameStore.getResourceAmount('hcu') >= milestone
+              return gameStore.resourceSystem.getResourceAmount('hcu') >= milestone
             },
             5000, // Reasonable limit
           )
-        } catch (_error) {
-          // eslint-disable-line @typescript-eslint/no-unused-vars
+        } catch {
           // If we can't reach the milestone, that's OK for this test
         }
 
@@ -232,8 +232,8 @@ describe('Game Integration Tests', () => {
       createIntegrationTestPinia()
       const gameStore = useGameStore()
       // Test system resilience with edge values
-      gameStore.addResource('hcu', 0) // Should handle zero adds
-      gameStore.spendResource('hcu', 0) // Should handle zero spends
+      gameStore.resourceSystem.addResource('hcu', 0) // Should handle zero adds
+      gameStore.resourceSystem.spendResource('hcu', 0) // Should handle zero spends
 
       // System should handle these operations gracefully
       expect(() => {
@@ -242,7 +242,7 @@ describe('Game Integration Tests', () => {
       }).not.toThrow()
 
       // Values should remain valid
-      expect(gameStore.getResourceAmount('hcu')).toBeGreaterThanOrEqual(0)
+      expect(gameStore.resourceSystem.getResourceAmount('hcu')).toBeGreaterThanOrEqual(0)
       expect(gameStore.gameState.resources.hcu?.lifetime || 0).toBeGreaterThanOrEqual(0)
       expect(gameStore.gameState.prestige.level).toBeGreaterThanOrEqual(0)
     })

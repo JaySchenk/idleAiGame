@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const gameStore = useGameStore()
-const resourceConfig = computed(() => gameStore.getResourceConfig(props.resourceId))
+const resourceConfig = computed(() => gameStore.resourceSystem.getResourceConfig(props.resourceId))
 
 const formattedAmount = computed(() => {
   return formatResource(resourceConfig.value, props.amount, props.showUnit)

@@ -63,6 +63,7 @@ import { useGameStore } from '../stores/gameStore'
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
 const gameStore = useGameStore()
+const { resourceSystem } = gameStore
 const isClicking = ref(false)
 const clickAnimations = ref<Array<{ id: number; x: number; y: number; delay: number }>>([])
 
@@ -70,7 +71,7 @@ let animationId = 0
 
 // Get resource display name
 const getResourceDisplayName = (resourceId: string): string => {
-  const resource = gameStore.getResourceConfig(resourceId)
+  const resource = resourceSystem.getResourceConfig(resourceId)
   return resource ? resource.symbol : resourceId.toUpperCase()
 }
 
