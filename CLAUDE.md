@@ -34,7 +34,7 @@ npm run format       # Prettier code formatting
 
 - `src/stores/` - Pinia store for centralized state management
 - `src/components/` - Vue 3 UI components with Composition API
-- `src/game/` - Core utilities (SaveManager)
+- `src/game/` - Core game utilities
 - `src/assets/` - Styles and static content
 - `src/config/` - Game configuration TypeScript files
 
