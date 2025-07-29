@@ -162,12 +162,3 @@ export const generators: GeneratorConfig[] = [
     owned: 0,
   },
 ]
-
-// Generator access by ID:
-// 'basicAdBotFarm' - Basic Ad-Bot Farm
-// 'clickbaitEngine' - Clickbait Engine
-// 'hyperpersonalizedAds' - Hyper-personalized Ads AI
-// 'deepfakeEntertainment' - Deepfake Entertainment AI
-// 'politicalPropaganda' - Political Propaganda AI
-// 'automatedCustomerService' - Automated Customer Service AI
-// 'aiGeneratedNews' - AI-Generated News Feeds

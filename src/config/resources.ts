@@ -122,12 +122,3 @@ export const resources: ResourceConfig[] = [
     },
   },
 ]
-
-// Use string IDs for all resource operations:
-// 'hcu' - Hollow Content Units
-// 'rd' - Raw Data
-// 'ha' - Human Attention
-// 'pt' - Public Trust
-// 'sc' - Social Cohesion
-// 'es' - Environmental Stability
-// 'aa' - AI Autonomy

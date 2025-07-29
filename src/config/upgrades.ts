@@ -54,7 +54,3 @@ export const upgrades: UpgradeConfig[] = [
     isPurchased: false,
   },
 ]
-
-// Upgrade access by ID:
-// 'automatedContentScript' - Soul-Crushing Automation
-// 'clickbaitOptimizer' - Clickbait Optimizer
