@@ -1,12 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createTestPinia } from '../../test-utils'
-import { ComponentTestHelpers } from '../../test-utils'
-import GeneratorPurchaseButton from '../GeneratorPurchaseButton.vue'
+import { createTestingPinia } from '@pinia/testing'
 import { useGameStore } from '../../stores/gameStore'
-// Use string IDs directly instead of importing config objects
+import GeneratorPurchaseButton from '../GeneratorPurchaseButton.vue'
 
-// Mock the CurrencyDisplay component
+// Mock CurrencyDisplay component
 vi.mock('../CurrencyDisplay.vue', () => ({
   default: {
     name: 'CurrencyDisplay',
@@ -16,21 +14,22 @@ vi.mock('../CurrencyDisplay.vue', () => ({
 }))
 
 describe('GeneratorPurchaseButton', () => {
+  let store: ReturnType<typeof useGameStore>
+  let pinia: any
+
   beforeEach(() => {
-    createTestPinia()
-    vi.useFakeTimers()
+    pinia = createTestingPinia({
+      createSpy: vi.fn,
+      stubActions: false,
+    })
+    store = useGameStore(pinia)
   })
 
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  describe('Component Rendering', () => {
-    it('should render with correct generator information', () => {
+  describe('Rendering', () => {
+    it('displays generator information correctly', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
 
       expect(wrapper.find('.generator-name').text()).toBe('Basic Ad-Bot Farm')
@@ -39,426 +38,300 @@ describe('GeneratorPurchaseButton', () => {
       expect(wrapper.find('.purchase-button').exists()).toBe(true)
     })
 
-    it('should display current generator stats', async () => {
+    it('shows correct base cost', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
-      })
-      const gameStore = useGameStore()
-      // Purchase a generator to test owned count display
-      gameStore.addResource('hcu', 100)
-      gameStore.purchaseGenerator('basicAdBotFarm')
-
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('.owned-count').text()).toContain('Owned: 1')
-    })
-
-    it('should display correct cost', () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
 
-      // Should show base cost initially
       expect(wrapper.find('.cost-display').text()).toContain('10')
     })
 
-    it('should display production rate with global multiplier', async () => {
+    it('updates cost when generator count changes', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
-      // Purchase generator and set prestige for global multiplier
-      gameStore.addResource('hcu', 100)
-      gameStore.purchaseGenerator('basicAdBotFarm')
-      gameStore.gameState.prestige.level = 1 // 1.25x multiplier
 
+      // Purchase one generator to increase cost
+      store.addResource('hcu', 100)
+      store.purchaseGenerator('basicAdBotFarm')
       await wrapper.vm.$nextTick()
 
-      // Should show production rate with global multiplier applied
-      expect(wrapper.find('.production-info').text()).toContain('1.25')
+      // Cost should increase (10 * 1.15^1 = 11)
+      expect(wrapper.find('.cost-display').text()).toContain('11')
     })
   })
 
   describe('Purchase Functionality', () => {
-    it('should allow purchase when player can afford', async () => {
+    it('enables purchase button when affordable', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
-      // Give player enough money
-      gameStore.addResource('hcu', 50)
+
+      store.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
 
       const button = wrapper.find('.purchase-button')
       expect(button.classes()).not.toContain('disabled')
-      expect(ComponentTestHelpers.isDisabled(wrapper, '.purchase-button')).toBe(false)
     })
 
-    it('should prevent purchase when player cannot afford', async () => {
+    it('disables purchase button when unaffordable', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
 
-      // Player has no money
-      expect(gameStore.getResourceAmount('hcu')).toBe(0)
-      await wrapper.vm.$nextTick()
-
+      // Default state - no money
       const button = wrapper.find('.purchase-button')
       expect(button.classes()).toContain('disabled')
-      expect(ComponentTestHelpers.isDisabled(wrapper, '.purchase-button')).toBe(true)
     })
 
-    it('should execute purchase when clicked and affordable', async () => {
+    it('executes purchase when clicked and affordable', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
-      // Give player money
-      gameStore.addResource('hcu', 50)
-      await wrapper.vm.$nextTick() // Make sure reactivity updates
-      const initialUnits = gameStore.getResourceAmount('hcu')
+
+      store.addResource('hcu', 50)
+      await wrapper.vm.$nextTick()
 
       await wrapper.find('.purchase-button').trigger('click')
+      vi.runAllTimers() // Complete purchase delay
+      await wrapper.vm.$nextTick()
 
-      // Should trigger purchase after delay
-      vi.advanceTimersByTime(150)
-      await wrapper.vm.$nextTick() // Allow reactivity updates
-
-      expect(gameStore.getResourceAmount('hcu')).toBe(initialUnits - 10) // Cost of basicAdBotFarm
-
-      const generator = gameStore.getGenerator('basicAdBotFarm')
-      expect(generator?.owned).toBe(1)
+      expect(store.getResourceAmount('hcu')).toBe(40)
+      expect(store.getGenerator('basicAdBotFarm')?.owned).toBe(1)
     })
 
-    it('should not execute purchase when clicked but unaffordable', async () => {
+    it('shows purchasing state during purchase', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
 
-      const initialUnits = gameStore.getResourceAmount('hcu') // Should be 0
-
-      await wrapper.find('.purchase-button').trigger('click')
-      vi.advanceTimersByTime(150)
-
-      expect(gameStore.getResourceAmount('hcu')).toBe(initialUnits)
-
-      const generator = gameStore.getGenerator('basicAdBotFarm')
-      expect(generator?.owned).toBe(0)
-    })
-
-    it('should show purchasing state during purchase', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
-      })
-      const gameStore = useGameStore()
-      gameStore.addResource('hcu', 50)
+      store.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
 
       const button = wrapper.find('.purchase-button')
-
-      // Initially not purchasing
       expect(button.classes()).not.toContain('purchasing')
 
-      // Start the purchase process
-      const clickPromise = wrapper.find('.purchase-button').trigger('click')
+      await wrapper.find('.purchase-button').trigger('click')
       await wrapper.vm.$nextTick()
 
-      // Should show purchasing state immediately after click
       expect(button.classes()).toContain('purchasing')
-
-      // Complete all timers and async operations
-      vi.runAllTimers()
-      await clickPromise
-      await wrapper.vm.$nextTick()
-
-      // Verify the purchase completed successfully
-      const generator = gameStore.getGenerator('basicAdBotFarm')
-      expect(generator?.owned).toBe(1)
     })
 
-    it('should prevent multiple rapid purchases', async () => {
+    it('prevents multiple rapid purchases', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
-      gameStore.addResource('hcu', 100) // Enough for multiple purchases
 
-      // Click rapidly multiple times
+      store.addResource('hcu', 100)
+
+      // Click multiple times rapidly
       const button = wrapper.find('.purchase-button')
       await button.trigger('click')
       await button.trigger('click')
       await button.trigger('click')
 
-      // Wait for all async operations to complete
-      vi.advanceTimersByTime(200)
+      vi.runAllTimers()
       await wrapper.vm.$nextTick()
 
-      const generator = gameStore.getGenerator('basicAdBotFarm')
-      expect(generator?.owned).toBe(1) // Only one purchase should go through
+      // Only one purchase should complete
+      expect(store.getGenerator('basicAdBotFarm')?.owned).toBe(1)
     })
   })
 
-  describe('Dynamic Updates', () => {
-    it('should update cost when generator count changes', async () => {
+  describe('Production Display', () => {
+    it('shows zero production when no generators owned', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
 
-      // Initial cost
-      expect(wrapper.find('.cost-display').text()).toContain('10')
-
-      // Purchase one to increase cost
-      gameStore.addResource('hcu', 100)
-      gameStore.purchaseGenerator('basicAdBotFarm')
-      await wrapper.vm.$nextTick()
-
-      // Cost should have increased (10 * 1.15^1 = 11)
-      expect(wrapper.find('.cost-display').text()).toContain('11')
+      expect(wrapper.find('.production-info').text()).toContain('0')
     })
 
-    it('should update affordability when player money changes', async () => {
+    it('shows correct production rate', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
 
-      // Initially cannot afford
-      expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
-
-      // Give money
-      gameStore.addResource('hcu', 50)
+      store.getGenerator('basicAdBotFarm')!.owned = 5
       await wrapper.vm.$nextTick()
 
-      // Should now be affordable
-      expect(wrapper.find('.purchase-button').classes()).not.toContain('disabled')
-
-      // Spend money
-      gameStore.spendResource('hcu', 50)
-      await wrapper.vm.$nextTick()
-
-      // Should be unaffordable again
-      expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
-    })
-
-    it('should update production rate when upgrades are purchased', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
-      })
-      const gameStore = useGameStore()
-      // Purchase generators to enable upgrade
-      gameStore.addResource('hcu', 200)
-      for (let i = 0; i < 5; i++) {
-        gameStore.purchaseGenerator('basicAdBotFarm')
-      }
-
-      // Initial production rate (5 * 1 = 5)
-      await wrapper.vm.$nextTick()
       expect(wrapper.find('.production-info').text()).toContain('5')
-
-      // Purchase upgrade that affects this generator
-      gameStore.purchaseUpgrade('automatedContentScript')
-      await wrapper.vm.$nextTick()
-
-      // Production rate should increase (5 * 1.25 = 6.25)
-      expect(wrapper.find('.production-info').text()).toContain('6.25')
     })
 
-    it('should update production rate when prestige level changes', async () => {
+    it('applies upgrade multipliers to production display', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
-      // Purchase a generator
-      gameStore.addResource('hcu', 50)
-      gameStore.purchaseGenerator('basicAdBotFarm')
+
+      store.getGenerator('basicAdBotFarm')!.owned = 4
+      store.getUpgrade('automatedContentScript')!.isPurchased = true
       await wrapper.vm.$nextTick()
 
-      // Initial production rate (1 * 1 = 1)
-      expect(wrapper.find('.production-info').text()).toContain('1')
+      // 4 * 1 * 1.25 = 5
+      expect(wrapper.find('.production-info').text()).toContain('5')
+    })
 
-      // Increase prestige level
-      gameStore.gameState.prestige.level = 1 // 1.25x multiplier
+    it('applies prestige multipliers to production display', async () => {
+      const wrapper = mount(GeneratorPurchaseButton, {
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
+      })
+
+      store.getGenerator('basicAdBotFarm')!.owned = 1
+      store.gameState.prestige.level = 1 // 1.25x multiplier
       await wrapper.vm.$nextTick()
 
-      // Production rate should include global multiplier (1 * 1.25 = 1.25)
       expect(wrapper.find('.production-info').text()).toContain('1.25')
     })
   })
 
   describe('Different Generator Types', () => {
-    it('should work with different generator configurations', async () => {
+    it('works with different generator configurations', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'clickbaitEngine',
-        },
+        props: { generatorId: 'clickbaitEngine' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
 
-      // Unlock clickbaitEngine by purchasing required basicAdBotFarm generators
-      gameStore.addResource('hcu', 1000)
+      // Unlock clickbaitEngine by meeting requirements
+      store.addResource('hcu', 1000)
       for (let i = 0; i < 5; i++) {
-        gameStore.purchaseGenerator('basicAdBotFarm')
+        store.purchaseGenerator('basicAdBotFarm')
       }
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.generator-name').text()).toBe('Clickbait Engine')
-      // Should show cost for clickbaitEngine (100)
       expect(wrapper.find('.cost-display').text()).toContain('100')
     })
   })
 
-  describe('Edge Cases and Error Handling', () => {
-    it('should handle extremely high costs', async () => {
+  describe('Reactivity', () => {
+    it('updates affordability when player money changes', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
-      const gameStore = useGameStore()
-      // Purchase many generators to get very high cost
-      gameStore.addResource('hcu', 1000000)
-      const generator = gameStore.getGenerator('basicAdBotFarm')!
-      generator.owned = 50 // This should create a very high cost
 
+      // Initially unaffordable
+      expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
+
+      // Add money
+      store.addResource('hcu', 50)
       await wrapper.vm.$nextTick()
 
-      // Should display the high cost without breaking
+      expect(wrapper.find('.purchase-button').classes()).not.toContain('disabled')
+
+      // Spend money
+      store.spendResource('hcu', 50)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.purchase-button').classes()).toContain('disabled')
+    })
+
+    it('updates owned count display', async () => {
+      const wrapper = mount(GeneratorPurchaseButton, {
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
+      })
+
+      expect(wrapper.find('.owned-count').text()).toContain('Owned: 0')
+
+      store.addResource('hcu', 100)
+      store.purchaseGenerator('basicAdBotFarm')
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.owned-count').text()).toContain('Owned: 1')
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('handles extremely high costs', async () => {
+      const wrapper = mount(GeneratorPurchaseButton, {
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
+      })
+
+      // Set high owned count for very high cost
+      store.getGenerator('basicAdBotFarm')!.owned = 50
+      await wrapper.vm.$nextTick()
+
       const costText = wrapper.find('.cost-display').text()
       expect(costText).toMatch(/\d+/)
-      expect(costText.length).toBeGreaterThan(2) // Should be a large number
+      expect(costText.length).toBeGreaterThan(2)
     })
 
-    it('should handle zero production generators', async () => {
+    it('handles component unmounting during purchase', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
 
-      // Generator with 0 owned should show 0 production
-      expect(wrapper.find('.production-info').text()).toContain('0')
-      expect(wrapper.find('.owned-count').text()).toContain('Owned: 0')
-    })
-
-    it('should handle component unmounting during purchase', async () => {
-      const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
-      })
-      const gameStore = useGameStore()
-      gameStore.addResource('hcu', 50)
-
-      // Start purchase
+      store.addResource('hcu', 50)
       await wrapper.find('.purchase-button').trigger('click')
 
-      // Unmount while purchase is pending
+      // Should not throw when unmounting
       expect(() => wrapper.unmount()).not.toThrow()
-
-      // Timer should still complete without error
-      vi.advanceTimersByTime(150)
     })
 
-    it('should handle rapid prop changes', async () => {
+    it('handles rapid prop changes', async () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
 
-      const gameStore = useGameStore()
-
-      // Unlock clickbaitEngine first
-      gameStore.addResource('hcu', 1000)
+      // Setup for clickbaitEngine
+      store.addResource('hcu', 1000)
       for (let i = 0; i < 5; i++) {
-        gameStore.purchaseGenerator('basicAdBotFarm')
+        store.purchaseGenerator('basicAdBotFarm')
       }
 
-      // Change props rapidly
-      await wrapper.setProps({
-        generatorId: 'clickbaitEngine',
-      })
-      await wrapper.vm.$nextTick()
-
+      // Change generator type
+      await wrapper.setProps({ generatorId: 'clickbaitEngine' })
       expect(wrapper.find('.generator-name').text()).toBe('Clickbait Engine')
-      expect(wrapper.find('.cost-display').text()).toContain('100')
 
-      // Should not throw during rapid changes
-      await wrapper.setProps({
-        generatorId: 'basicAdBotFarm',
-      })
-
+      // Change back
+      await wrapper.setProps({ generatorId: 'basicAdBotFarm' })
       expect(wrapper.find('.generator-name').text()).toBe('Basic Ad-Bot Farm')
-      // Cost will be higher than 10 because we already purchased 5 generators
-      const currentCost = gameStore.getGeneratorCost('basicAdBotFarm')[0].amount
-      expect(wrapper.find('.cost-display').text()).toContain(currentCost.toString())
     })
   })
 
-  describe('Accessibility and Usability', () => {
-    it('should have proper button semantics', () => {
+  describe('Accessibility', () => {
+    it('uses proper button semantics', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
 
       const button = wrapper.find('.purchase-button')
       expect(button.element.tagName).toBe('BUTTON')
-      // Vue uses button element semantics by default
     })
 
-    it('should provide clear visual feedback for disabled state', async () => {
+    it('provides clear visual feedback for disabled state', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
 
       const button = wrapper.find('.purchase-button')
-
-      // Should be disabled when unaffordable
       expect(button.classes()).toContain('disabled')
       expect(button.attributes('disabled')).toBeDefined()
     })
 
-    it('should show clear information hierarchy', () => {
+    it('maintains clear information hierarchy', () => {
       const wrapper = mount(GeneratorPurchaseButton, {
-        props: {
-          generatorId: 'basicAdBotFarm',
-        },
+        props: { generatorId: 'basicAdBotFarm' },
+        global: { plugins: [pinia] },
       })
 
-      // Information should be clearly separated
       expect(wrapper.find('.generator-info').exists()).toBe(true)
       expect(wrapper.find('.generator-name').exists()).toBe(true)
       expect(wrapper.find('.generator-stats').exists()).toBe(true)

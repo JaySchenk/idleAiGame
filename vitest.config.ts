@@ -9,9 +9,10 @@ export default mergeConfig(
       environment: 'jsdom',
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
-      testTimeout: 10000, // 10 second timeout for all tests
-      hookTimeout: 10000, // 10 second timeout for hooks
-      teardownTimeout: 5000, // 5 second timeout for teardown
+      testTimeout: 10000,
+      hookTimeout: 10000,
+      teardownTimeout: 5000,
+      setupFiles: ['./src/test-utils/setup.ts'],
     },
   }),
 )
