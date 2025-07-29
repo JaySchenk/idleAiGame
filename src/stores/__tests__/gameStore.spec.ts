@@ -119,9 +119,15 @@ describe('GameStore', () => {
 
   describe('Upgrade System', () => {
     it('initializes upgrades from config', () => {
-      expect(store.gameState.upgrades).toHaveLength(2)
+      expect(store.gameState.upgrades.length).toBeGreaterThan(0)
       expect(store.gameState.upgrades[0].id).toBe('automatedContentScript')
       expect(store.gameState.upgrades[0].isPurchased).toBe(false)
+      // Verify all upgrades have the new structure
+      store.gameState.upgrades.forEach(upgrade => {
+        expect(upgrade).toHaveProperty('category')
+        expect(upgrade).toHaveProperty('effects')
+        expect(Array.isArray(upgrade.effects)).toBe(true)
+      })
     })
 
     it('checks upgrade requirements', () => {

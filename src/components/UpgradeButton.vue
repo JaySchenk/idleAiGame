@@ -13,6 +13,14 @@
       {{ upgrade.description }}
     </div>
 
+    <div class="upgrade-effects">
+      <div v-for="effect in upgrade.effects" :key="effect.type + effect.targetId" class="upgrade-effect">
+        <span class="effect-description" :class="{ positive: isPositiveEffect(effect), negative: !isPositiveEffect(effect) }">
+          {{ formatEffectDescription(effect) }}
+        </span>
+      </div>
+    </div>
+
     <div class="upgrade-requirements" v-if="!requirementsMet">
       <div class="requirement-text">Requires:</div>
       <div v-for="condition in upgrade.unlockConditions" :key="condition.generatorId || condition.resourceId" class="requirement-item">
@@ -51,7 +59,7 @@
     <!-- Purchase effect animation -->
     <div v-if="showPurchaseEffect" class="purchase-effect">
       <div class="effect-text">Upgrade Purchased!</div>
-      <div class="effect-bonus">+25% Production</div>
+      <div class="effect-bonus">{{ formatPurchaseEffects() }}</div>
     </div>
   </div>
 </template>
@@ -60,6 +68,7 @@
 import { computed } from 'vue'
 import { useGameStore, type UpgradeConfig } from '../stores/gameStore'
 import { usePurchaseAnimation } from '../composables/usePurchaseAnimation'
+import type { UpgradeEffect } from '../config/upgrades'
 // Currency display now uses IDs from the store
 import CurrencyDisplay from './CurrencyDisplay.vue'
 
@@ -112,6 +121,75 @@ const purchaseUpgrade = async () => {
 
   await executePurchase(() => gameStore.purchaseUpgrade(props.upgrade.id))
 }
+
+// Determine if an effect is positive
+const isPositiveEffect = (effect: UpgradeEffect): boolean => {
+  switch (effect.type) {
+    case 'production_multiplier':
+    case 'click_multiplier':
+    case 'global_resource_multiplier':
+      return effect.value > 1
+    case 'resource_capacity':
+      return effect.value > 0
+    case 'decay_reduction':
+      return effect.value < 1
+    default:
+      return true
+  }
+}
+
+// Format effect description
+const formatEffectDescription = (effect: UpgradeEffect): string => {
+  const targetName = effect.targetId ? getTargetName(effect.targetId, effect.type) : ''
+  
+  switch (effect.type) {
+    case 'production_multiplier':
+      const prodPercent = Math.round((effect.value - 1) * 100)
+      const prodSign = prodPercent >= 0 ? '+' : ''
+      return `${prodSign}${prodPercent}% ${targetName} production`
+    
+    case 'click_multiplier':
+      const clickPercent = Math.round((effect.value - 1) * 100)
+      const clickSign = clickPercent >= 0 ? '+' : ''
+      return `${clickSign}${clickPercent}% click rewards`
+    
+    case 'global_resource_multiplier':
+      const globalPercent = Math.round((effect.value - 1) * 100)
+      const globalSign = globalPercent >= 0 ? '+' : ''
+      return `${globalSign}${globalPercent}% all ${targetName} generation`
+    
+    case 'resource_capacity':
+      const capacitySign = effect.value >= 0 ? '+' : ''
+      return `${capacitySign}${effect.value} max ${targetName}`
+    
+    case 'decay_reduction':
+      const decayPercent = Math.round((1 - effect.value) * 100)
+      const decaySign = decayPercent >= 0 ? '-' : '+'
+      return `${decaySign}${Math.abs(decayPercent)}% ${targetName} decay`
+    
+    default:
+      return `${effect.type}: ${effect.value}`
+  }
+}
+
+// Get target name for effect
+const getTargetName = (targetId: string, effectType: string): string => {
+  if (effectType === 'production_multiplier') {
+    return getGeneratorName(targetId)
+  }
+  
+  // For resource-based effects, get resource display name
+  const resource = gameStore.getResourceConfig(targetId)
+  return resource ? resource.displayName : targetId
+}
+
+// Format purchase effects for animation
+const formatPurchaseEffects = (): string => {
+  if (!upgrade.value.effects.length) return 'Effects Applied!'
+  
+  const mainEffect = upgrade.value.effects[0]
+  return formatEffectDescription(mainEffect)
+}
 </script>
 
 <style scoped>
@@ -154,8 +232,30 @@ const purchaseUpgrade = async () => {
 .upgrade-description {
   font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   line-height: 1.4;
+}
+
+.upgrade-effects {
+  margin-bottom: 1rem;
+}
+
+.upgrade-effect {
+  margin-bottom: 0.25rem;
+}
+
+.effect-description {
+  font-size: 0.9rem;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+.effect-description.positive {
+  color: #00ff88;
+}
+
+.effect-description.negative {
+  color: #ff4444;
 }
 
 .upgrade-requirements {

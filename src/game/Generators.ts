@@ -69,24 +69,24 @@ function checkGeneratorInputs(
 export function applyGlobalMultipliers(
   resourceChanges: Map<string, number>,
   gameState: GameState,
+  getGlobalResourceMultiplier?: (resourceId: string) => number,
 ): Map<string, number> {
   const multipliedChanges = new Map<string, number>()
 
-  // Calculate global multiplier from upgrades
-  let globalMultiplier = 1
-  for (const upgrade of gameState.upgrades) {
-    if (upgrade.isPurchased && upgrade.effectType === 'global_multiplier') {
-      globalMultiplier *= upgrade.effectValue
-    }
-  }
-
   // Apply prestige multiplier
-  globalMultiplier *= Math.pow(1.25, gameState.prestige.level)
+  const prestigeMultiplier = Math.pow(1.25, gameState.prestige.level)
 
   // Apply multipliers to production (positive values only, negative values are consumption)
   for (const [resourceId, change] of resourceChanges) {
     if (change > 0) {
-      multipliedChanges.set(resourceId, change * globalMultiplier)
+      let totalMultiplier = prestigeMultiplier
+      
+      // Apply resource-specific global multiplier if function provided
+      if (getGlobalResourceMultiplier) {
+        totalMultiplier *= getGlobalResourceMultiplier(resourceId)
+      }
+      
+      multipliedChanges.set(resourceId, change * totalMultiplier)
     } else {
       multipliedChanges.set(resourceId, change) // Don't multiply consumption
     }
@@ -101,9 +101,10 @@ export function applyGlobalMultipliers(
 export function getHCUProductionRate(
   gameState: GameState,
   getGeneratorMultiplier: (id: string) => number,
+  getGlobalResourceMultiplier?: (resourceId: string) => number,
 ): number {
   const resourceChanges = calculateResourceProduction(gameState, getGeneratorMultiplier)
-  const globalChanges = applyGlobalMultipliers(resourceChanges, gameState)
+  const globalChanges = applyGlobalMultipliers(resourceChanges, gameState, getGlobalResourceMultiplier)
 
   return globalChanges.get('hcu') || 0
 }

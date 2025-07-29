@@ -19,11 +19,12 @@ describe('UpgradeButton', () => {
       id: 'testUpgrade',
       name: 'Test Upgrade',
       description: 'A test upgrade for testing purposes',
+      category: 'production',
       costs: [{ resourceId: 'hcu', amount: 100 }],
       unlockConditions: [
         { type: 'generator', generatorId: 'basicAdBotFarm', minOwned: 5 }
       ],
-      effects: [{ type: 'generatorMultiplier', generatorId: 'basicAdBotFarm', multiplier: 1.25 }],
+      effects: [{ type: 'production_multiplier', targetId: 'basicAdBotFarm', value: 1.25 }],
       isPurchased: false
     }
   })
@@ -222,7 +223,7 @@ describe('UpgradeButton', () => {
       expect(wrapper.vm.showPurchaseEffect).toBe(true)
       expect(wrapper.find('.purchase-effect').exists()).toBe(true)
       expect(wrapper.find('.effect-text').text()).toBe('Upgrade Purchased!')
-      expect(wrapper.find('.effect-bonus').text()).toBe('+25% Production')
+      expect(wrapper.find('.effect-bonus').text()).toBe('+25% Basic Ad-Bot Farm production')
     })
 
     it('hides purchase effect after animation', async () => {

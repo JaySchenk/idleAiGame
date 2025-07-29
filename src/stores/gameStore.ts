@@ -3,10 +3,10 @@ import { ref, computed } from 'vue'
 import {
   generators as generatorConfigs,
   type GeneratorConfig,
-  type UnlockCondition,
   type ResourceCost,
   type ResourceProduction,
 } from '../config/generators'
+import type { UnlockCondition } from '../utils/unlockSystem'
 import { upgrades as upgradeConfigs, type UpgradeConfig } from '../config/upgrades'
 import { resources, type ResourceConfig } from '../config/resources'
 import { narratives, type NarrativeEvent } from '../config/narratives'
@@ -112,12 +112,80 @@ export const useGameStore = defineStore(
     const getGeneratorMultiplier = (generatorId: string) => {
       let multiplier = 1
       for (const upgrade of gameState.value.upgrades) {
-        if (
-          upgrade.isPurchased &&
-          upgrade.targetGenerator === generatorId &&
-          upgrade.effectType === 'production_multiplier'
-        ) {
-          multiplier *= upgrade.effectValue
+        if (upgrade.isPurchased) {
+          for (const effect of upgrade.effects) {
+            if (effect.type === 'production_multiplier' && effect.targetId === generatorId) {
+              multiplier *= effect.value
+            }
+          }
+        }
+      }
+      return multiplier
+    }
+
+    /**
+     * Get click multiplier from upgrades
+     */
+    const getClickMultiplier = () => {
+      let multiplier = 1
+      for (const upgrade of gameState.value.upgrades) {
+        if (upgrade.isPurchased) {
+          for (const effect of upgrade.effects) {
+            if (effect.type === 'click_multiplier') {
+              multiplier *= effect.value
+            }
+          }
+        }
+      }
+      return multiplier
+    }
+
+    /**
+     * Get resource-specific global multiplier from upgrades
+     */
+    const getGlobalResourceMultiplier = (resourceId: string) => {
+      let multiplier = 1
+      for (const upgrade of gameState.value.upgrades) {
+        if (upgrade.isPurchased) {
+          for (const effect of upgrade.effects) {
+            if (effect.type === 'global_resource_multiplier' && effect.targetId === resourceId) {
+              multiplier *= effect.value
+            }
+          }
+        }
+      }
+      return multiplier
+    }
+
+    /**
+     * Get resource capacity modification from upgrades
+     */
+    const getResourceCapacityModification = (resourceId: string) => {
+      let modification = 0
+      for (const upgrade of gameState.value.upgrades) {
+        if (upgrade.isPurchased) {
+          for (const effect of upgrade.effects) {
+            if (effect.type === 'resource_capacity' && effect.targetId === resourceId) {
+              modification += effect.value
+            }
+          }
+        }
+      }
+      return modification
+    }
+
+    /**
+     * Get decay rate multiplier from upgrades
+     */
+    const getDecayRateMultiplier = (resourceId: string) => {
+      let multiplier = 1
+      for (const upgrade of gameState.value.upgrades) {
+        if (upgrade.isPurchased) {
+          for (const effect of upgrade.effects) {
+            if (effect.type === 'decay_reduction' && effect.targetId === resourceId) {
+              multiplier *= effect.value
+            }
+          }
         }
       }
       return multiplier
@@ -127,7 +195,7 @@ export const useGameStore = defineStore(
      * Primary resource production rate (HCU) for display purposes
      */
     const productionRate = computed(() => {
-      return getHCUProductionRate(gameState.value, getGeneratorMultiplier)
+      return getHCUProductionRate(gameState.value, getGeneratorMultiplier, getGlobalResourceMultiplier)
     })
 
     /**
@@ -136,14 +204,15 @@ export const useGameStore = defineStore(
     function getResourceProductionRate(resourceId: string): number {
       // Get base generator production/consumption
       const baseProduction = calculateResourceProduction(gameState.value, getGeneratorMultiplier)
-      const finalProduction = applyGlobalMultipliers(baseProduction, gameState.value)
+      const finalProduction = applyGlobalMultipliers(baseProduction, gameState.value, getGlobalResourceMultiplier)
       let netRate = finalProduction.get(resourceId) || 0
 
       // Add natural decay for depletable resources
       const resourceConfig = getResourceConfig(resourceId)
       if (resourceConfig && resourceConfig.isDepletable && resourceConfig.decayRate) {
         const currentAmount = getResourceAmount(resourceId)
-        const decayRate = currentAmount * resourceConfig.decayRate
+        const decayMultiplier = getDecayRateMultiplier(resourceId)
+        const decayRate = currentAmount * resourceConfig.decayRate * decayMultiplier
         netRate -= decayRate
       }
 
@@ -155,7 +224,7 @@ export const useGameStore = defineStore(
      */
     function applyResourceProduction(): void {
       const baseProduction = calculateResourceProduction(gameState.value, getGeneratorMultiplier)
-      const finalProduction = applyGlobalMultipliers(baseProduction, gameState.value)
+      const finalProduction = applyGlobalMultipliers(baseProduction, gameState.value, getGlobalResourceMultiplier)
 
       // Apply the production changes (scaled for tick rate)
       const tickMultiplier = GAME_CONSTANTS.TICK_RATE / 1000
@@ -172,9 +241,10 @@ export const useGameStore = defineStore(
      * Click rewards for manual clicks - returns array of resource rewards
      */
     const clickRewards = computed(() => {
+      const clickMult = getClickMultiplier()
       return GAME_CONSTANTS.CLICK_REWARDS.map((reward) => ({
         resourceId: reward.resourceId,
-        amount: reward.amount * globalMultiplier.value,
+        amount: reward.amount * globalMultiplier.value * clickMult,
       }))
     })
 
@@ -224,9 +294,11 @@ export const useGameStore = defineStore(
       const currentAmount = gameState.value.resources[resourceId].current
       let newAmount = currentAmount + amount
 
-      // Apply maxValue bounds if defined
+      // Apply maxValue bounds if defined (including capacity modifications)
       if (resourceConfig?.maxValue !== undefined) {
-        newAmount = Math.min(newAmount, resourceConfig.maxValue)
+        const capacityModification = getResourceCapacityModification(resourceId)
+        const effectiveMaxValue = resourceConfig.maxValue + capacityModification
+        newAmount = Math.min(newAmount, Math.max(0, effectiveMaxValue))
       }
 
       // Ensure non-negative values for non-depletable resources
@@ -265,7 +337,8 @@ export const useGameStore = defineStore(
         if (resourceConfig.isDepletable && resourceConfig.decayRate) {
           const currentAmount = getResourceAmount(resourceConfig.id)
           if (currentAmount > 0) {
-            const decayAmount = currentAmount * resourceConfig.decayRate
+            const decayMultiplier = getDecayRateMultiplier(resourceConfig.id)
+            const decayAmount = currentAmount * resourceConfig.decayRate * decayMultiplier
             gameState.value.resources[resourceConfig.id].current = Math.max(
               0,
               currentAmount - decayAmount,
@@ -608,6 +681,10 @@ export const useGameStore = defineStore(
       // ===== HELPER FUNCTIONS =====
       formatResource: formatResourceById,
       getGeneratorMultiplier,
+      getClickMultiplier,
+      getGlobalResourceMultiplier,
+      getResourceCapacityModification,
+      getDecayRateMultiplier,
 
       // ===== RESOURCE ACTIONS =====
       getResourceConfig,

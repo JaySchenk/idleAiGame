@@ -1,4 +1,4 @@
-import type { UnlockCondition } from './generators'
+import type { UnlockCondition } from '../utils/unlockSystem'
 
 export interface ResourceConfig {
   id: string

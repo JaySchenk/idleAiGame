@@ -5,6 +5,7 @@ export interface UnlockCondition {
     | 'resource' 
     | 'generator' 
     | 'upgrade' 
+    | 'not_upgrade'
     | 'narrative' 
     | 'prestige' 
     | 'time' 
@@ -111,6 +112,9 @@ export class UnlockSystem {
       
       case 'upgrade':
         return this.checkUpgradeCondition(condition, gameState, visible)
+      
+      case 'not_upgrade':
+        return this.checkNotUpgradeCondition(condition, gameState, visible)
       
       case 'narrative':
         return this.checkNarrativeCondition(condition, gameState, visible)
@@ -263,6 +267,36 @@ export class UnlockSystem {
       isUnlocked,
       isVisible: visible,
       failedConditions: isUnlocked ? [] : [`Upgrade not purchased: ${upgrade.name}`]
+    }
+  }
+
+  private static checkNotUpgradeCondition(
+    condition: UnlockCondition, 
+    gameState: GameState, 
+    visible: boolean
+  ): UnlockResult {
+    if (!condition.upgradeId) {
+      return { 
+        isUnlocked: false, 
+        isVisible: visible, 
+        failedConditions: ['Not upgrade condition missing upgradeId'] 
+      }
+    }
+
+    const upgrade = gameState.upgrades.find(u => u.id === condition.upgradeId)
+    if (!upgrade) {
+      return { 
+        isUnlocked: false, 
+        isVisible: visible, 
+        failedConditions: [`Upgrade not found: ${condition.upgradeId}`] 
+      }
+    }
+
+    const isUnlocked = !upgrade.isPurchased
+    return {
+      isUnlocked,
+      isVisible: visible,
+      failedConditions: isUnlocked ? [] : [`Upgrade already purchased: ${upgrade.name}`]
     }
   }
 
